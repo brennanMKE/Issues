@@ -49,6 +49,7 @@ struct TimelineView: View {
     private static let minTrackWidth: CGFloat = 600
     private static let rowHeight: CGFloat = 26
     private static let rowSpacing: CGFloat = 4
+    private static let minBarWidth: CGFloat = 60
 
     var body: some View {
         let issues = store.filteredIssues
@@ -150,7 +151,7 @@ struct TimelineView: View {
 
         let startX = trackWidth * geometry.fraction(for: start)
         let endX = trackWidth * geometry.fraction(for: end)
-        let width = max(endX - startX, 14)
+        let width = max(endX - startX, Self.minBarWidth)
         let isSelected = store.selectedIssueID == issue.id
         let y = CGFloat(yIndex) * (Self.rowHeight + Self.rowSpacing)
 

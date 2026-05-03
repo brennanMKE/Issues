@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct ToolbarView: View {
     @Bindable var store: IssueStore
@@ -50,13 +51,9 @@ struct ToolbarView: View {
     }
 
     private func statusPill(for status: IssueStatus) -> some View {
-        let isActive = store.statusFilter == status
+        let isActive = store.statusFilters.contains(status)
         return Button {
-            if isActive {
-                store.statusFilter = nil
-            } else {
-                store.statusFilter = status
-            }
+            handleStatusPillClick(status: status, isActive: isActive)
         } label: {
             HStack(spacing: 4) {
                 Circle()
@@ -77,6 +74,28 @@ struct ToolbarView: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .help("Click to filter by \(status.displayName). Option-click to add/remove from the current selection.")
+    }
+
+    /// Plain click: collapse selection to just this status, or clear if it
+    /// was the only one already selected.
+    /// Option-click: toggle this status's membership in the active set
+    /// (allowing multi-select across statuses).
+    private func handleStatusPillClick(status: IssueStatus, isActive: Bool) {
+        let optionHeld = NSEvent.modifierFlags.contains(.option)
+        if optionHeld {
+            if isActive {
+                store.statusFilters.remove(status)
+            } else {
+                store.statusFilters.insert(status)
+            }
+        } else {
+            if isActive && store.statusFilters.count == 1 {
+                store.statusFilters.removeAll()
+            } else {
+                store.statusFilters = [status]
+            }
+        }
     }
 
     private var viewModeSwitcher: some View {

@@ -28,7 +28,7 @@ final class IssueStore {
     private(set) var loadError: String?
     private(set) var folderInvalidated: Bool = false
 
-    var statusFilter: IssueStatus?
+    var statusFilters: Set<IssueStatus> = []
     var moduleFilter: String?
     var platformFilter: String?
     var viewMode: ViewMode = .swimlane
@@ -129,7 +129,7 @@ final class IssueStore {
 
     var filteredIssues: [Issue] {
         issues.filter { issue in
-            if let s = statusFilter, issue.status != s { return false }
+            if !statusFilters.isEmpty && !statusFilters.contains(issue.status) { return false }
             if let m = moduleFilter, !issue.modules.contains(m) { return false }
             if let p = platformFilter, issue.platform != p, issue.platform != "All" { return false }
             return true
