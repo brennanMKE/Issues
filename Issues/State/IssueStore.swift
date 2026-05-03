@@ -1,8 +1,12 @@
 import Foundation
 import Observation
+import os.log
+
+nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: "IssueStore")
 
 @Observable
 final class IssueStore {
+
     enum ViewMode: String, CaseIterable, Hashable {
         case swimlane, timeline, list
 
@@ -51,16 +55,21 @@ final class IssueStore {
 
     func start() {
         didStartAccess = folderURL.startAccessingSecurityScopedResource()
+        logger.notice("start folder=\(self.folderURL.path, privacy: .public) scopedAccess=\(self.didStartAccess, privacy: .public)")
         reload()
         let watcher = FolderWatcher(
             onChange: { [weak self] in self?.reload() },
-            onInvalidated: { [weak self] in self?.folderInvalidated = true }
+            onInvalidated: { [weak self] in
+                logger.notice("folder invalidated — clearing store")
+                self?.folderInvalidated = true
+            }
         )
         watcher.start(url: folderURL)
         self.watcher = watcher
     }
 
     func stop() {
+        logger.notice("stop")
         watcher?.stop()
         watcher = nil
         if didStartAccess {
@@ -72,6 +81,7 @@ final class IssueStore {
     // MARK: - Loading
 
     func reload() {
+        let started = Date()
         do {
             let fm = FileManager.default
             let entries = try fm.contentsOfDirectory(
@@ -80,22 +90,38 @@ final class IssueStore {
                 options: [.skipsHiddenFiles, .skipsSubdirectoryDescendants]
             )
             var parsed: [Issue] = []
+            var skippedNames: [String] = []
             for url in entries {
-                guard MarkdownIssueParser.filenameMatchesIssuePattern(url.lastPathComponent) else {
+                let name = url.lastPathComponent
+                guard MarkdownIssueParser.filenameMatchesIssuePattern(name) else {
                     continue
                 }
-                if let issue = try? MarkdownIssueParser.parse(fileURL: url) {
-                    parsed.append(issue)
+                do {
+                    if let issue = try MarkdownIssueParser.parse(fileURL: url) {
+                        parsed.append(issue)
+                    } else {
+                        skippedNames.append(name)
+                    }
+                } catch {
+                    skippedNames.append(name)
+                    logger.warning("read \(name, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
                 }
             }
             parsed.sort { $0.id < $1.id }
+            let prevCount = self.issues.count
             self.issues = parsed
             if let id = selectedIssueID, !parsed.contains(where: { $0.id == id }) {
                 selectedIssueID = nil
             }
             self.loadError = nil
+            let ms = Int(Date().timeIntervalSince(started) * 1000)
+            logger.notice("reload parsed=\(parsed.count, privacy: .public) skipped=\(skippedNames.count, privacy: .public) wasCount=\(prevCount, privacy: .public) elapsedMs=\(ms, privacy: .public)")
+            if !skippedNames.isEmpty {
+                logger.warning("skipped files: \(skippedNames.joined(separator: ", "), privacy: .public)")
+            }
         } catch {
             self.loadError = "Failed to read folder: \(error.localizedDescription)"
+            logger.error("reload failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 

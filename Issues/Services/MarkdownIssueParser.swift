@@ -1,4 +1,7 @@
 import Foundation
+import os.log
+
+nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: "MarkdownIssueParser")
 
 enum MarkdownIssueParser {
     private static let filenamePattern: NSRegularExpression = {
@@ -69,6 +72,7 @@ enum MarkdownIssueParser {
             .trimmingCharacters(in: .whitespacesAndNewlines),
               !title.isEmpty
         else {
+            logger.warning("skip \(filename, privacy: .public): title line did not match `# NNNN — Title` (em-dash U+2014 required)")
             return nil
         }
 
