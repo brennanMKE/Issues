@@ -3,6 +3,21 @@ import os.log
 
 nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: "MarkdownIssueParser")
 
+/// Reasons the parser may reject an otherwise well-named `NNNN.md` file.
+/// Surfaced through `parseDetailed(...)` so the lint pane (#0019) can explain
+/// why a file was skipped instead of silently ignoring it.
+enum MarkdownIssueParseError: Error, Equatable, Hashable, Sendable {
+    /// File name doesn't match `^\d{4}\.md$` — the filename gate. Strictly
+    /// speaking the linter never sees this case (it filters first), but the
+    /// error is exposed for symmetry with the existing `parse(...)` contract.
+    case filenameMismatch
+    /// No `# NNNN \u{2014} Title` line. Most often a hyphen was used instead
+    /// of an em-dash (U+2014), or the heading is missing entirely.
+    case missingTitle
+    /// No `| **Status** | … |` row in the metadata table.
+    case missingStatus
+}
+
 enum MarkdownIssueParser {
     private static let filenamePattern: NSRegularExpression = {
         // swiftlint:disable:next force_try
@@ -64,8 +79,30 @@ enum MarkdownIssueParser {
 
     /// Pure parsing entry point — testable without disk access.
     static func parse(fileURL: URL, contents: String, modifiedAt: Date = Date()) -> Issue? {
+        switch parseDetailed(fileURL: fileURL, contents: contents, modifiedAt: modifiedAt) {
+        case .success(let issue):
+            return issue
+        case .failure(let error):
+            if case .missingTitle = error {
+                logger.warning("skip \(fileURL.lastPathComponent, privacy: .public): title line did not match `# NNNN — Title` (em-dash U+2014 required)")
+            }
+            return nil
+        }
+    }
+
+    /// Parsing entry point that distinguishes between the failure modes the
+    /// lint pane needs to display. The success payload is identical to what
+    /// `parse(...)` returns; the failure payload describes which structural
+    /// element was missing or malformed.
+    static func parseDetailed(
+        fileURL: URL,
+        contents: String,
+        modifiedAt: Date = Date()
+    ) -> Result<Issue, MarkdownIssueParseError> {
         let filename = fileURL.lastPathComponent
-        guard filenameMatchesIssuePattern(filename) else { return nil }
+        guard filenameMatchesIssuePattern(filename) else {
+            return .failure(.filenameMismatch)
+        }
 
         // ID is the leading 4-digit portion of the filename.
         let id = String(filename.prefix(4))
@@ -74,11 +111,13 @@ enum MarkdownIssueParser {
             .trimmingCharacters(in: .whitespacesAndNewlines),
               !title.isEmpty
         else {
-            logger.warning("skip \(filename, privacy: .public): title line did not match `# NNNN — Title` (em-dash U+2014 required)")
-            return nil
+            return .failure(.missingTitle)
         }
 
-        let statusRaw = firstCapture(of: statusFieldPattern, in: contents) ?? "open"
+        guard let statusRawCapture = firstCapture(of: statusFieldPattern, in: contents) else {
+            return .failure(.missingStatus)
+        }
+        let statusRaw = statusRawCapture.trimmingCharacters(in: .whitespacesAndNewlines)
         let moduleRaw = firstCapture(of: moduleFieldPattern, in: contents) ?? ""
         let platformRaw = firstCapture(of: platformFieldPattern, in: contents) ?? ""
         let firstSeenRaw = firstCapture(of: firstSeenFieldPattern, in: contents) ?? ""
@@ -94,19 +133,22 @@ enum MarkdownIssueParser {
         let firstSeen = parseDate(firstSeenRaw)
         let closed = parseDate(closedRaw)
 
-        return Issue(
-            id: id,
-            title: title,
-            status: status,
-            module: module,
-            platform: platform,
-            firstSeen: firstSeen,
-            firstSeenRaw: firstSeenRaw,
-            closed: closed,
-            closedRaw: closedRaw,
-            description: description,
-            fileURL: fileURL,
-            modifiedAt: modifiedAt
+        return .success(
+            Issue(
+                id: id,
+                title: title,
+                status: status,
+                statusRaw: statusRaw,
+                module: module,
+                platform: platform,
+                firstSeen: firstSeen,
+                firstSeenRaw: firstSeenRaw,
+                closed: closed,
+                closedRaw: closedRaw,
+                description: description,
+                fileURL: fileURL,
+                modifiedAt: modifiedAt
+            )
         )
     }
 

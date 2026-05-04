@@ -8,6 +8,12 @@ struct StatsBarView: View {
     @Bindable var store: IssueStore
     let total: Int
     let counts: [IssueStatus: Int]
+    /// Number of `LintFinding`s currently surfaced by the store. When > 0 a
+    /// small amber banner appears between the count chips and the view-mode
+    /// switcher; tapping it triggers `onShowLint`. Hidden entirely at zero so
+    /// a clean folder shows no chrome.
+    let lintCount: Int
+    let onShowLint: () -> Void
 
     var body: some View {
         HStack(spacing: 18) {
@@ -19,6 +25,9 @@ struct StatsBarView: View {
                 }
             }
             Spacer()
+            if lintCount > 0 {
+                lintBanner
+            }
             viewModeSwitcher
         }
         .padding(.horizontal, 16)
@@ -29,6 +38,30 @@ struct StatsBarView: View {
                 .fill(Color.appBorder)
                 .frame(height: 1)
         }
+    }
+
+    private var lintBanner: some View {
+        Button(action: onShowLint) {
+            HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.statusOpen)
+                Text("\(lintCount) " + (lintCount == 1 ? "lint finding" : "lint findings"))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.appText)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Color.appBackgroundCard)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule().stroke(Color.statusOpen.opacity(0.5), lineWidth: 1)
+            )
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .help("Show lint findings")
+        .accessibilityLabel("\(lintCount) lint findings")
     }
 
     private func statRow(color: Color, label: String, count: Int) -> some View {

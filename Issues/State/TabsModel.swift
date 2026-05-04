@@ -200,6 +200,7 @@ final class TabsModel {
                 id: id,
                 title: "",
                 status: prev.status,
+                statusRaw: prev.status.rawValue,
                 module: "",
                 platform: "",
                 firstSeen: nil,

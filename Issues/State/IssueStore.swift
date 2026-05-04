@@ -39,6 +39,11 @@ final class IssueStore: Identifiable {
     let id: UUID = UUID()
     let folderURL: URL
     private(set) var issues: [Issue] = []
+    /// Read-only lint findings produced by `LintRunner` after each successful
+    /// reload. Surfaced via the lint banner in `StatsBarView` (#0019); empty
+    /// list means a clean folder. Recomputed on every `reload()` so it stays
+    /// in sync with `issues`.
+    private(set) var lintFindings: [LintFinding] = []
     private(set) var loadError: String?
     private(set) var folderInvalidated: Bool = false
 
@@ -144,12 +149,13 @@ final class IssueStore: Identifiable {
             parsed.sort { $0.id < $1.id }
             let prevCount = self.issues.count
             self.issues = parsed
+            self.lintFindings = LintRunner.run(folderURL: folderURL, parsedIssues: parsed)
             if let id = selectedIssueID, !parsed.contains(where: { $0.id == id }) {
                 selectedIssueID = nil
             }
             self.loadError = nil
             let ms = Int(Date().timeIntervalSince(started) * 1000)
-            logger.notice("[\(self.repoName, privacy: .public)] reload parsed=\(parsed.count, privacy: .public) skipped=\(skippedNames.count, privacy: .public) wasCount=\(prevCount, privacy: .public) elapsedMs=\(ms, privacy: .public)")
+            logger.notice("[\(self.repoName, privacy: .public)] reload parsed=\(parsed.count, privacy: .public) skipped=\(skippedNames.count, privacy: .public) lint=\(self.lintFindings.count, privacy: .public) wasCount=\(prevCount, privacy: .public) elapsedMs=\(ms, privacy: .public)")
             if !skippedNames.isEmpty {
                 logger.warning("[\(self.repoName, privacy: .public)] skipped files: \(skippedNames.joined(separator: ", "), privacy: .public)")
             }

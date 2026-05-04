@@ -6,12 +6,19 @@ struct MainView: View {
     @Bindable var bookmarks: FolderBookmarkService
 
     @State private var markdownSheetIssue: Issue? = nil
+    @State private var showingLintSheet: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
             HeaderView(store: store)
             TabBarView(tabs: tabs, bookmarks: bookmarks)
-            StatsBarView(store: store, total: store.issues.count, counts: store.statusCounts)
+            StatsBarView(
+                store: store,
+                total: store.issues.count,
+                counts: store.statusCounts,
+                lintCount: store.lintFindings.count,
+                onShowLint: { showingLintSheet = true }
+            )
             ToolbarView(store: store)
 
             HStack(spacing: 0) {
@@ -37,6 +44,9 @@ struct MainView: View {
         .background(Color.appBackground)
         .sheet(item: $markdownSheetIssue) { issue in
             IssueMarkdownSheet(issue: issue)
+        }
+        .sheet(isPresented: $showingLintSheet) {
+            LintSheetView(findings: store.lintFindings)
         }
         .onAppear { registerCommandHandlers() }
         .onChange(of: store.id) { _, _ in registerCommandHandlers() }
@@ -112,6 +122,7 @@ struct MainView: View {
             id: "----",
             title: "",
             status: .open,
+            statusRaw: "open",
             module: "",
             platform: "",
             firstSeen: nil,

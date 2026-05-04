@@ -4,6 +4,11 @@ struct Issue: Identifiable, Equatable, Hashable, Sendable {
     let id: String
     let title: String
     let status: IssueStatus
+    /// The raw, untrimmed status text as written in the markdown table. Kept
+    /// alongside the normalized `status` so the linter can flag values that
+    /// fall outside the canonical set (which `IssueStatus.init(raw:)` silently
+    /// folds to `.open`).
+    let statusRaw: String
     let module: String
     let platform: String
     let firstSeen: Date?
