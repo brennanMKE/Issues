@@ -36,6 +36,7 @@ private struct TimelineGeometry {
 
 struct TimelineView: View {
     @Bindable var store: IssueStore
+    let onOpenMarkdown: (Issue) -> Void
 
     private static let labelFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -155,31 +156,28 @@ struct TimelineView: View {
         let isSelected = store.selectedIssueID == issue.id
         let y = CGFloat(yIndex) * (Self.rowHeight + Self.rowSpacing)
 
-        return Button {
-            store.toggleSelection(issue.id)
-        } label: {
-            HStack(spacing: 4) {
-                Text("#\(issue.id)")
-                    .font(.system(size: 10, weight: .heavy))
-                    .foregroundStyle(issue.status.foreground)
-                    .padding(.horizontal, 6)
-            }
-            .frame(width: width, height: Self.rowHeight, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(issue.status.background22)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(
-                        isSelected ? Color.appAccent : issue.status.foreground,
-                        lineWidth: isSelected ? 2 : 1
-                    )
-            )
-            .scaleEffect(y: isSelected ? 1.15 : 1.0, anchor: .center)
-            .contentShape(RoundedRectangle(cornerRadius: 10))
+        return HStack(spacing: 4) {
+            Text("#\(issue.id)")
+                .font(.system(size: 10, weight: .heavy))
+                .foregroundStyle(issue.status.foreground)
+                .padding(.horizontal, 6)
         }
-        .buttonStyle(.plain)
+        .frame(width: width, height: Self.rowHeight, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(issue.status.background22)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(
+                    isSelected ? Color.appAccent : issue.status.foreground,
+                    lineWidth: isSelected ? 2 : 1
+                )
+        )
+        .scaleEffect(y: isSelected ? 1.15 : 1.0, anchor: .center)
+        .contentShape(RoundedRectangle(cornerRadius: 10))
+        .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+        .onTapGesture { store.toggleSelection(issue.id) }
         .help("\(issue.title)")
         .offset(x: startX, y: y)
     }

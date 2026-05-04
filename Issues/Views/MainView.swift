@@ -51,11 +51,11 @@ struct MainView: View {
             case .swimlane:
                 SwimlaneView(store: store, onOpenMarkdown: { markdownSheetIssue = $0 })
             case .timeline:
-                TimelineView(store: store)
+                TimelineView(store: store, onOpenMarkdown: { markdownSheetIssue = $0 })
             case .list:
-                ListView(store: store)
+                ListView(store: store, onOpenMarkdown: { markdownSheetIssue = $0 })
             case .recent:
-                RecentView(store: store)
+                RecentView(store: store, onOpenMarkdown: { markdownSheetIssue = $0 })
             }
         }
     }

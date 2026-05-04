@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ListView: View {
     @Bindable var store: IssueStore
+    let onOpenMarkdown: (Issue) -> Void
     @State private var sortOrder: [KeyPathComparator<Issue>] = [
         KeyPathComparator(\Issue.id, order: .forward)
     ]
@@ -20,11 +21,23 @@ struct ListView: View {
                 Text("#\(issue.id)")
                     .font(.system(size: 11, weight: .heavy))
                     .foregroundStyle(Color.appMuted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .contextMenu {
+                        Button("Preview Markdown") { onOpenMarkdown(issue) }
+                    }
             }
             .width(60)
 
             TableColumn("Status", value: \.status.rawValue) { issue in
                 StatusBadgeView(status: issue.status)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .contextMenu {
+                        Button("Preview Markdown") { onOpenMarkdown(issue) }
+                    }
             }
             .width(110)
 
@@ -33,6 +46,12 @@ struct ListView: View {
                     .foregroundStyle(Color.appText)
                     .lineLimit(1)
                     .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .contextMenu {
+                        Button("Preview Markdown") { onOpenMarkdown(issue) }
+                    }
             }
 
             TableColumn("Module", value: \.module) { issue in
@@ -40,17 +59,35 @@ struct ListView: View {
                     .foregroundStyle(Color.appMuted)
                     .lineLimit(1)
                     .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .contextMenu {
+                        Button("Preview Markdown") { onOpenMarkdown(issue) }
+                    }
             }
 
             TableColumn("Platform", value: \.platform) { issue in
                 Text(issue.platform)
                     .foregroundStyle(Color.appText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .contextMenu {
+                        Button("Preview Markdown") { onOpenMarkdown(issue) }
+                    }
             }
             .width(80)
 
             TableColumn("Filed", value: \.firstSeenRaw) { issue in
                 Text(displayDate(issue.firstSeen, raw: issue.firstSeenRaw))
                     .foregroundStyle(Color.appText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .contextMenu {
+                        Button("Preview Markdown") { onOpenMarkdown(issue) }
+                    }
             }
             .width(100)
         }
