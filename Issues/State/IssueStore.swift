@@ -45,6 +45,9 @@ final class IssueStore: Identifiable {
     var statusFilters: Set<IssueStatus> = []
     var moduleFilter: String?
     var platformFilter: String?
+    // TODO #0009: persist `searchQuery` per tab so closing/reopening a tab
+    // restores the query. v1 deliberately resets on tab close.
+    var searchQuery: String = ""
     var viewMode: ViewMode = .swimlane
     var selectedIssueID: String?
     var sortColumn: SortColumn = .id
@@ -160,10 +163,16 @@ final class IssueStore: Identifiable {
     // MARK: - Derived state
 
     var filteredIssues: [Issue] {
-        issues.filter { issue in
+        let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        let lowercasedQuery = trimmedQuery.isEmpty ? nil : trimmedQuery.lowercased()
+        return issues.filter { issue in
             if !statusFilters.isEmpty && !statusFilters.contains(issue.status) { return false }
             if let m = moduleFilter, !issue.modules.contains(m) { return false }
             if let p = platformFilter, issue.platform != p, issue.platform != "All" { return false }
+            if let q = lowercasedQuery {
+                guard issue.title.lowercased().contains(q) ||
+                      issue.description.lowercased().contains(q) else { return false }
+            }
             return true
         }
     }
