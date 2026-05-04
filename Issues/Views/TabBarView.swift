@@ -89,6 +89,14 @@ struct TabBarView: View {
                     }
                 }
                 .fixedSize(horizontal: true, vertical: false)
+                // Drag gesture lives on this stable parent HStack — its
+                // identity does not change when chip cells re-render, so
+                // the gesture stays alive for the full drag and .onEnded
+                // is reached on every release. simultaneousGesture lets it
+                // coexist with each chip's own .onTapGesture for activate;
+                // the min-distance gates which one wins (tap = no movement,
+                // drag = ≥4pt movement).
+                .simultaneousGesture(barDragGesture)
 
                 if let dragged = draggedChip {
                     TabChipView(
@@ -189,7 +197,7 @@ struct TabBarView: View {
                 }
                 .contentShape(Rectangle())
                 .onTapGesture { tabs.setActive(id: chip.id) }
-                .gesture(dragGesture(for: chip))
+                // No per-chip drag gesture — the bar owns the drag now.
             }
         case .placeholder:
             Color.clear.frame(width: draggedWidth, height: 1)
@@ -198,14 +206,28 @@ struct TabBarView: View {
 
     // MARK: - Drag gesture
 
-    private func dragGesture(for chip: IssueStore) -> some Gesture {
+    /// The single drag gesture for the whole bar. Lives on the inner
+    /// `HStack` (a view whose identity does not change as cells re-render),
+    /// so the gesture survives every cell update and `.onEnded` fires on
+    /// every release. On the first `.onChanged` tick we hit-test
+    /// `value.startLocation.x` against cumulative chip anchors to identify
+    /// which chip the user grabbed.
+    private var barDragGesture: some Gesture {
         DragGesture(minimumDistance: 4)
             .onChanged { value in
                 if draggingID == nil {
-                    // First tick: capture all the static state for this drag.
-                    // No animation here — we don't want the overlay's initial
-                    // appearance to interpolate from the origin.
-                    let idx = tabs.tabs.firstIndex { $0.id == chip.id } ?? 0
+                    // First tick: identify the chip from the start location.
+                    // `value.startLocation.x` is in the bar HStack's coord
+                    // space (the gesture host) — same space as our
+                    // cumulative anchor math, so the hit-test maps directly.
+                    let startX = value.startLocation.x
+                    guard let (idx, chip) = chipAtBarX(startX) else {
+                        // Press began in an inter-chip gap or outside the
+                        // bar — ignore until the cursor enters a chip.
+                        return
+                    }
+                    // No animation here — we don't want the overlay's
+                    // initial appearance to interpolate from the origin.
                     draggingID = chip.id
                     originalSlot = idx
                     phantomSlot = idx
@@ -216,13 +238,9 @@ struct TabBarView: View {
                 dragXOffset = value.translation.width
 
                 guard originalSlot != nil else { return }
-                // `value.location` is in the chip's local coords (the gesture
-                // is attached to the chip), so cursor-in-bar-coords is the
-                // chip's leading-edge anchor plus the local cursor x. Using
-                // `startLocation + translation` is equivalent and avoids any
-                // surprise about which coordinate space `location` reports.
-                let cursorLocalX = value.startLocation.x + value.translation.width
-                let cursorBarX = originalSlotAnchor + cursorLocalX
+                // Gesture is on the bar HStack now, so `value.location` is
+                // already in bar coords — no anchor offset needed.
+                let cursorBarX = value.location.x
                 let newPhantom = computePhantomSlot(cursorBarX: cursorBarX)
                 if newPhantom != phantomSlot {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.78)) {
@@ -260,6 +278,24 @@ struct TabBarView: View {
     }
 
     // MARK: - Geometry helpers
+
+    /// Walk cumulative chip anchors and return the index + chip whose
+    /// `[anchorX, anchorX + width)` range contains `x` (a bar-coord X,
+    /// typically `DragGesture.Value.startLocation.x`). Returns `nil` if
+    /// the press landed in an inter-chip gap or past the trailing chip —
+    /// in that case the gesture's first tick is dropped.
+    private func chipAtBarX(_ x: CGFloat) -> (Int, IssueStore)? {
+        guard !tabs.tabs.isEmpty, x >= 0 else { return nil }
+        var anchorX: CGFloat = 0
+        for (idx, chip) in tabs.tabs.enumerated() {
+            let w = measuredWidths[chip.id] ?? defaultTabWidth
+            if x >= anchorX && x < anchorX + w {
+                return (idx, chip)
+            }
+            anchorX += w + spacing
+        }
+        return nil
+    }
 
     /// Leading-edge x of slot `index` in the natural HStack layout (i.e.
     /// before any drag started). Sum of preceding chips' measured widths
