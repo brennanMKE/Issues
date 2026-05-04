@@ -26,6 +26,19 @@ struct IssuesApp: App {
         }
         .defaultSize(width: 1200, height: 800)
         .commands {
+            // Replace the standard Help menu with one that opens our own
+            // `HelpView` window. `CommandGroup(replacing: .help)` keeps the
+            // Cmd+? binding macOS users expect; the action just points at
+            // the dedicated `id: "help"` window scene below.
+            //
+            // `@Environment(\.openWindow)` isn't available directly inside
+            // `.commands { ... }` because the commands closure isn't a
+            // `View`. Wrapping the button in a tiny `View` lets us read
+            // the environment value where SwiftUI provides it.
+            CommandGroup(replacing: .help) {
+                HelpMenuButton()
+            }
+
             // Tab management goes next to "New" in File. Cmd+T (New Tab),
             // Cmd+W (Close Tab), Cmd+R (Reload).
             //
@@ -110,5 +123,28 @@ struct IssuesApp: App {
                 }
             }
         }
+
+        // Dedicated Help window. Opt-in: only opens when the user picks
+        // "Issues Help" from the Help menu (or hits Cmd+?). Lives in its
+        // own window so the user can keep it next to the main window.
+        Window("Issues Help", id: "help") {
+            HelpView()
+        }
+        .defaultSize(width: 720, height: 800)
+        .windowResizability(.contentMinSize)
+    }
+}
+
+/// Help menu item. Lifted into its own `View` so the `@Environment`
+/// property wrapper works — `CommandGroup`'s closure is a builder, not a
+/// `View`, and can't read environment values directly.
+private struct HelpMenuButton: View {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button("Issues Help") {
+            openWindow(id: "help")
+        }
+        .keyboardShortcut("?", modifiers: .command)
     }
 }
