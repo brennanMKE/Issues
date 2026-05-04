@@ -31,10 +31,19 @@ struct IssueMarkdownSheet: View {
                     .foregroundStyle(Color.appMuted)
             }
             Spacer(minLength: 8)
-            Button("Close") {
+            Button {
                 dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.appMuted)
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .keyboardShortcut(.cancelAction)
+            .help("Close")
+            .accessibilityLabel("Close")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
