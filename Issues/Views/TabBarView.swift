@@ -62,7 +62,11 @@ struct TabBarView: View {
                     .shadow(color: .black.opacity(isDragging ? 0.35 : 0), radius: 14, y: 8)
                     .offset(x: visualOffset)
                     .zIndex(isDragging ? 1 : 0)
-                    .animation(.spring(response: 0.35, dampingFraction: 0.78), value: currentIdx)
+                    // Slot-change spring fires only on *neighbors* — animating
+                    // the dragged chip's compensated offset between old/new
+                    // slots fights the cursor (which drives `dragXOffset`
+                    // directly) and reads as jitter. See #0021 follow-up.
+                    .animation(isDragging ? nil : .spring(response: 0.35, dampingFraction: 0.78), value: currentIdx)
                     .animation(.spring(response: 0.32, dampingFraction: 0.82), value: isDragging)
                     .contentShape(Rectangle())
                     .onTapGesture { tabs.setActive(id: store.id) }
@@ -113,7 +117,12 @@ struct TabBarView: View {
                     // final index because the source removal shifts later
                     // indices left by one.
                     let destination = target > currentIdx ? target + 1 : target
-                    tabs.reorderWithoutPersisting(from: currentIdx, to: destination)
+                    // Suppress any implicit animation on the array mutation —
+                    // we drive the dragged chip's position from the cursor and
+                    // let neighbors animate via their own `.animation(value:)`.
+                    withTransaction(Transaction(animation: nil)) {
+                        tabs.reorderWithoutPersisting(from: currentIdx, to: destination)
+                    }
                 }
             }
             .onEnded { _ in
