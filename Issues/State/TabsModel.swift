@@ -224,11 +224,25 @@ final class TabsModel {
     }
 
     func reorder(from source: Int, to destination: Int) {
+        reorderWithoutPersisting(from: source, to: destination)
+        persist()
+    }
+
+    /// Mutates `tabs` in place without writing to UserDefaults. Used by the
+    /// Safari-style live-rearrange drag (#0021) where many reorder events
+    /// can fire during a single gesture; the caller is expected to invoke
+    /// `persistTabs()` once on drag end so we don't thrash UserDefaults.
+    func reorderWithoutPersisting(from source: Int, to destination: Int) {
         guard source >= 0, source < tabs.count, destination >= 0, destination <= tabs.count else { return }
         let store = tabs.remove(at: source)
         let insertIndex = destination > source ? destination - 1 : destination
         let clamped = max(0, min(tabs.count, insertIndex))
         tabs.insert(store, at: clamped)
+    }
+
+    /// Public bridge to the private persistence step so views can flush
+    /// after a batch of `reorderWithoutPersisting` calls (e.g. drag end).
+    func persistTabs() {
         persist()
     }
 

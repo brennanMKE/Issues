@@ -4,50 +4,76 @@ import SwiftUI
 /// Active tab uses the accent tint; inactive tabs use the card background.
 /// Trailing "+" presents the folder open panel and adds a new tab.
 ///
-/// Chips support drag-to-reorder via SwiftUI's `.draggable` / `.dropDestination`
-/// APIs; the new order is persisted by `TabsModel.reorder(from:to:)`. The `+`
-/// add-tab button is intentionally not a drop target.
+/// Tabs are laid out by absolute x-offset inside a `ZStack`. Each chip has a
+/// fixed width so the `idx * stride` math stays trivial; long repo names
+/// truncate. While a chip is being dragged its position formula switches to
+/// `originalX + dragOffset`; neighbors keep `idx * stride` and animate via
+/// `.animation(value: idx)`. On each `onChanged` we recompute
+/// `slotsCrossed` and mutate `TabsModel.tabs` (via
+/// `reorderWithoutPersisting`) when the dragged chip lands on a new slot.
+/// Persistence is flushed once, on `onEnded`, to avoid UserDefaults thrash.
+/// (#0021 — replaces the `.draggable`/`.dropDestination` flow from #0011.)
 struct TabBarView: View {
     @Bindable var tabs: TabsModel
     @Bindable var bookmarks: FolderBookmarkService
 
+    /// Fixed chip width so `idx * stride` math is trivial. Wide enough for
+    /// most repo names; the chip truncates with an ellipsis past this.
+    private let tabWidth: CGFloat = 200
+    /// Gap between chips, matching the previous `LazyHStack(spacing: 6)`.
+    private let tabSpacing: CGFloat = 6
+    private var tabStride: CGFloat { tabWidth + tabSpacing }
+
+    @State private var draggingID: UUID?
+    @State private var originalIndex: Int?
+    @State private var dragXOffset: CGFloat = 0
+
     var body: some View {
         HStack(spacing: 0) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 6) {
-                    ForEach(tabs.tabs) { store in
-                        TabChipView(
-                            store: store,
-                            isActive: store.id == tabs.activeTabID,
-                            hasUnseen: tabs.hasUnseenChanges[store.id] ?? false,
-                            onSelect: { tabs.setActive(id: store.id) },
-                            onClose: { tabs.closeTab(id: store.id) }
-                        )
-                        .draggable(store.id.uuidString) {
-                            // Faint copy of the chip as the drag preview.
-                            TabChipView(
-                                store: store,
-                                isActive: store.id == tabs.activeTabID,
-                                hasUnseen: tabs.hasUnseenChanges[store.id] ?? false,
-                                onSelect: {},
-                                onClose: {}
-                            )
-                            .opacity(0.6)
-                        }
-                        .dropDestination(for: String.self) { droppedIDs, _ in
-                            handleDrop(droppedIDs: droppedIDs, onto: store.id)
-                        }
-                    }
+            // TODO #0021 auto-scroll: when the dragged chip nears the visible
+            // bounds of an overflowing bar, programmatically scroll. For now
+            // we let the bar overflow visually rather than wrap the ZStack
+            // in a ScrollView (the math gets messier with scroll offsets and
+            // Issues users rarely have enough tabs to overflow).
+            ZStack(alignment: .leading) {
+                ForEach(tabs.tabs) { store in
+                    let idx = tabs.tabs.firstIndex(where: { $0.id == store.id }) ?? 0
+                    let isDragging = draggingID == store.id
+                    let homeX = CGFloat(idx) * tabStride
+                    let originalX = originalIndex.map { CGFloat($0) * tabStride } ?? homeX
+                    let xPos = isDragging ? originalX + dragXOffset : homeX
+
+                    TabChipView(
+                        store: store,
+                        isActive: store.id == tabs.activeTabID,
+                        hasUnseen: tabs.hasUnseenChanges[store.id] ?? false,
+                        onClose: { tabs.closeTab(id: store.id) }
+                    )
+                    .frame(width: tabWidth)
+                    .scaleEffect(isDragging ? 1.04 : 1)
+                    .shadow(color: .black.opacity(isDragging ? 0.35 : 0), radius: 14, y: 8)
+                    .offset(x: xPos)
+                    .zIndex(isDragging ? 1 : 0)
+                    .animation(.spring(response: 0.35, dampingFraction: 0.78), value: idx)
+                    .animation(.spring(response: 0.32, dampingFraction: 0.82), value: isDragging)
+                    .contentShape(Rectangle())
+                    .onTapGesture { tabs.setActive(id: store.id) }
+                    .gesture(dragGesture(for: store))
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
             }
+            .frame(
+                width: max(0, CGFloat(tabs.tabs.count) * tabStride - tabSpacing),
+                height: 24,
+                alignment: .leading
+            )
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
 
             addButton
                 .padding(.trailing, 12)
+
+            Spacer(minLength: 0)
         }
-        // Horizontal ScrollView has no intrinsic vertical size and will
-        // greedily consume whatever vertical space the parent VStack offers.
         // Pin the bar to chip-row height (≈22pt chip + 6pt vertical padding
         // top/bottom + a hair for the border).
         .frame(height: 36)
@@ -59,21 +85,44 @@ struct TabBarView: View {
         }
     }
 
-    /// Resolves the dropped chip's UUID, finds source/destination indices in
-    /// `tabs.tabs`, and forwards to `TabsModel.reorder(from:to:)` (which uses
-    /// the standard `Array.move(fromOffsets:toOffset:)` shape — `to` is the
-    /// insertion offset *before* the source removal, so we pass `to + 1` when
-    /// dropping onto a chip that comes after the dragged one).
-    private func handleDrop(droppedIDs: [String], onto targetID: UUID) -> Bool {
-        guard
-            let raw = droppedIDs.first,
-            let draggedID = UUID(uuidString: raw),
-            let from = tabs.tabs.firstIndex(where: { $0.id == draggedID }),
-            let to = tabs.tabs.firstIndex(where: { $0.id == targetID }),
-            from != to
-        else { return false }
-        tabs.reorder(from: from, to: to > from ? to + 1 : to)
-        return true
+    private func dragGesture(for store: IssueStore) -> some Gesture {
+        DragGesture(minimumDistance: 4)
+            .onChanged { value in
+                if draggingID == nil {
+                    draggingID = store.id
+                    originalIndex = tabs.tabs.firstIndex(where: { $0.id == store.id })
+                }
+                guard let origIdx = originalIndex else { return }
+
+                dragXOffset = value.translation.width
+
+                let crossed = slotsCrossed(dragOffset: dragXOffset, stride: tabStride)
+                let target = targetIndex(
+                    originalIndex: origIdx,
+                    slotsCrossed: crossed,
+                    count: tabs.tabs.count
+                )
+                let currentIdx = tabs.tabs.firstIndex(where: { $0.id == store.id }) ?? origIdx
+
+                if target != currentIdx {
+                    // Bridge to `TabsModel`'s move-offsets-shaped API: when
+                    // moving forward, the destination offset is one past the
+                    // final index because the source removal shifts later
+                    // indices left by one.
+                    let destination = target > currentIdx ? target + 1 : target
+                    tabs.reorderWithoutPersisting(from: currentIdx, to: destination)
+                }
+            }
+            .onEnded { _ in
+                let mutated = originalIndex != nil
+                draggingID = nil
+                originalIndex = nil
+                dragXOffset = 0
+                if mutated {
+                    // Single UserDefaults write per drag — see TabsModel.
+                    tabs.persistTabs()
+                }
+            }
     }
 
     private var addButton: some View {
@@ -98,11 +147,29 @@ struct TabBarView: View {
     }
 }
 
+// MARK: - Reorder math (pure, free functions for unit-testability)
+
+/// How many tab-slots the dragged chip's center has crossed, rounded to the
+/// nearest integer. Positive means rightward, negative means leftward.
+/// Free function (not nested) so the test target can call it directly.
+func slotsCrossed(dragOffset: CGFloat, stride: CGFloat) -> Int {
+    guard stride > 0 else { return 0 }
+    return Int((dragOffset / stride).rounded())
+}
+
+/// Resolves the dragged chip's current target slot in `[0, count - 1]` given
+/// where it started and how many slots it has crossed. Clamps out-of-range
+/// drags to the ends so a hard flick past the bar's edge parks the chip at
+/// the first/last slot rather than no-op'ing.
+func targetIndex(originalIndex: Int, slotsCrossed: Int, count: Int) -> Int {
+    guard count > 0 else { return 0 }
+    return max(0, min(count - 1, originalIndex + slotsCrossed))
+}
+
 private struct TabChipView: View {
     @Bindable var store: IssueStore
     let isActive: Bool
     let hasUnseen: Bool
-    let onSelect: () -> Void
     let onClose: () -> Void
 
     @State private var isHovered: Bool = false
@@ -134,6 +201,8 @@ private struct TabChipView: View {
                 .lineLimit(1)
                 .truncationMode(.tail)
 
+            Spacer(minLength: 0)
+
             // Reserve the close-button slot so the chip width doesn't jump on
             // hover. Hidden when not hovering and not active.
             ZStack {
@@ -163,7 +232,6 @@ private struct TabChipView: View {
                 .stroke(isActive ? Color.appAccent : Color.appBorder, lineWidth: 1)
         )
         .contentShape(Rectangle())
-        .onTapGesture { onSelect() }
         .onHover { hovering in
             isHovered = hovering
         }
