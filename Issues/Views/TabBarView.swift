@@ -264,7 +264,14 @@ struct TabBarView: View {
                 // reflow into the final order in one motion.
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                     if p != d {
-                        tabs.reorderWithoutPersisting(from: d, to: p)
+                        // `reorderWithoutPersisting` uses
+                        // `Array.move(fromOffsets:toOffset:)` semantics —
+                        // for forward moves the destination is the index
+                        // BEFORE which to insert in the original array,
+                        // so passing `p` directly lands the chip one slot
+                        // short of the user's drop. Adjust here.
+                        let destination = (p > d) ? p + 1 : p
+                        tabs.reorderWithoutPersisting(from: d, to: destination)
                     }
                     draggingID = nil
                     originalSlot = nil
