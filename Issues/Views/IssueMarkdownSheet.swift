@@ -12,8 +12,8 @@ struct IssueMarkdownSheet: View {
             Divider().background(Color.appBorder)
             contentBody
         }
-        .frame(width: 720, height: 800)
-        .frame(minWidth: 480, minHeight: 400)
+        .frame(minWidth: 600, idealWidth: 900, maxWidth: .infinity,
+               minHeight: 400, idealHeight: 800, maxHeight: .infinity)
         .background(Color.appBackground)
         .preferredColorScheme(.dark)
     }
