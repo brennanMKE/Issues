@@ -4,8 +4,7 @@ import AppKit
 struct DetailPanelView: View {
     let issue: Issue
     let onClose: () -> Void
-
-    @State private var showingMarkdownSheet = false
+    let onOpenMarkdown: (Issue) -> Void
 
     private static let displayDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -31,9 +30,6 @@ struct DetailPanelView: View {
             Rectangle()
                 .fill(Color.appBorder)
                 .frame(width: 1)
-        }
-        .sheet(isPresented: $showingMarkdownSheet) {
-            IssueMarkdownSheet(issue: issue)
         }
     }
 
@@ -115,7 +111,7 @@ struct DetailPanelView: View {
 
     private var fileLink: some View {
         Button {
-            showingMarkdownSheet = true
+            onOpenMarkdown(issue)
         } label: {
             HStack(spacing: 4) {
                 Text("\(issue.id).md")

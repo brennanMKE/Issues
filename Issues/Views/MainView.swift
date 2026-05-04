@@ -5,6 +5,8 @@ struct MainView: View {
     @Bindable var tabs: TabsModel
     @Bindable var bookmarks: FolderBookmarkService
 
+    @State private var markdownSheetIssue: Issue? = nil
+
     var body: some View {
         VStack(spacing: 0) {
             HeaderView(folderURL: store.folderURL)
@@ -19,7 +21,8 @@ struct MainView: View {
                 if store.selectedIssue != nil {
                     DetailPanelView(
                         issue: store.selectedIssue ?? placeholderIssue,
-                        onClose: { store.deselect() }
+                        onClose: { store.deselect() },
+                        onOpenMarkdown: { markdownSheetIssue = $0 }
                     )
                     .frame(width: 360)
                     .transition(.move(edge: .trailing))
@@ -33,6 +36,9 @@ struct MainView: View {
         }
         .background(Color.appBackground)
         .preferredColorScheme(.dark)
+        .sheet(item: $markdownSheetIssue) { issue in
+            IssueMarkdownSheet(issue: issue)
+        }
     }
 
     @ViewBuilder
@@ -43,7 +49,7 @@ struct MainView: View {
                 .onTapGesture { store.deselect() }
             switch store.viewMode {
             case .swimlane:
-                SwimlaneView(store: store)
+                SwimlaneView(store: store, onOpenMarkdown: { markdownSheetIssue = $0 })
             case .timeline:
                 TimelineView(store: store)
             case .list:

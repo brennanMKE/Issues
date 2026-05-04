@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SwimlaneView: View {
     @Bindable var store: IssueStore
+    let onOpenMarkdown: (Issue) -> Void
 
     var body: some View {
         ScrollView(.vertical) {
@@ -30,7 +31,8 @@ struct SwimlaneView: View {
                     IssueCardView(
                         issue: issue,
                         isSelected: store.selectedIssueID == issue.id,
-                        onTap: { store.toggleSelection(issue.id) }
+                        onTap: { store.toggleSelection(issue.id) },
+                        onOpenMarkdown: onOpenMarkdown
                     )
                 }
             }
