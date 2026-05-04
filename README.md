@@ -9,6 +9,8 @@ this as a bug"* and a markdown file appears in `issues/`. The app sees the
 change and updates within ~150 ms — no JSON regeneration, no page refresh, no
 manual sync.
 
+![Issues.app demo](Issues.gif)
+
 ## How it fits together
 
 ```
