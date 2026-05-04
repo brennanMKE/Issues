@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Textual
 
 struct DetailPanelView: View {
     let issue: Issue
@@ -94,7 +95,15 @@ struct DetailPanelView: View {
 
     private var description: some View {
         Group {
-            if !issue.description.isEmpty {
+            if let body = bodyMarkdown() {
+                StructuredText(
+                    markdown: body,
+                    baseURL: issue.fileURL.deletingLastPathComponent()
+                )
+                .textual.textSelection(.enabled)
+                .font(.system(size: 12))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else if !issue.description.isEmpty {
                 Text(issue.description)
                     .font(.system(size: 12))
                     .foregroundStyle(Color.appMuted)
@@ -107,6 +116,22 @@ struct DetailPanelView: View {
                     .foregroundStyle(Color.appMuted)
             }
         }
+    }
+
+    /// Returns the markdown body below the H1 title and metadata table,
+    /// starting at the first H2 (`## `). Returns nil if the file can't be
+    /// read or no H2 is found, so callers can fall back to plain text.
+    private func bodyMarkdown() -> String? {
+        guard let raw = try? String(contentsOf: issue.fileURL, encoding: .utf8) else {
+            return nil
+        }
+        guard let range = raw.range(of: "\n## ") else {
+            return nil
+        }
+        // Include the H2 marker itself; drop the leading newline.
+        let body = raw[range.lowerBound...].dropFirst()
+        let trimmed = body.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     private var fileLink: some View {
