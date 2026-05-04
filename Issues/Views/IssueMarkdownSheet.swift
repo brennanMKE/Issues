@@ -15,7 +15,6 @@ struct IssueMarkdownSheet: View {
         .frame(minWidth: 600, idealWidth: 900, maxWidth: .infinity,
                minHeight: 400, idealHeight: 800, maxHeight: .infinity)
         .background(Color.appBackground)
-        .preferredColorScheme(.dark)
     }
 
     private var header: some View {

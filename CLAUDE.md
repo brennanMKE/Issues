@@ -76,7 +76,7 @@ Note the `"All"` short-circuit on platform — an issue with platform `All` matc
 
 ### Theme
 
-Dark mode only by design (`.preferredColorScheme(.dark)` on the root). Palette is in `Issues/Theme/Theme.swift`; status colors are in `StatusColor.swift` and exposed as `IssueStatus.foreground`, `.background15` (badges), `.background22` (timeline bars). Light theme is intentionally out of scope.
+Adaptive light/dark — the window honors the system color scheme. Palette is in `Issues/Theme/Theme.swift`; each `Color.app*` constant is a `Color(light:dark:)` pair backed by an `NSColor` dynamic provider. Status colors are in `StatusColor.swift` and exposed as `IssueStatus.foreground`, `.background15` (badges), `.background22` (timeline bars); status hues are shared across both schemes. There is no in-app appearance toggle yet — that's tracked separately.
 
 ## Issue tracking for this repo
 
@@ -92,4 +92,4 @@ The unrelated file `Issues.md` at the repo root is the **legacy** skill guide fr
 
 ## Out of scope (v1)
 
-Documented in `PRD.md`; do not silently introduce these without discussion: search across title/description, inline attachment rendering, full-body markdown rendering for Steps/Notes, write access, light theme, per-folder remembered filters.
+Documented in `PRD.md`; do not silently introduce these without discussion: search across title/description, inline attachment rendering, full-body markdown rendering for Steps/Notes, write access, per-folder remembered filters. (Light theme was originally out of scope; #0020 made the palette adaptive.)

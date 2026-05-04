@@ -35,7 +35,6 @@ struct MainView: View {
             }
         }
         .background(Color.appBackground)
-        .preferredColorScheme(.dark)
         .sheet(item: $markdownSheetIssue) { issue in
             IssueMarkdownSheet(issue: issue)
         }

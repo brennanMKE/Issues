@@ -60,7 +60,6 @@ struct FolderPickerView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.appBackground)
-        .preferredColorScheme(.dark)
     }
 
     private var emptyState: some View {
