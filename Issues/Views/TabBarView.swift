@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Horizontal Safari-style tab bar listing each open `IssueStore` as a chip.
@@ -103,7 +104,11 @@ struct TabBarView: View {
                         store: dragged,
                         isActive: dragged.id == tabs.activeTabID,
                         hasUnseen: tabs.hasUnseenChanges[dragged.id] ?? false,
-                        onClose: { tabs.closeTab(id: dragged.id) }
+                        isOnlyTab: tabs.tabs.count <= 1,
+                        onClose: { tabs.closeTab(id: dragged.id) },
+                        onCloseOthers: {},
+                        onRevealInFinder: {},
+                        onReload: {}
                     )
                     .fixedSize(horizontal: true, vertical: false)
                     .frame(width: draggedWidth)
@@ -182,7 +187,17 @@ struct TabBarView: View {
                     store: chip,
                     isActive: chip.id == tabs.activeTabID,
                     hasUnseen: tabs.hasUnseenChanges[chip.id] ?? false,
-                    onClose: { tabs.closeTab(id: chip.id) }
+                    isOnlyTab: tabs.tabs.count <= 1,
+                    onClose: { tabs.closeTab(id: chip.id) },
+                    onCloseOthers: {
+                        for other in tabs.tabs where other.id != chip.id {
+                            tabs.closeTab(id: other.id)
+                        }
+                    },
+                    onRevealInFinder: {
+                        NSWorkspace.shared.activateFileViewerSelecting([chip.folderURL])
+                    },
+                    onReload: { chip.reload() }
                 )
                 .fixedSize(horizontal: true, vertical: false)
                 .onGeometryChange(for: CGFloat.self) { proxy in
@@ -385,7 +400,11 @@ private struct TabChipView: View {
     @Bindable var store: IssueStore
     let isActive: Bool
     let hasUnseen: Bool
+    let isOnlyTab: Bool
     let onClose: () -> Void
+    let onCloseOthers: () -> Void
+    let onRevealInFinder: () -> Void
+    let onReload: () -> Void
 
     @State private var isHovered: Bool = false
 
@@ -450,6 +469,14 @@ private struct TabChipView: View {
         }
         .help(helpText)
         .accessibilityLabel(accessibilityText)
+        .contextMenu {
+            Button("Close") { onClose() }
+            Button("Close Other Tabs") { onCloseOthers() }
+                .disabled(isOnlyTab)
+            Divider()
+            Button("Reveal in Finder") { onRevealInFinder() }
+            Button("Reload") { onReload() }
+        }
     }
 
     private var helpText: String {
