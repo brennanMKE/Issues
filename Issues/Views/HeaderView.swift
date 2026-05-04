@@ -14,6 +14,10 @@ struct HeaderView: View {
     var body: some View {
         HStack(spacing: 12) {
             appIcon
+            Text("Issues")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color.appAccent)
+
             Spacer()
             searchField
         }
@@ -51,12 +55,12 @@ struct HeaderView: View {
             Image(nsImage: nsImage)
                 .resizable()
                 .interpolation(.high)
-                .frame(width: 22, height: 22)
+                .frame(width: 30, height: 30)
         } else {
             Image(systemName: "tray.full.fill")
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(Color.appAccent)
-                .frame(width: 22, height: 22)
+                .frame(width: 30, height: 30)
         }
     }
 
