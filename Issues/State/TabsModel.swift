@@ -20,7 +20,21 @@ final class TabsModel {
     private static let defaultsKey = "openTabs"
 
     private(set) var tabs: [IssueStore] = []
-    var activeTabID: UUID?
+    var activeTabID: UUID? {
+        didSet {
+            guard oldValue != activeTabID, let id = activeTabID else { return }
+            markActiveSeen(id: id)
+        }
+    }
+
+    /// Snapshot of the issues each tab had the last time the user viewed it.
+    /// `nil` means "no baseline yet" — the next reload establishes the baseline
+    /// without flipping the indicator. Keyed by `IssueStore.id`.
+    private var lastSeenSnapshot: [UUID: [String: IssueSnapshot]] = [:]
+
+    /// Per-tab "has unseen changes" bit. Drives the dot indicator in the tab
+    /// chip. Cleared when a tab becomes active.
+    private(set) var hasUnseenChanges: [UUID: Bool] = [:]
 
     init() {
         restore()
@@ -46,7 +60,13 @@ final class TabsModel {
             return existing
         }
         let store = IssueStore(folderURL: url)
+        attachReloadHook(to: store)
         store.start()
+        // After the initial `start()` reload, take the resulting snapshot as
+        // this tab's baseline so the indicator doesn't fire on the very first
+        // populate. The user just opened it; they're caught up.
+        lastSeenSnapshot[store.id] = store.snapshot
+        hasUnseenChanges[store.id] = false
         tabs.append(store)
         activeTabID = store.id
         logger.notice("opened tab repo=\(store.repoName, privacy: .public) count=\(self.tabs.count, privacy: .public)")
@@ -61,8 +81,11 @@ final class TabsModel {
         guard let idx = tabs.firstIndex(where: { $0.id == id }) else { return }
         let store = tabs[idx]
         let wasActive = activeTabID == id
+        store.onReload = nil
         store.stop()
         tabs.remove(at: idx)
+        lastSeenSnapshot.removeValue(forKey: id)
+        hasUnseenChanges.removeValue(forKey: id)
         logger.notice("closed tab repo=\(store.repoName, privacy: .public) remaining=\(self.tabs.count, privacy: .public)")
         if wasActive {
             // Prefer the tab that took the slot, otherwise the previous one,
@@ -81,6 +104,50 @@ final class TabsModel {
     func setActive(id: UUID) {
         guard tabs.contains(where: { $0.id == id }) else { return }
         activeTabID = id
+    }
+
+    // MARK: - Unseen-change tracking
+
+    /// Wires `IssueStore.onReload` so each post-reload tick funnels into
+    /// `handleReload(_:)`. Called from `openTab` and `restore`.
+    private func attachReloadHook(to store: IssueStore) {
+        store.onReload = { [weak self] store in
+            // `IssueStore` is `@MainActor`, so this fires on main and we can
+            // touch `TabsModel` state directly.
+            MainActor.assumeIsolated {
+                self?.handleReload(store)
+            }
+        }
+    }
+
+    private func handleReload(_ store: IssueStore) {
+        let id = store.id
+        let newSnapshot = store.snapshot
+        if activeTabID == id {
+            // Active tab — user is looking at this; treat the new state as
+            // seen and don't flag the indicator.
+            lastSeenSnapshot[id] = newSnapshot
+            hasUnseenChanges[id] = false
+            return
+        }
+        guard let baseline = lastSeenSnapshot[id] else {
+            // No baseline established yet (e.g. first reload after restore).
+            // Take this snapshot as the baseline; don't flip the indicator.
+            lastSeenSnapshot[id] = newSnapshot
+            return
+        }
+        if newSnapshot != baseline {
+            hasUnseenChanges[id] = true
+        }
+    }
+
+    /// Marks `id`'s tab as "seen": stamps the current snapshot as the new
+    /// baseline and clears the indicator. Called from the `activeTabID`
+    /// `didSet`.
+    private func markActiveSeen(id: UUID) {
+        guard let store = tabs.first(where: { $0.id == id }) else { return }
+        lastSeenSnapshot[id] = store.snapshot
+        hasUnseenChanges[id] = false
     }
 
     func reorder(from source: Int, to destination: Int) {
@@ -142,7 +209,13 @@ final class TabsModel {
                     continue
                 }
                 let store = IssueStore(folderURL: url)
+                attachReloadHook(to: store)
                 store.start()
+                // Seed each restored tab's baseline from the first reload so
+                // the indicator stays clean on launch. (Persistence of the
+                // baseline across launches is intentionally out of scope.)
+                lastSeenSnapshot[store.id] = store.snapshot
+                hasUnseenChanges[store.id] = false
                 restored.append(store)
             } catch {
                 logger.warning("restore: resolve failed: \(error.localizedDescription, privacy: .public)")

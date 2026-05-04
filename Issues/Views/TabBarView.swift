@@ -17,6 +17,7 @@ struct TabBarView: View {
                         TabChipView(
                             store: store,
                             isActive: store.id == tabs.activeTabID,
+                            hasUnseen: tabs.hasUnseenChanges[store.id] ?? false,
                             onSelect: { tabs.setActive(id: store.id) },
                             onClose: { tabs.closeTab(id: store.id) }
                         )
@@ -63,13 +64,29 @@ struct TabBarView: View {
 private struct TabChipView: View {
     @Bindable var store: IssueStore
     let isActive: Bool
+    let hasUnseen: Bool
     let onSelect: () -> Void
     let onClose: () -> Void
 
     @State private var isHovered: Bool = false
 
+    /// Active tab never shows the dot, even if `hasUnseen` somehow lingers.
+    private var showsUnseenDot: Bool { hasUnseen && !isActive }
+
     var body: some View {
         HStack(spacing: 6) {
+            // Reserve the dot slot so the chip width doesn't jump when the
+            // indicator appears/disappears.
+            ZStack {
+                if showsUnseenDot {
+                    Circle()
+                        .fill(Color.appAccent)
+                        .frame(width: 6, height: 6)
+                } else {
+                    Color.clear.frame(width: 6, height: 6)
+                }
+            }
+
             Image(systemName: "folder.fill")
                 .font(.system(size: 10))
                 .foregroundStyle(isActive ? Color.appAccent : Color.appMuted)
@@ -113,6 +130,21 @@ private struct TabChipView: View {
         .onHover { hovering in
             isHovered = hovering
         }
-        .help(store.folderURL.path)
+        .help(helpText)
+        .accessibilityLabel(accessibilityText)
+    }
+
+    private var helpText: String {
+        if showsUnseenDot {
+            return "\(store.folderURL.path) — Updated since last viewed"
+        }
+        return store.folderURL.path
+    }
+
+    private var accessibilityText: String {
+        if showsUnseenDot {
+            return "\(store.repoName), updated since last viewed"
+        }
+        return store.repoName
     }
 }

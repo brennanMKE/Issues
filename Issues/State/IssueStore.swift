@@ -4,6 +4,15 @@ import os.log
 
 nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: "IssueStore")
 
+/// Compact, value-typed view of an issue used to detect changes between
+/// reloads. Includes id, status, and file mtime so that body edits — which
+/// don't change id/status — still register as "unseen changes" via `modifiedAt`.
+struct IssueSnapshot: Hashable, Sendable {
+    let id: String
+    let status: IssueStatus
+    let modifiedAt: Date
+}
+
 @Observable
 final class IssueStore: Identifiable {
 
@@ -43,6 +52,15 @@ final class IssueStore: Identifiable {
 
     private var watcher: FolderWatcher?
     private var didStartAccess: Bool = false
+
+    /// Fires after every successful `reload()` (i.e. after `issues` has been
+    /// reassigned). Used by `TabsModel` to drive the per-tab "unseen changes"
+    /// indicator. Not fired on read failures — those leave `issues` untouched
+    /// and shouldn't flip the indicator. In practice this always fires on the
+    /// main actor: the initial `reload()` is called from `TabsModel`
+    /// (main-isolated) and subsequent reloads come through
+    /// `FolderWatcher.onChange`, which is `@MainActor` by contract.
+    var onReload: ((IssueStore) -> Void)?
 
     /// Repo-style label for the watched folder, e.g. for a folder
     /// `/path/to/MyRepo/issues` this is `MyRepo`. Used for tab titles and log
@@ -132,6 +150,7 @@ final class IssueStore: Identifiable {
             if !skippedNames.isEmpty {
                 logger.warning("[\(self.repoName, privacy: .public)] skipped files: \(skippedNames.joined(separator: ", "), privacy: .public)")
             }
+            onReload?(self)
         } catch {
             self.loadError = "Failed to read folder: \(error.localizedDescription)"
             logger.error("[\(self.repoName, privacy: .public)] reload failed: \(error.localizedDescription, privacy: .public)")
@@ -184,6 +203,22 @@ final class IssueStore: Identifiable {
             set.insert(issue.platform)
         }
         return set.sorted()
+    }
+
+    /// A change-detection view of the current issue list keyed by id. Used by
+    /// `TabsModel` to compare the post-reload state against what the user last
+    /// saw on this tab.
+    var snapshot: [String: IssueSnapshot] {
+        var result: [String: IssueSnapshot] = [:]
+        result.reserveCapacity(issues.count)
+        for issue in issues {
+            result[issue.id] = IssueSnapshot(
+                id: issue.id,
+                status: issue.status,
+                modifiedAt: issue.modifiedAt
+            )
+        }
+        return result
     }
 
     var statusCounts: [IssueStatus: Int] {
