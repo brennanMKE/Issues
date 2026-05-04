@@ -8,13 +8,14 @@ nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: 
 final class IssueStore {
 
     enum ViewMode: String, CaseIterable, Hashable {
-        case swimlane, timeline, list
+        case swimlane, timeline, list, recent
 
         var displayName: String {
             switch self {
             case .swimlane: return "Swimlanes"
             case .timeline: return "Timeline"
             case .list: return "List"
+            case .recent: return "Recent"
             }
         }
     }

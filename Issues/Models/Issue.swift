@@ -12,6 +12,7 @@ struct Issue: Identifiable, Equatable, Hashable, Sendable {
     let closedRaw: String
     let description: String
     let fileURL: URL
+    let modifiedAt: Date
 
     var modules: [String] {
         module

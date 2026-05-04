@@ -57,11 +57,13 @@ enum MarkdownIssueParser {
         let filename = fileURL.lastPathComponent
         guard filenameMatchesIssuePattern(filename) else { return nil }
         let contents = try String(contentsOf: fileURL, encoding: .utf8)
-        return parse(fileURL: fileURL, contents: contents)
+        let resourceValues = try? fileURL.resourceValues(forKeys: [.contentModificationDateKey])
+        let modifiedAt = resourceValues?.contentModificationDate ?? Date()
+        return parse(fileURL: fileURL, contents: contents, modifiedAt: modifiedAt)
     }
 
     /// Pure parsing entry point — testable without disk access.
-    static func parse(fileURL: URL, contents: String) -> Issue? {
+    static func parse(fileURL: URL, contents: String, modifiedAt: Date = Date()) -> Issue? {
         let filename = fileURL.lastPathComponent
         guard filenameMatchesIssuePattern(filename) else { return nil }
 
@@ -103,7 +105,8 @@ enum MarkdownIssueParser {
             closed: closed,
             closedRaw: closedRaw,
             description: description,
-            fileURL: fileURL
+            fileURL: fileURL,
+            modifiedAt: modifiedAt
         )
     }
 

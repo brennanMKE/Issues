@@ -46,6 +46,8 @@ struct MainView: View {
                 TimelineView(store: store)
             case .list:
                 ListView(store: store)
+            case .recent:
+                RecentView(store: store)
             }
         }
     }
@@ -81,7 +83,8 @@ struct MainView: View {
             closed: nil,
             closedRaw: "",
             description: "",
-            fileURL: store.folderURL
+            fileURL: store.folderURL,
+            modifiedAt: Date()
         )
     }
 }
