@@ -31,6 +31,11 @@ struct TabBarView: View {
             addButton
                 .padding(.trailing, 12)
         }
+        // Horizontal ScrollView has no intrinsic vertical size and will
+        // greedily consume whatever vertical space the parent VStack offers.
+        // Pin the bar to chip-row height (≈22pt chip + 6pt vertical padding
+        // top/bottom + a hair for the border).
+        .frame(height: 36)
         .background(Color.appBackground)
         .overlay(alignment: .bottom) {
             Rectangle()
