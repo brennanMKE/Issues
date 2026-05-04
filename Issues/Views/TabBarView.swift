@@ -30,8 +30,12 @@ import SwiftUI
 ///   once and then `persistTabs()`.
 ///
 /// Variable chip widths are measured per-chip via `onGeometryChange` and
-/// stored in `measuredWidths`; the phantom-slot threshold is computed by
-/// walking those cumulative widths.
+/// stored in `measuredWidths`. The phantom-slot threshold matches Safari:
+/// the dragged chip swaps slots the **instant the cursor enters another
+/// tab's `[anchorX, anchorX + width)` range**, not when the dragged chip's
+/// center crosses anything. The cursor's bar-coord X is computed at each
+/// `.onChanged` tick from `originalSlotAnchor + (startLocation.x +
+/// translation.width)` and compared to cumulative slot anchors.
 struct TabBarView: View {
     @Bindable var tabs: TabsModel
     @Bindable var bookmarks: FolderBookmarkService
@@ -84,6 +88,7 @@ struct TabBarView: View {
                         cell(for: item)
                     }
                 }
+                .fixedSize(horizontal: true, vertical: false)
 
                 if let dragged = draggedChip {
                     TabChipView(
@@ -92,6 +97,7 @@ struct TabBarView: View {
                         hasUnseen: tabs.hasUnseenChanges[dragged.id] ?? false,
                         onClose: { tabs.closeTab(id: dragged.id) }
                     )
+                    .fixedSize(horizontal: true, vertical: false)
                     .frame(width: draggedWidth)
                     .scaleEffect(1.04)
                     .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
@@ -170,6 +176,7 @@ struct TabBarView: View {
                     hasUnseen: tabs.hasUnseenChanges[chip.id] ?? false,
                     onClose: { tabs.closeTab(id: chip.id) }
                 )
+                .fixedSize(horizontal: true, vertical: false)
                 .onGeometryChange(for: CGFloat.self) { proxy in
                     proxy.size.width
                 } action: { newWidth in
@@ -208,8 +215,15 @@ struct TabBarView: View {
                 }
                 dragXOffset = value.translation.width
 
-                guard let d = originalSlot else { return }
-                let newPhantom = computePhantomSlot(originalSlot: d, dragXOffset: dragXOffset)
+                guard originalSlot != nil else { return }
+                // `value.location` is in the chip's local coords (the gesture
+                // is attached to the chip), so cursor-in-bar-coords is the
+                // chip's leading-edge anchor plus the local cursor x. Using
+                // `startLocation + translation` is equivalent and avoids any
+                // surprise about which coordinate space `location` reports.
+                let cursorLocalX = value.startLocation.x + value.translation.width
+                let cursorBarX = originalSlotAnchor + cursorLocalX
+                let newPhantom = computePhantomSlot(cursorBarX: cursorBarX)
                 if newPhantom != phantomSlot {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.78)) {
                         phantomSlot = newPhantom
@@ -264,20 +278,19 @@ struct TabBarView: View {
 
     /// Walks the natural slot anchors (using each chip's measured width;
     /// at the original slot we use the dragged chip's captured width) and
-    /// returns the index of the slot whose center the cursor has just
-    /// crossed. This is the "past the halfway point of the next tab"
-    /// rule generalized to variable widths.
-    private func computePhantomSlot(originalSlot d: Int, dragXOffset: CGFloat) -> Int {
+    /// returns the index of the slot whose `[anchorX, anchorX + width)`
+    /// range contains `cursorBarX`. This matches Safari's "tab swaps the
+    /// instant the cursor enters another tab's slot" semantic.
+    private func computePhantomSlot(cursorBarX: CGFloat) -> Int {
         guard !tabs.tabs.isEmpty else { return 0 }
-        let cursorX = originalSlotAnchor + draggedWidth / 2 + dragXOffset
+        if cursorBarX < 0 { return 0 }
         var anchorX: CGFloat = 0
         for (idx, chip) in tabs.tabs.enumerated() {
-            let w: CGFloat = (idx == d)
+            let w: CGFloat = (idx == originalSlot)
                 ? draggedWidth
                 : (measuredWidths[chip.id] ?? defaultTabWidth)
-            let centerX = anchorX + w / 2
-            if cursorX < centerX {
-                return max(0, idx)
+            if cursorBarX < anchorX + w {
+                return idx
             }
             anchorX += w + spacing
         }
@@ -358,9 +371,7 @@ private struct TabChipView: View {
                 .font(.system(size: 12, weight: isActive ? .semibold : .regular))
                 .foregroundStyle(Color.appText)
                 .lineLimit(1)
-                .truncationMode(.tail)
-
-            Spacer(minLength: 0)
+                .fixedSize(horizontal: true, vertical: false)
 
             // Reserve the close-button slot so the chip width doesn't jump on
             // hover. Hidden when not hovering and not active.
