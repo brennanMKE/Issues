@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 @main
 struct IssuesApp: App {
@@ -6,9 +7,22 @@ struct IssuesApp: App {
     /// state. `RootView`/`MainView` populate its references on appear.
     @State private var commands = AppCommandsController.shared
 
+    init() {
+        // The notification delegate must outlive view recreations, so we wire
+        // it to the singleton. Done in `init()` so the delegate is in place
+        // before any system-delivered notification can arrive at launch.
+        UNUserNotificationCenter.current().delegate = NotificationService.shared
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()
+                .onAppear {
+                    // Request notification authorization on first scene
+                    // appear. The service guards on `hasRequestedAuthorization`
+                    // so this only prompts once per process.
+                    NotificationService.shared.requestAuthorization()
+                }
         }
         .defaultSize(width: 1200, height: 800)
         .commands {

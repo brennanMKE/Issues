@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 import os.log
@@ -132,13 +133,85 @@ final class TabsModel {
         }
         guard let baseline = lastSeenSnapshot[id] else {
             // No baseline established yet (e.g. first reload after restore).
-            // Take this snapshot as the baseline; don't flip the indicator.
+            // Take this snapshot as the baseline; don't flip the indicator
+            // and don't fire notifications — there's nothing to diff against.
             lastSeenSnapshot[id] = newSnapshot
             return
         }
         if newSnapshot != baseline {
             hasUnseenChanges[id] = true
+            // Only emit notifications when the app is in the background. The
+            // dot indicator we just set above is enough when the user has
+            // focus. We do the check inside `NotificationService.notifyChanges`
+            // too; checking here avoids the diff work when it can't fire.
+            if !NSApplication.shared.isActive {
+                let (additions, removals, statusChanges) = diff(
+                    baseline: baseline,
+                    new: newSnapshot,
+                    issues: store.issues
+                )
+                if !additions.isEmpty || !removals.isEmpty || !statusChanges.isEmpty {
+                    NotificationService.shared.notifyChanges(
+                        repoName: store.repoName,
+                        tabID: id,
+                        additions: additions,
+                        removals: removals,
+                        statusChanges: statusChanges
+                    )
+                }
+            }
         }
+    }
+
+    /// Computes the addition / removal / status-change sets between `baseline`
+    /// and `new`. Body-only edits (same id, same status, different mtime) are
+    /// intentionally not surfaced — the dot indicator already tracks them and
+    /// banner-spamming on every keystroke would be noise. Removed issues are
+    /// reconstructed from the baseline-only snapshot data; we don't have the
+    /// original `Issue` row anymore, so we synthesize a placeholder with the
+    /// id we know about. Issues only appear in `additions` if we can find the
+    /// matching row in `issues` (we always can — `new` is derived from it).
+    private func diff(
+        baseline: [String: IssueSnapshot],
+        new: [String: IssueSnapshot],
+        issues: [Issue]
+    ) -> (additions: [Issue], removals: [Issue], statusChanges: [(issue: Issue, oldStatus: IssueStatus, newStatus: IssueStatus)]) {
+        var additions: [Issue] = []
+        var removals: [Issue] = []
+        var statusChanges: [(issue: Issue, oldStatus: IssueStatus, newStatus: IssueStatus)] = []
+        let issuesByID: [String: Issue] = Dictionary(uniqueKeysWithValues: issues.map { ($0.id, $0) })
+
+        for (id, snap) in new {
+            if let prev = baseline[id] {
+                if prev.status != snap.status, let issue = issuesByID[id] {
+                    statusChanges.append((issue: issue, oldStatus: prev.status, newStatus: snap.status))
+                }
+            } else if let issue = issuesByID[id] {
+                additions.append(issue)
+            }
+        }
+        for (id, prev) in baseline where new[id] == nil {
+            // The removed issue is gone from `issues`, so synthesize a minimal
+            // placeholder carrying the id and last-known status. Title is left
+            // blank because we never persisted it; the notification format
+            // tolerates this — the repo line in the body still tells the user
+            // which folder lost the issue.
+            removals.append(Issue(
+                id: id,
+                title: "",
+                status: prev.status,
+                module: "",
+                platform: "",
+                firstSeen: nil,
+                firstSeenRaw: "",
+                closed: nil,
+                closedRaw: "",
+                description: "",
+                fileURL: URL(fileURLWithPath: "/"),
+                modifiedAt: prev.modifiedAt
+            ))
+        }
+        return (additions, removals, statusChanges)
     }
 
     /// Marks `id`'s tab as "seen": stamps the current snapshot as the new
