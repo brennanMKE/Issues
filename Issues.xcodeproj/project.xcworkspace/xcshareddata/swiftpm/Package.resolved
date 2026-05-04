@@ -1,0 +1,15 @@
+{
+  "originHash" : "03fdf81334ee51eb76f561294e3d1a95a695e31d8ff25112ab701a0f210890cc",
+  "pins" : [
+    {
+      "identity" : "watcher",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:brennanMKE/Watcher.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "91e8f4db0184cfb5f7d60560f04189121f636357"
+      }
+    }
+  ],
+  "version" : 3
+}

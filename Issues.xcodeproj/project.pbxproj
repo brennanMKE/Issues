@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		26EEA1102FA81FCC0029CBBC /* Watcher in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA10F2FA81FCC0029CBBC /* Watcher */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		26EEA0782FA5B83B0029CBBC /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26EEA1102FA81FCC0029CBBC /* Watcher in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = Issues;
 			packageProductDependencies = (
+				26EEA10F2FA81FCC0029CBBC /* Watcher */,
 			);
 			productName = Issues;
 			productReference = 26EEA06A2FA5B8390029CBBC /* Issues.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = 26EEA0612FA5B8390029CBBC;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				26EEA10E2FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "Watcher" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 26EEA06B2FA5B8390029CBBC /* Products */;
 			projectDirPath = "";
@@ -573,6 +582,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		26EEA10E2FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "Watcher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "git@github.com:brennanMKE/Watcher.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		26EEA10F2FA81FCC0029CBBC /* Watcher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 26EEA10E2FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "Watcher" */;
+			productName = Watcher;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 26EEA0622FA5B8390029CBBC /* Project object */;
 }
