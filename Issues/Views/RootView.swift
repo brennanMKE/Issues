@@ -20,5 +20,11 @@ struct RootView: View {
             }
         }
         .frame(minWidth: 900, minHeight: 600)
+        .onAppear {
+            // Register with the menu-bar command bridge. `MainView` updates
+            // `activeStore` and `openMarkdown` when it mounts.
+            AppCommandsController.shared.tabs = tabs
+            AppCommandsController.shared.bookmarks = bookmarks
+        }
     }
 }

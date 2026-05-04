@@ -39,6 +39,8 @@ struct MainView: View {
         .sheet(item: $markdownSheetIssue) { issue in
             IssueMarkdownSheet(issue: issue)
         }
+        .onAppear { registerCommandHandlers() }
+        .onChange(of: store.id) { _, _ in registerCommandHandlers() }
     }
 
     @ViewBuilder
@@ -57,6 +59,33 @@ struct MainView: View {
             case .recent:
                 RecentView(store: store, onOpenMarkdown: { markdownSheetIssue = $0 })
             }
+        }
+        .focusable()
+        .focusEffectDisabled()
+        .onKeyPress(.upArrow) {
+            store.selectPrevious()
+            return .handled
+        }
+        .onKeyPress(.downArrow) {
+            store.selectNext()
+            return .handled
+        }
+        .onKeyPress(.return) {
+            if let issue = store.selectedIssue {
+                markdownSheetIssue = issue
+                return .handled
+            }
+            return .ignored
+        }
+    }
+
+    /// Wires `AppCommandsController` so menu-bar shortcuts can drive the
+    /// active store. Re-runs when the active tab changes so the menu always
+    /// targets the visible store.
+    private func registerCommandHandlers() {
+        AppCommandsController.shared.activeStore = store
+        AppCommandsController.shared.openMarkdown = { issue in
+            markdownSheetIssue = issue
         }
     }
 

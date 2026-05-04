@@ -240,4 +240,52 @@ final class IssueStore: Identifiable {
     func deselect() {
         selectedIssueID = nil
     }
+
+    // MARK: - Keyboard navigation
+
+    /// Issues in the order the active view displays them. The flat order across
+    /// view modes:
+    /// - List: filtered set sorted by `id` ascending. The view itself can
+    ///   override sort via column headers, but for ↑/↓ navigation we use the
+    ///   stable id order so the keyboard walk is deterministic regardless of
+    ///   column sort. (`Table` already handles its own focused navigation; this
+    ///   helper is the fallback.)
+    /// - Recent: filtered set by `modifiedAt` descending.
+    /// - Swimlanes: grouped by primary module, flattened.
+    /// - Timeline: same grouping as Swimlanes (display order matches).
+    var visibleIssueOrder: [Issue] {
+        let filtered = filteredIssues
+        switch viewMode {
+        case .list:
+            return filtered.sorted { $0.id < $1.id }
+        case .recent:
+            return filtered.sorted { $0.modifiedAt > $1.modifiedAt }
+        case .swimlane, .timeline:
+            return groupedByPrimaryModule(filtered).flatMap { $0.issues }
+        }
+    }
+
+    /// Moves selection to the next issue in `visibleIssueOrder`. Wraps around
+    /// at the end. If nothing is selected, picks the first.
+    func selectNext() {
+        let order = visibleIssueOrder
+        guard !order.isEmpty else { return }
+        if let id = selectedIssueID, let idx = order.firstIndex(where: { $0.id == id }) {
+            selectedIssueID = order[(idx + 1) % order.count].id
+        } else {
+            selectedIssueID = order.first?.id
+        }
+    }
+
+    /// Moves selection to the previous issue in `visibleIssueOrder`. Wraps
+    /// around at the start. If nothing is selected, picks the last.
+    func selectPrevious() {
+        let order = visibleIssueOrder
+        guard !order.isEmpty else { return }
+        if let id = selectedIssueID, let idx = order.firstIndex(where: { $0.id == id }) {
+            selectedIssueID = order[(idx - 1 + order.count) % order.count].id
+        } else {
+            selectedIssueID = order.last?.id
+        }
+    }
 }
