@@ -5,6 +5,8 @@ struct DetailPanelView: View {
     let issue: Issue
     let onClose: () -> Void
 
+    @State private var showingMarkdownSheet = false
+
     private static let displayDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
@@ -29,6 +31,9 @@ struct DetailPanelView: View {
             Rectangle()
                 .fill(Color.appBorder)
                 .frame(width: 1)
+        }
+        .sheet(isPresented: $showingMarkdownSheet) {
+            IssueMarkdownSheet(issue: issue)
         }
     }
 
@@ -110,7 +115,7 @@ struct DetailPanelView: View {
 
     private var fileLink: some View {
         Button {
-            NSWorkspace.shared.open(issue.fileURL)
+            showingMarkdownSheet = true
         } label: {
             HStack(spacing: 4) {
                 Text("\(issue.id).md")
@@ -122,7 +127,7 @@ struct DetailPanelView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("Open \(issue.fileURL.lastPathComponent)")
+        .help("Preview \(issue.fileURL.lastPathComponent)")
     }
 
     private func label(_ text: String) -> some View {
