@@ -158,9 +158,18 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
 
     // MARK: - UNUserNotificationCenterDelegate
 
-    /// Routes the tap: activate the app, switch to the originating tab, and
-    /// select the issue if one was named in `userInfo`. Rollup notifications
-    /// only carry a `tabID`, so the tab activates without changing selection.
+    /// Routes the tap: activate the app and the existing main window, switch
+    /// to the originating tab, and select the issue if one was named in
+    /// `userInfo`. Rollup notifications only carry a `tabID`, so the tab
+    /// activates without changing selection.
+    ///
+    /// Window handling (#0026): the main scene is a single-instance
+    /// `Window(id: "main")`, so activating the app re-uses the existing window
+    /// instead of spawning a new one. We also explicitly bring the window to
+    /// the front in case it was hidden (Cmd+H, miniaturized, or the Help
+    /// window currently has focus). Cold-launch path: if the tabs model
+    /// hasn't been wired up yet, the link sits as `pendingDeepLink` and is
+    /// drained from `RootView.onAppear` once `TabsModel.restore()` completes.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
@@ -171,15 +180,35 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         let issueID = userInfo[UserInfoKey.issueID] as? String
 
         Task { @MainActor in
-            NSApplication.shared.activate()
-            if let tabIDString, let tabID = UUID(uuidString: tabIDString),
-               let tabs = AppCommandsController.shared.tabs,
-               tabs.tabs.contains(where: { $0.id == tabID }) {
-                tabs.setActive(id: tabID)
-                if let issueID, let store = tabs.tabs.first(where: { $0.id == tabID }) {
-                    store.selectedIssueID = issueID
-                }
+            // Stash the routing intent first so a cold launch can pick it up
+            // from `RootView.onAppear`.
+            if let tabIDString, let tabID = UUID(uuidString: tabIDString) {
+                AppCommandsController.shared.pendingDeepLink = AppCommandsController.DeepLink(
+                    tabID: tabID,
+                    issueID: issueID
+                )
             }
+
+            // Bring the app forward. With the main scene now a single-instance
+            // `Window`, this won't spawn a second window — it just re-activates
+            // the one that already exists.
+            NSApplication.shared.activate(ignoringOtherApps: true)
+
+            // Explicitly bring the main window to the front. Handles the
+            // case where the user has the Help window focused, or the main
+            // window was Cmd+H'd / miniaturized. No-op if already key.
+            if let mainWindow = NSApp.windows.first(where: { $0.identifier?.rawValue == "main" }) {
+                if mainWindow.isMiniaturized {
+                    mainWindow.deminiaturize(nil)
+                }
+                mainWindow.makeKeyAndOrderFront(nil)
+            }
+
+            // Drain immediately if the tabs model is already wired up (warm
+            // app path). Otherwise this is a cold launch and `RootView`'s
+            // `onAppear` will drain after `TabsModel.restore()` finishes.
+            AppCommandsController.shared.consumePendingDeepLinkIfPossible()
+
             completionHandler()
         }
     }

@@ -25,6 +25,10 @@ struct RootView: View {
             // `activeStore` and `openMarkdown` when it mounts.
             AppCommandsController.shared.tabs = tabs
             AppCommandsController.shared.bookmarks = bookmarks
+            // Drain any deep-link queued by a notification tap that arrived
+            // during a cold launch (#0026). The tabs are now wired up and
+            // `TabsModel.init()` already finished its synchronous restore.
+            AppCommandsController.shared.consumePendingDeepLinkIfPossible()
         }
     }
 }

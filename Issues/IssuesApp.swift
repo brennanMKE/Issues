@@ -15,7 +15,11 @@ struct IssuesApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        // Single-instance `Window` (not `WindowGroup`) so that activating the
+        // app from a notification tap re-uses the existing window instead of
+        // spawning a second one. See #0026. The Help scene below is the only
+        // additional window we ever expose.
+        Window("Issues", id: "main") {
             RootView()
                 .onAppear {
                     // Request notification authorization on first scene

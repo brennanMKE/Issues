@@ -40,7 +40,48 @@ final class AppCommandsController {
     /// the search field's host view will set this to drive `@FocusState`.
     var focusSearch: (() -> Void)?
 
+    /// Routing intent deposited by the notification tap handler. Drained as
+    /// soon as the tabs model is wired up — either immediately (warm app) or
+    /// after `TabsModel.restore()` completes during a cold launch (#0026).
+    struct DeepLink {
+        let tabID: UUID
+        let issueID: String?   // nil for rollup notifications
+    }
+
+    var pendingDeepLink: DeepLink?
+
     private init() {}
+
+    // MARK: - Deep linking
+
+    /// Drains `pendingDeepLink` if a matching tab is currently open. Safe to
+    /// call from any of the wiring sites (notification handler, `RootView`'s
+    /// `onAppear`, post-restore hook). No-ops when there's nothing to do.
+    ///
+    /// Edge cases:
+    /// - No pending link → returns immediately.
+    /// - Tabs not yet wired up (cold-launch race) → returns; the next caller
+    ///   after restore will pick it up.
+    /// - Tab id no longer present (folder removed, bookmark went stale and
+    ///   #0012 dropped it) → silently clears the link rather than crashing.
+    /// - Tab found but `issueID` doesn't match any current row → still
+    ///   activates the tab; selection stays as-is.
+    func consumePendingDeepLinkIfPossible() {
+        guard let link = pendingDeepLink else { return }
+        guard let tabs else { return }
+        guard tabs.tabs.contains(where: { $0.id == link.tabID }) else {
+            // Tab not present — drop the link so a later restore doesn't
+            // re-fire on a stale id.
+            pendingDeepLink = nil
+            return
+        }
+        tabs.setActive(id: link.tabID)
+        if let issueID = link.issueID,
+           let store = tabs.tabs.first(where: { $0.id == link.tabID }) {
+            store.selectedIssueID = issueID
+        }
+        pendingDeepLink = nil
+    }
 
     // MARK: - Tab actions
 
