@@ -5,7 +5,7 @@ import os.log
 nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: "IssueStore")
 
 @Observable
-final class IssueStore {
+final class IssueStore: Identifiable {
 
     enum ViewMode: String, CaseIterable, Hashable {
         case swimlane, timeline, list, recent
@@ -24,6 +24,10 @@ final class IssueStore {
         case id, status, title, module, platform, firstSeen
     }
 
+    /// Stable per-store identity used as the tab id by `TabsModel`. Survives
+    /// across reloads; not persisted (tabs are persisted by bookmark, ids are
+    /// regenerated on launch).
+    let id: UUID = UUID()
     let folderURL: URL
     private(set) var issues: [Issue] = []
     private(set) var loadError: String?
@@ -39,6 +43,13 @@ final class IssueStore {
 
     private var watcher: FolderWatcher?
     private var didStartAccess: Bool = false
+
+    /// Repo-style label for the watched folder, e.g. for a folder
+    /// `/path/to/MyRepo/issues` this is `MyRepo`. Used for tab titles and log
+    /// labels so multi-folder log streams stay readable.
+    var repoName: String {
+        folderURL.deletingLastPathComponent().lastPathComponent
+    }
 
     init(folderURL: URL) {
         self.folderURL = folderURL
@@ -56,12 +67,13 @@ final class IssueStore {
 
     func start() {
         didStartAccess = folderURL.startAccessingSecurityScopedResource()
-        logger.notice("start folder=\(self.folderURL.path, privacy: .public) scopedAccess=\(self.didStartAccess, privacy: .public)")
+        logger.notice("[\(self.repoName, privacy: .public)] start folder=\(self.folderURL.path, privacy: .public) scopedAccess=\(self.didStartAccess, privacy: .public)")
         reload()
+        let repoName = self.repoName
         let watcher = FolderWatcher(
             onChange: { [weak self] in self?.reload() },
             onInvalidated: { [weak self] in
-                logger.notice("folder invalidated — clearing store")
+                logger.notice("[\(repoName, privacy: .public)] folder invalidated — clearing store")
                 self?.folderInvalidated = true
             }
         )
@@ -70,7 +82,7 @@ final class IssueStore {
     }
 
     func stop() {
-        logger.notice("stop")
+        logger.notice("[\(self.repoName, privacy: .public)] stop")
         watcher?.stop()
         watcher = nil
         if didStartAccess {
@@ -105,7 +117,7 @@ final class IssueStore {
                     }
                 } catch {
                     skippedNames.append(name)
-                    logger.warning("read \(name, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+                    logger.warning("[\(self.repoName, privacy: .public)] read \(name, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
                 }
             }
             parsed.sort { $0.id < $1.id }
@@ -116,13 +128,13 @@ final class IssueStore {
             }
             self.loadError = nil
             let ms = Int(Date().timeIntervalSince(started) * 1000)
-            logger.notice("reload parsed=\(parsed.count, privacy: .public) skipped=\(skippedNames.count, privacy: .public) wasCount=\(prevCount, privacy: .public) elapsedMs=\(ms, privacy: .public)")
+            logger.notice("[\(self.repoName, privacy: .public)] reload parsed=\(parsed.count, privacy: .public) skipped=\(skippedNames.count, privacy: .public) wasCount=\(prevCount, privacy: .public) elapsedMs=\(ms, privacy: .public)")
             if !skippedNames.isEmpty {
-                logger.warning("skipped files: \(skippedNames.joined(separator: ", "), privacy: .public)")
+                logger.warning("[\(self.repoName, privacy: .public)] skipped files: \(skippedNames.joined(separator: ", "), privacy: .public)")
             }
         } catch {
             self.loadError = "Failed to read folder: \(error.localizedDescription)"
-            logger.error("reload failed: \(error.localizedDescription, privacy: .public)")
+            logger.error("[\(self.repoName, privacy: .public)] reload failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 

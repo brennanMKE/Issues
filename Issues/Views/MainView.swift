@@ -2,11 +2,13 @@ import SwiftUI
 
 struct MainView: View {
     @Bindable var store: IssueStore
-    let onSwitchFolder: () -> Void
+    @Bindable var tabs: TabsModel
+    @Bindable var bookmarks: FolderBookmarkService
 
     var body: some View {
         VStack(spacing: 0) {
-            HeaderView(folderURL: store.folderURL, onSwitchFolder: onSwitchFolder)
+            HeaderView(folderURL: store.folderURL)
+            TabBarView(tabs: tabs, bookmarks: bookmarks)
             StatsBarView(total: store.issues.count, counts: store.statusCounts)
             ToolbarView(store: store)
 
