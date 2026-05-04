@@ -35,8 +35,8 @@ extension Color {
     static let appBorder = Color(hex: "#30363d")
     static let appText = Color(hex: "#e6edf3")
     static let appMuted = Color(hex: "#8b949e")
-    static let appAccent = Color(hex: "#0085ff")
-    static let appAccentDim = Color(hex: "#0059b3")
+    static let appAccent = Color.accentColor
+    static let appAccentDim = Color.accentColor.opacity(0.6)
 
     static let statusOpen = Color(hex: "#f59e0b")
     static let statusInProgress = Color(hex: "#3b82f6")
