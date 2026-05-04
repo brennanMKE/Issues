@@ -4,12 +4,16 @@ import SwiftUI
 /// Active tab uses the accent tint; inactive tabs use the card background.
 /// Trailing "+" presents the folder open panel and adds a new tab.
 ///
-/// Tabs are laid out by absolute x-offset inside a `ZStack`. Each chip has a
-/// fixed width so the `idx * stride` math stays trivial; long repo names
-/// truncate. While a chip is being dragged its position formula switches to
-/// `originalX + dragOffset`; neighbors keep `idx * stride` and animate via
-/// `.animation(value: idx)`. On each `onChanged` we recompute
-/// `slotsCrossed` and mutate `TabsModel.tabs` (via
+/// Tabs are laid out in a regular `HStack(spacing: tabSpacing)` so each chip
+/// occupies its natural layout slot — hit testing matches what's drawn. Each
+/// chip has a fixed width (so the array-index <-> visual-slot mapping is
+/// trivial); long repo names truncate. While a chip is being dragged we apply
+/// `.offset(x:)` *only* to that chip, compensating for any in-drag array
+/// reorders so the dragged chip stays pinned under the cursor:
+/// `visualOffset = (originalIndex - currentIdx) * stride + dragXOffset`.
+/// Neighbors render at their natural HStack positions and animate via
+/// `.animation(value: currentIdx)` when their slots change. On each
+/// `onChanged` we recompute `slotsCrossed` and mutate `TabsModel.tabs` (via
 /// `reorderWithoutPersisting`) when the dragged chip lands on a new slot.
 /// Persistence is flushed once, on `onEnded`, to avoid UserDefaults thrash.
 /// (#0021 — replaces the `.draggable`/`.dropDestination` flow from #0011.)
@@ -17,7 +21,7 @@ struct TabBarView: View {
     @Bindable var tabs: TabsModel
     @Bindable var bookmarks: FolderBookmarkService
 
-    /// Fixed chip width so `idx * stride` math is trivial. Wide enough for
+    /// Fixed chip width so the index-to-slot math is trivial. Wide enough for
     /// most repo names; the chip truncates with an ellipsis past this.
     private let tabWidth: CGFloat = 200
     /// Gap between chips, matching the previous `LazyHStack(spacing: 6)`.
@@ -32,16 +36,20 @@ struct TabBarView: View {
         HStack(spacing: 0) {
             // TODO #0021 auto-scroll: when the dragged chip nears the visible
             // bounds of an overflowing bar, programmatically scroll. For now
-            // we let the bar overflow visually rather than wrap the ZStack
-            // in a ScrollView (the math gets messier with scroll offsets and
+            // we let the bar overflow visually rather than wrap it in a
+            // ScrollView (the math gets messier with scroll offsets and
             // Issues users rarely have enough tabs to overflow).
-            ZStack(alignment: .leading) {
+            HStack(spacing: tabSpacing) {
                 ForEach(tabs.tabs) { store in
-                    let idx = tabs.tabs.firstIndex(where: { $0.id == store.id }) ?? 0
                     let isDragging = draggingID == store.id
-                    let homeX = CGFloat(idx) * tabStride
-                    let originalX = originalIndex.map { CGFloat($0) * tabStride } ?? homeX
-                    let xPos = isDragging ? originalX + dragXOffset : homeX
+                    let currentIdx = tabs.tabs.firstIndex(where: { $0.id == store.id }) ?? 0
+                    // While dragging, the chip sits at `currentIdx`'s slot via
+                    // HStack layout. We want it visually at `originalIndex`'s
+                    // slot plus the live drag translation, so the chip stays
+                    // pinned under the cursor as neighbors slide around it.
+                    let visualOffset: CGFloat = isDragging
+                        ? CGFloat((originalIndex ?? currentIdx) - currentIdx) * tabStride + dragXOffset
+                        : 0
 
                     TabChipView(
                         store: store,
@@ -52,20 +60,15 @@ struct TabBarView: View {
                     .frame(width: tabWidth)
                     .scaleEffect(isDragging ? 1.04 : 1)
                     .shadow(color: .black.opacity(isDragging ? 0.35 : 0), radius: 14, y: 8)
-                    .offset(x: xPos)
+                    .offset(x: visualOffset)
                     .zIndex(isDragging ? 1 : 0)
-                    .animation(.spring(response: 0.35, dampingFraction: 0.78), value: idx)
+                    .animation(.spring(response: 0.35, dampingFraction: 0.78), value: currentIdx)
                     .animation(.spring(response: 0.32, dampingFraction: 0.82), value: isDragging)
                     .contentShape(Rectangle())
                     .onTapGesture { tabs.setActive(id: store.id) }
                     .gesture(dragGesture(for: store))
                 }
             }
-            .frame(
-                width: max(0, CGFloat(tabs.tabs.count) * tabStride - tabSpacing),
-                height: 24,
-                alignment: .leading
-            )
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
 
