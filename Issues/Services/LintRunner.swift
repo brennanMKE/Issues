@@ -192,17 +192,48 @@ enum LintRunner {
     }
 
     private static func extractImagePaths(from text: String) -> [String] {
-        let range = NSRange(text.startIndex..<text.endIndex, in: text)
-        let matches = imageRefPattern.matches(in: text, range: range)
+        // Strip code spans (fenced ```…``` blocks and inline `…`) BEFORE
+        // regexing. Otherwise issue prose that documents the attachment
+        // syntax with an inline-code example like `![alt](NNNN/foo.png)`
+        // would be flagged as a real (and missing) attachment. The
+        // markdown renderer treats those as code, so the linter should
+        // too.
+        let scanned = stripCodeSpans(text)
+        let range = NSRange(scanned.startIndex..<scanned.endIndex, in: scanned)
+        let matches = imageRefPattern.matches(in: scanned, range: range)
         var paths: [String] = []
         paths.reserveCapacity(matches.count)
         for match in matches where match.numberOfRanges >= 2 {
-            if let r = Range(match.range(at: 1), in: text) {
-                let raw = String(text[r]).trimmingCharacters(in: .whitespaces)
+            if let r = Range(match.range(at: 1), in: scanned) {
+                let raw = String(scanned[r]).trimmingCharacters(in: .whitespaces)
                 if !raw.isEmpty { paths.append(raw) }
             }
         }
         return paths
+    }
+
+    /// Remove fenced code blocks (``` … ```) and inline code spans (` … `)
+    /// from `text`. Used so the image-ref regex doesn't fire on illustrative
+    /// markdown syntax inside prose. Replacement is the empty string — we
+    /// don't preserve positions because `extractImagePaths` only needs the
+    /// captured paths, not source ranges.
+    private static func stripCodeSpans(_ text: String) -> String {
+        var stripped = text
+        // Fenced code blocks first (so a ``` … ``` containing single
+        // backticks doesn't get mangled by the inline pass).
+        stripped = stripped.replacingOccurrences(
+            of: #"```[\s\S]*?```"#,
+            with: "",
+            options: .regularExpression
+        )
+        // Inline code spans. Constrained to a single line so an
+        // unterminated stray backtick doesn't swallow the rest of the file.
+        stripped = stripped.replacingOccurrences(
+            of: #"`[^`\n]*`"#,
+            with: "",
+            options: .regularExpression
+        )
+        return stripped
     }
 
     /// `http://`, `https://`, `data:` etc. — those aren't on-disk attachments
