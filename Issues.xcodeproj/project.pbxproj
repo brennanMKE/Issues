@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		26EEA1102FA81FCC0029CBBC /* Watcher in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA10F2FA81FCC0029CBBC /* Watcher */; };
+		26EEA1132FA81FCC0029CBBC /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA1122FA81FCC0029CBBC /* Textual */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				26EEA1102FA81FCC0029CBBC /* Watcher in Frameworks */,
+				26EEA1132FA81FCC0029CBBC /* Textual in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -118,6 +120,7 @@
 			name = Issues;
 			packageProductDependencies = (
 				26EEA10F2FA81FCC0029CBBC /* Watcher */,
+				26EEA1122FA81FCC0029CBBC /* Textual */,
 			);
 			productName = Issues;
 			productReference = 26EEA06A2FA5B8390029CBBC /* Issues.app */;
@@ -203,6 +206,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				26EEA10E2FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "Watcher" */,
+				26EEA1112FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "textual" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 26EEA06B2FA5B8390029CBBC /* Products */;
@@ -592,6 +596,14 @@
 				kind = branch;
 			};
 		};
+		26EEA1112FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "textual" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/textual.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -599,6 +611,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 26EEA10E2FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "Watcher" */;
 			productName = Watcher;
+		};
+		26EEA1122FA81FCC0029CBBC /* Textual */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 26EEA1112FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "textual" */;
+			productName = Textual;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
