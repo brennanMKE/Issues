@@ -1,6 +1,11 @@
 import SwiftUI
 
+/// Single horizontal row showing colored count chips on the leading edge and
+/// the view-mode segmented capsule on the trailing edge. The view-mode
+/// capsule moved here from `ToolbarView` in #0022 so the toolbar row has
+/// breathing room for the status pills and module/platform pickers.
 struct StatsBarView: View {
+    @Bindable var store: IssueStore
     let total: Int
     let counts: [IssueStatus: Int]
 
@@ -14,6 +19,7 @@ struct StatsBarView: View {
                 }
             }
             Spacer()
+            viewModeSwitcher
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -37,5 +43,30 @@ struct StatsBarView: View {
                 .font(.system(size: 12))
                 .foregroundStyle(Color.appMuted)
         }
+    }
+
+    private var viewModeSwitcher: some View {
+        HStack(spacing: 0) {
+            ForEach(IssueStore.ViewMode.allCases, id: \.self) { mode in
+                let active = store.viewMode == mode
+                Button {
+                    store.viewMode = mode
+                } label: {
+                    Text(mode.displayName)
+                        .font(.system(size: 11, weight: .medium))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 5)
+                        .foregroundStyle(active ? Color.white : Color.appMuted)
+                        .background(active ? Color.appAccentDim : Color.clear)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .background(Color.appBackgroundCard)
+        .clipShape(Capsule())
+        .overlay(
+            Capsule().stroke(Color.appBorder, lineWidth: 1)
+        )
     }
 }

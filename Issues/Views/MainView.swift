@@ -9,9 +9,9 @@ struct MainView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HeaderView(folderURL: store.folderURL)
+            HeaderView(store: store)
             TabBarView(tabs: tabs, bookmarks: bookmarks)
-            StatsBarView(total: store.issues.count, counts: store.statusCounts)
+            StatsBarView(store: store, total: store.issues.count, counts: store.statusCounts)
             ToolbarView(store: store)
 
             HStack(spacing: 0) {

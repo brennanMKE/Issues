@@ -1,14 +1,16 @@
 import SwiftUI
 import AppKit
 
+/// Toolbar row holding the status filter pills and the module/platform
+/// pickers. The search field moved to `HeaderView` and the view-mode
+/// segmented capsule moved to `StatsBarView` in #0022 — both lifts free up
+/// horizontal space so the status pill labels render on a single line at
+/// typical window widths.
 struct ToolbarView: View {
     @Bindable var store: IssueStore
-    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         HStack(spacing: 12) {
-            searchField
-
             statusPills
 
             Picker("Module", selection: moduleBinding) {
@@ -32,8 +34,6 @@ struct ToolbarView: View {
             .fixedSize()
 
             Spacer()
-
-            viewModeSwitcher
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -43,63 +43,6 @@ struct ToolbarView: View {
                 .fill(Color.appBorder)
                 .frame(height: 1)
         }
-        .onAppear {
-            // Wire the Cmd+F menu shortcut (#0008 stub) to focus this field.
-            // The closure captures `_isSearchFocused` (the `@FocusState`
-            // projected value), which lives as long as this view's underlying
-            // state. We clear the closure on disappear to avoid keeping a
-            // dangling capture if the toolbar is torn down.
-            AppCommandsController.shared.focusSearch = {
-                isSearchFocused = true
-            }
-        }
-        .onDisappear {
-            AppCommandsController.shared.focusSearch = nil
-        }
-    }
-
-    private var searchField: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(Color.appMuted)
-
-            TextField("Search", text: $store.searchQuery)
-                .textFieldStyle(.plain)
-                .font(.system(size: 12))
-                .foregroundStyle(Color.appText)
-                .focused($isSearchFocused)
-                .onKeyPress(.escape) {
-                    if !store.searchQuery.isEmpty {
-                        store.searchQuery = ""
-                    }
-                    isSearchFocused = false
-                    return .handled
-                }
-
-            if !store.searchQuery.isEmpty {
-                Button {
-                    store.searchQuery = ""
-                    isSearchFocused = true
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Color.appMuted)
-                }
-                .buttonStyle(.plain)
-                .help("Clear search")
-            }
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .frame(width: 200)
-        .background(
-            RoundedRectangle(cornerRadius: 6).fill(Color.appBackgroundCard)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(isSearchFocused ? Color.appAccentDim : Color.appBorder, lineWidth: 1)
-        )
     }
 
     private var statusPills: some View {
@@ -121,6 +64,8 @@ struct ToolbarView: View {
                     .frame(width: 6, height: 6)
                 Text(status.displayName)
                     .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
@@ -134,6 +79,7 @@ struct ToolbarView: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .fixedSize(horizontal: true, vertical: false)
         .help("Click to filter by \(status.displayName). Option-click to add/remove from the current selection.")
     }
 
@@ -156,31 +102,6 @@ struct ToolbarView: View {
                 store.statusFilters = [status]
             }
         }
-    }
-
-    private var viewModeSwitcher: some View {
-        HStack(spacing: 0) {
-            ForEach(IssueStore.ViewMode.allCases, id: \.self) { mode in
-                let active = store.viewMode == mode
-                Button {
-                    store.viewMode = mode
-                } label: {
-                    Text(mode.displayName)
-                        .font(.system(size: 11, weight: .medium))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 5)
-                        .foregroundStyle(active ? Color.white : Color.appMuted)
-                        .background(active ? Color.appAccentDim : Color.clear)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .background(Color.appBackgroundCard)
-        .clipShape(Capsule())
-        .overlay(
-            Capsule().stroke(Color.appBorder, lineWidth: 1)
-        )
     }
 
     private var moduleBinding: Binding<String?> {
