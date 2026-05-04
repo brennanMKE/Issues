@@ -4,7 +4,9 @@ import SwiftUI
 /// Active tab uses the accent tint; inactive tabs use the card background.
 /// Trailing "+" presents the folder open panel and adds a new tab.
 ///
-/// Drag-to-reorder is intentionally out of scope for v1 — see issue #0002.
+/// Chips support drag-to-reorder via SwiftUI's `.draggable` / `.dropDestination`
+/// APIs; the new order is persisted by `TabsModel.reorder(from:to:)`. The `+`
+/// add-tab button is intentionally not a drop target.
 struct TabBarView: View {
     @Bindable var tabs: TabsModel
     @Bindable var bookmarks: FolderBookmarkService
@@ -21,8 +23,21 @@ struct TabBarView: View {
                             onSelect: { tabs.setActive(id: store.id) },
                             onClose: { tabs.closeTab(id: store.id) }
                         )
+                        .draggable(store.id.uuidString) {
+                            // Faint copy of the chip as the drag preview.
+                            TabChipView(
+                                store: store,
+                                isActive: store.id == tabs.activeTabID,
+                                hasUnseen: tabs.hasUnseenChanges[store.id] ?? false,
+                                onSelect: {},
+                                onClose: {}
+                            )
+                            .opacity(0.6)
+                        }
+                        .dropDestination(for: String.self) { droppedIDs, _ in
+                            handleDrop(droppedIDs: droppedIDs, onto: store.id)
+                        }
                     }
-                    // TODO: drag to reorder
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
@@ -42,6 +57,23 @@ struct TabBarView: View {
                 .fill(Color.appBorder)
                 .frame(height: 1)
         }
+    }
+
+    /// Resolves the dropped chip's UUID, finds source/destination indices in
+    /// `tabs.tabs`, and forwards to `TabsModel.reorder(from:to:)` (which uses
+    /// the standard `Array.move(fromOffsets:toOffset:)` shape — `to` is the
+    /// insertion offset *before* the source removal, so we pass `to + 1` when
+    /// dropping onto a chip that comes after the dragged one).
+    private func handleDrop(droppedIDs: [String], onto targetID: UUID) -> Bool {
+        guard
+            let raw = droppedIDs.first,
+            let draggedID = UUID(uuidString: raw),
+            let from = tabs.tabs.firstIndex(where: { $0.id == draggedID }),
+            let to = tabs.tabs.firstIndex(where: { $0.id == targetID }),
+            from != to
+        else { return false }
+        tabs.reorder(from: from, to: to > from ? to + 1 : to)
+        return true
     }
 
     private var addButton: some View {
