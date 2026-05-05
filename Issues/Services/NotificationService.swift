@@ -38,6 +38,83 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
 
     private override init() {
         super.init()
+        logger.notice("NotificationService init \(NotificationService.processTag(), privacy: .public)")
+
+        // Observe application lifecycle so we can correlate notification taps
+        // with launch / activation events. Critical for diagnosing #0026's
+        // multi-process bug: if we see "didFinishLaunching" fire on the
+        // existing process whenever a notification is tapped, that means a
+        // second process is being spawned in addition to the running one.
+        let nc = NotificationCenter.default
+        nc.addObserver(
+            self,
+            selector: #selector(handleAppDidFinishLaunching),
+            name: NSApplication.didFinishLaunchingNotification,
+            object: nil
+        )
+        nc.addObserver(
+            self,
+            selector: #selector(handleAppDidBecomeActive),
+            name: NSApplication.didBecomeActiveNotification,
+            object: nil
+        )
+        nc.addObserver(
+            self,
+            selector: #selector(handleAppDidResignActive),
+            name: NSApplication.didResignActiveNotification,
+            object: nil
+        )
+
+        // Observe NSWorkspace launches of *any* app that matches our bundle
+        // identifier. If a second Issues.app process is launched while this
+        // process is still alive, this fires here — the smoking gun for a
+        // duplicate-launch path.
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(handleWorkspaceDidLaunchApp(_:)),
+            name: NSWorkspace.didLaunchApplicationNotification,
+            object: nil
+        )
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(handleWorkspaceDidActivateApp(_:)),
+            name: NSWorkspace.didActivateApplicationNotification,
+            object: nil
+        )
+    }
+
+    /// Common process-identity tag included in every interesting log line so
+    /// we can correlate events across PIDs in the stream output. Format keeps
+    /// the line greppable: `pid=12345 bundle=/path/to/Issues.app`.
+    nonisolated static func processTag() -> String {
+        let pid = ProcessInfo.processInfo.processIdentifier
+        let path = Bundle.main.bundlePath
+        return "pid=\(pid) bundle=\(path)"
+    }
+
+    @objc private func handleAppDidFinishLaunching(_ note: Notification) {
+        logger.notice("APP_DID_FINISH_LAUNCHING \(NotificationService.processTag(), privacy: .public) isActive=\(NSApplication.shared.isActive, privacy: .public)")
+    }
+
+    @objc private func handleAppDidBecomeActive(_ note: Notification) {
+        logger.info("APP_DID_BECOME_ACTIVE \(NotificationService.processTag(), privacy: .public) windows=\(NSApp.windows.count, privacy: .public)")
+    }
+
+    @objc private func handleAppDidResignActive(_ note: Notification) {
+        logger.info("APP_DID_RESIGN_ACTIVE \(NotificationService.processTag(), privacy: .public)")
+    }
+
+    @objc private func handleWorkspaceDidLaunchApp(_ note: Notification) {
+        guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+        guard app.bundleIdentifier == Bundle.main.bundleIdentifier else { return }
+        logger.error("WORKSPACE_DID_LAUNCH_OWN_BUNDLE another \(app.bundleIdentifier ?? "?", privacy: .public) launched: pid=\(app.processIdentifier, privacy: .public) path=\(app.bundleURL?.path ?? "?", privacy: .public). Current process: \(NotificationService.processTag(), privacy: .public). This indicates a duplicate-instance launch.")
+    }
+
+    @objc private func handleWorkspaceDidActivateApp(_ note: Notification) {
+        guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+        guard app.bundleIdentifier == Bundle.main.bundleIdentifier else { return }
+        let isSelf = app.processIdentifier == ProcessInfo.processInfo.processIdentifier
+        logger.info("WORKSPACE_DID_ACTIVATE_OWN_BUNDLE \(isSelf ? "self" : "OTHER", privacy: .public) pid=\(app.processIdentifier, privacy: .public) path=\(app.bundleURL?.path ?? "?", privacy: .public)")
     }
 
     // MARK: - Authorization
@@ -48,13 +125,17 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     /// no-ops at the system level — we don't show a fallback dialog. The user
     /// can flip the switch in System Settings.
     func requestAuthorization() {
-        guard !hasRequestedAuthorization else { return }
+        guard !hasRequestedAuthorization else {
+            logger.debug("requestAuthorization noop (already requested) \(NotificationService.processTag(), privacy: .public)")
+            return
+        }
         hasRequestedAuthorization = true
+        logger.info("requestAuthorization start \(NotificationService.processTag(), privacy: .public)")
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
             if let error {
                 logger.warning("authorization request failed: \(error.localizedDescription, privacy: .public)")
             } else {
-                logger.notice("authorization granted=\(granted, privacy: .public)")
+                logger.notice("authorization granted=\(granted, privacy: .public) \(NotificationService.processTag(), privacy: .public)")
             }
         }
     }
@@ -72,14 +153,20 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         removals: [Issue],
         statusChanges: [(issue: Issue, oldStatus: IssueStatus, newStatus: IssueStatus)]
     ) {
+        let total = additions.count + removals.count + statusChanges.count
+        logger.debug("notifyChanges repo=\(repoName, privacy: .public) tabID=\(tabID.uuidString.prefix(8), privacy: .public) additions=\(additions.count, privacy: .public) removals=\(removals.count, privacy: .public) statusChanges=\(statusChanges.count, privacy: .public) isActive=\(NSApplication.shared.isActive, privacy: .public)")
+
         // The dot indicator from #0003 already tells the user about changes
         // while they're looking; a banner on top would be noise.
-        if NSApplication.shared.isActive { return }
+        if NSApplication.shared.isActive {
+            logger.debug("notifyChanges suppressed — app is active")
+            return
+        }
 
-        let total = additions.count + removals.count + statusChanges.count
         guard total > 0 else { return }
 
         if total > Self.rollupThreshold {
+            logger.info("notifyChanges rollup repo=\(repoName, privacy: .public) count=\(total, privacy: .public)")
             postRollup(repoName: repoName, tabID: tabID, count: total)
             return
         }
@@ -132,9 +219,12 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         // reload-events don't stack the same banner.
         let identifier = "issue.\(tabID.uuidString).\(issue.id).\(kind)"
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
+        logger.info("POST_INDIVIDUAL identifier=\(identifier, privacy: .public) title=\(content.title, privacy: .public)")
         UNUserNotificationCenter.current().add(request) { error in
             if let error {
                 logger.warning("post failed for \(identifier, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            } else {
+                logger.debug("post submitted \(identifier, privacy: .public)")
             }
         }
     }
@@ -149,9 +239,12 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         ]
         let identifier = "rollup.\(tabID.uuidString).\(Date().timeIntervalSince1970)"
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
+        logger.info("POST_ROLLUP identifier=\(identifier, privacy: .public) count=\(count, privacy: .public)")
         UNUserNotificationCenter.current().add(request) { error in
             if let error {
                 logger.warning("rollup post failed for \(identifier, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            } else {
+                logger.debug("rollup submitted \(identifier, privacy: .public)")
             }
         }
     }
@@ -178,8 +271,17 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         let userInfo = response.notification.request.content.userInfo
         let tabIDString = userInfo[UserInfoKey.tabID] as? String
         let issueID = userInfo[UserInfoKey.issueID] as? String
+        let kind = userInfo[UserInfoKey.kind] as? String ?? "?"
+        let identifier = response.notification.request.identifier
+        let actionIdentifier = response.actionIdentifier
+
+        // Synchronous log first so we capture the entry point even if the
+        // dispatched MainActor task gets delayed or the process exits early.
+        logger.notice("DID_RECEIVE \(NotificationService.processTag(), privacy: .public) identifier=\(identifier, privacy: .public) action=\(actionIdentifier, privacy: .public) kind=\(kind, privacy: .public) tabID=\(tabIDString ?? "nil", privacy: .public) issueID=\(issueID ?? "nil", privacy: .public)")
 
         Task { @MainActor in
+            logger.debug("DID_RECEIVE main-actor entry windows=\(NSApp.windows.count, privacy: .public) isActive=\(NSApplication.shared.isActive, privacy: .public)")
+
             // Stash the routing intent first so a cold launch can pick it up
             // from `RootView.onAppear`.
             if let tabIDString, let tabID = UUID(uuidString: tabIDString) {
@@ -187,27 +289,38 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
                     tabID: tabID,
                     issueID: issueID
                 )
+                logger.debug("DID_RECEIVE pendingDeepLink set tabID=\(tabIDString, privacy: .public) issueID=\(issueID ?? "nil", privacy: .public)")
+            } else {
+                logger.warning("DID_RECEIVE missing/invalid tabID — not setting pendingDeepLink")
             }
 
             // Bring the app forward. With the main scene now a single-instance
             // `Window`, this won't spawn a second window — it just re-activates
             // the one that already exists.
             NSApplication.shared.activate(ignoringOtherApps: true)
+            logger.debug("DID_RECEIVE called NSApp.activate")
 
             // Explicitly bring the main window to the front. Handles the
             // case where the user has the Help window focused, or the main
             // window was Cmd+H'd / miniaturized. No-op if already key.
-            if let mainWindow = NSApp.windows.first(where: { $0.identifier?.rawValue == "main" }) {
-                if mainWindow.isMiniaturized {
+            let mainWindow = NSApp.windows.first(where: { $0.identifier?.rawValue == "main" })
+            if let mainWindow {
+                let wasMin = mainWindow.isMiniaturized
+                if wasMin {
                     mainWindow.deminiaturize(nil)
                 }
                 mainWindow.makeKeyAndOrderFront(nil)
+                logger.debug("DID_RECEIVE main window brought forward (wasMiniaturized=\(wasMin, privacy: .public))")
+            } else {
+                let identifiers = NSApp.windows.compactMap { $0.identifier?.rawValue }.joined(separator: ",")
+                logger.warning("DID_RECEIVE no window with id=main found — current window identifiers: [\(identifiers, privacy: .public)]")
             }
 
             // Drain immediately if the tabs model is already wired up (warm
             // app path). Otherwise this is a cold launch and `RootView`'s
             // `onAppear` will drain after `TabsModel.restore()` finishes.
             AppCommandsController.shared.consumePendingDeepLinkIfPossible()
+            logger.debug("DID_RECEIVE consume attempt complete")
 
             completionHandler()
         }
@@ -223,6 +336,8 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        let identifier = notification.request.identifier
+        logger.info("WILL_PRESENT \(NotificationService.processTag(), privacy: .public) identifier=\(identifier, privacy: .public)")
         completionHandler([.banner, .sound])
     }
 }

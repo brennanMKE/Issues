@@ -1,5 +1,8 @@
 import SwiftUI
 import UserNotifications
+import os.log
+
+nonisolated private let appLogger = Logger(subsystem: Logging.subsystem, category: "IssuesApp")
 
 @main
 struct IssuesApp: App {
@@ -8,10 +11,13 @@ struct IssuesApp: App {
     @State private var commands = AppCommandsController.shared
 
     init() {
+        appLogger.notice("IssuesApp init \(NotificationService.processTag(), privacy: .public) args=\(CommandLine.arguments.joined(separator: " "), privacy: .public)")
+
         // The notification delegate must outlive view recreations, so we wire
         // it to the singleton. Done in `init()` so the delegate is in place
         // before any system-delivered notification can arrive at launch.
         UNUserNotificationCenter.current().delegate = NotificationService.shared
+        appLogger.debug("UNUserNotificationCenter delegate wired to NotificationService.shared")
     }
 
     var body: some Scene {
