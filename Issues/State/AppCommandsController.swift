@@ -18,6 +18,12 @@ import Observation
 final class AppCommandsController {
     static let shared = AppCommandsController()
 
+    /// User-configurable keyboard shortcut bindings (#0024). The
+    /// `IssuesApp.commands { ... }` block reads the binding for each
+    /// configurable action through this store; defaults match the literals
+    /// shipped in #0008.
+    let shortcuts: ShortcutsStore = ShortcutsStore()
+
     /// Currently active tabs model. Set by `RootView` on appear.
     var tabs: TabsModel?
 

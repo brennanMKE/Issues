@@ -61,43 +61,44 @@ struct IssuesApp: App {
                 Button("New Tab") {
                     commands.newTab()
                 }
-                .keyboardShortcut("t", modifiers: .command)
+                .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .newTab))
 
                 Button("Close Tab") {
                     commands.closeActiveTab()
                 }
-                .keyboardShortcut("w", modifiers: .command)
+                .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .closeTab))
 
                 Divider()
 
                 Button("Reload") {
                     commands.reloadActive()
                 }
-                .keyboardShortcut("r", modifiers: .command)
+                .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .reload))
             }
 
             // View-mode shortcuts use Cmd+Opt+1..4 so they don't collide with
-            // the tab Cmd+1..9 bindings below.
+            // the tab Cmd+1..9 bindings below. All four are user-configurable
+            // via Settings → Shortcuts (#0024).
             CommandMenu("View") {
                 Button("Swimlanes") {
                     commands.setViewMode(.swimlane)
                 }
-                .keyboardShortcut("1", modifiers: [.command, .option])
+                .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .swimlanesView))
 
                 Button("Timeline") {
                     commands.setViewMode(.timeline)
                 }
-                .keyboardShortcut("2", modifiers: [.command, .option])
+                .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .timelineView))
 
                 Button("List") {
                     commands.setViewMode(.list)
                 }
-                .keyboardShortcut("3", modifiers: [.command, .option])
+                .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .listView))
 
                 Button("Recent") {
                     commands.setViewMode(.recent)
                 }
-                .keyboardShortcut("4", modifiers: [.command, .option])
+                .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .recentView))
 
                 Divider()
 
@@ -107,19 +108,19 @@ struct IssuesApp: App {
                 Button("Find") {
                     commands.triggerFocusSearch()
                 }
-                .keyboardShortcut("f", modifiers: .command)
+                .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .focusSearch))
             }
 
             CommandMenu("Tabs") {
                 Button("Show Previous Tab") {
                     commands.previousTab()
                 }
-                .keyboardShortcut(.leftArrow, modifiers: [.command, .shift])
+                .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .previousTab))
 
                 Button("Show Next Tab") {
                     commands.nextTab()
                 }
-                .keyboardShortcut(.rightArrow, modifiers: [.command, .shift])
+                .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .nextTab))
 
                 Divider()
 
@@ -142,6 +143,13 @@ struct IssuesApp: App {
         }
         .defaultSize(width: 720, height: 800)
         .windowResizability(.contentMinSize)
+
+        // Native Settings scene (#0024). SwiftUI auto-wires the
+        // "Issues → Settings…" menu item with Cmd+, and gives us
+        // single-instance preferences-window behavior for free.
+        Settings {
+            SettingsView()
+        }
     }
 }
 
