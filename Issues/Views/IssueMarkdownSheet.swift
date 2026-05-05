@@ -15,6 +15,14 @@ struct IssueMarkdownSheet: View {
         .frame(minWidth: 600, idealWidth: 900, maxWidth: .infinity,
                minHeight: 400, idealHeight: 800, maxHeight: .infinity)
         .background(Color.appBackground)
+        .focusable()
+        .focusEffectDisabled()
+        .onKeyPress(.space) {
+            // Quick Look toggle (#0045): pressing space again while the
+            // preview is showing dismisses it, matching Finder.
+            dismiss()
+            return .handled
+        }
     }
 
     private var header: some View {
