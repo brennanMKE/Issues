@@ -93,7 +93,7 @@ struct StatsBarView: View {
                         .font(.system(size: 11, weight: .medium))
                         .padding(.horizontal, 12)
                         .padding(.vertical, 5)
-                        .foregroundStyle(active ? Color.white : Color.appMuted)
+                        .foregroundStyle(active ? Color.accentForeground : Color.appMuted)
                         .background(active ? Color.appAccentDim : Color.clear)
                         .contentShape(Rectangle())
                 }

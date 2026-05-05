@@ -41,7 +41,7 @@ struct FolderPickerView: View {
                 .font(.system(size: 13, weight: .medium))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-                .foregroundStyle(Color.white)
+                .foregroundStyle(Color.accentForeground)
                 .background(
                     RoundedRectangle(cornerRadius: 6).fill(Color.appAccent)
                 )
