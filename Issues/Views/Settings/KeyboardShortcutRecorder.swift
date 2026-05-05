@@ -25,7 +25,7 @@ struct KeyboardShortcutRecorder: NSViewRepresentable {
         view.binding = binding
         view.onCommit = { newBinding in
             // Hop out of the AppKit event path before mutating SwiftUI state.
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.binding = newBinding
             }
         }
