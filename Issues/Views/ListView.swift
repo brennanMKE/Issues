@@ -23,7 +23,7 @@ struct ListView: View {
                     .foregroundStyle(Color.appMuted)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
-                    .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .simultaneousGesture(TapGesture(count: 2).onEnded { onOpenMarkdown(issue) })
                     .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
                     .contextMenu {
                         Button("Preview Markdown") { onOpenMarkdown(issue) }
@@ -35,7 +35,7 @@ struct ListView: View {
                 StatusBadgeView(status: issue.status)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
-                    .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .simultaneousGesture(TapGesture(count: 2).onEnded { onOpenMarkdown(issue) })
                     .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
                     .contextMenu {
                         Button("Preview Markdown") { onOpenMarkdown(issue) }
@@ -50,7 +50,7 @@ struct ListView: View {
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
-                    .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .simultaneousGesture(TapGesture(count: 2).onEnded { onOpenMarkdown(issue) })
                     .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
                     .contextMenu {
                         Button("Preview Markdown") { onOpenMarkdown(issue) }
@@ -64,7 +64,7 @@ struct ListView: View {
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
-                    .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .simultaneousGesture(TapGesture(count: 2).onEnded { onOpenMarkdown(issue) })
                     .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
                     .contextMenu {
                         Button("Preview Markdown") { onOpenMarkdown(issue) }
@@ -76,7 +76,7 @@ struct ListView: View {
                     .foregroundStyle(Color.appText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
-                    .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .simultaneousGesture(TapGesture(count: 2).onEnded { onOpenMarkdown(issue) })
                     .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
                     .contextMenu {
                         Button("Preview Markdown") { onOpenMarkdown(issue) }
@@ -89,7 +89,7 @@ struct ListView: View {
                     .foregroundStyle(Color.appText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
-                    .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .simultaneousGesture(TapGesture(count: 2).onEnded { onOpenMarkdown(issue) })
                     .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
                     .contextMenu {
                         Button("Preview Markdown") { onOpenMarkdown(issue) }
