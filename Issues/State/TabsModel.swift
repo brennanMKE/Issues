@@ -434,7 +434,7 @@ final class TabsModel {
     private func scheduleDebouncedFlush() {
         persistTask?.cancel()
         persistTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: UInt64(Self.persistDebounce * 1_000_000_000))
+            try? await Task.sleep(for: .seconds(Self.persistDebounce))
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 self?.flushPerTabStateNow()
