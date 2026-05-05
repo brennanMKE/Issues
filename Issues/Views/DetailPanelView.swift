@@ -116,6 +116,11 @@ struct DetailPanelView: View {
                     .foregroundStyle(Color.appMuted)
             }
         }
+        // Textual's StructuredText caches its laid-out content internally and
+        // doesn't refresh when the `markdown:` parameter changes on a same-
+        // identity view. Tagging the subtree with the issue id forces SwiftUI
+        // to discard and rebuild on every selection change.
+        .id(issue.id)
     }
 
     /// Returns the markdown body below the H1 title and metadata table,
