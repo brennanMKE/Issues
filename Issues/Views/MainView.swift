@@ -72,6 +72,7 @@ struct MainView: View {
             Color.clear
                 .contentShape(Rectangle())
                 .onTapGesture { store.deselect() }
+                .accessibilityHidden(true)
             switch store.viewMode {
             case .swimlane:
                 SwimlaneView(store: store, onOpenMarkdown: { markdownSheetIssue = $0 })

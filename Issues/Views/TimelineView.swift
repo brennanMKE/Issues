@@ -178,6 +178,8 @@ struct TimelineView: View {
         .contentShape(RoundedRectangle(cornerRadius: 10))
         .onTapGesture(count: 2) { onOpenMarkdown(issue) }
         .onTapGesture { store.toggleSelection(issue.id) }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
         .help("\(issue.title)")
         .offset(x: startX, y: y)
     }

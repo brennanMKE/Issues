@@ -218,6 +218,7 @@ struct TabBarView: View {
                 }
                 .contentShape(Rectangle())
                 .onTapGesture { tabs.setActive(id: chip.id) }
+                .accessibilityAddTraits(.isButton)
                 // No per-chip drag gesture — the bar owns the drag now.
             }
         case .placeholder:

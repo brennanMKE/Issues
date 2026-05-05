@@ -24,6 +24,7 @@ struct ListView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
                     .contextMenu {
                         Button("Preview Markdown") { onOpenMarkdown(issue) }
                     }
@@ -35,6 +36,7 @@ struct ListView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
                     .contextMenu {
                         Button("Preview Markdown") { onOpenMarkdown(issue) }
                     }
@@ -49,6 +51,7 @@ struct ListView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
                     .contextMenu {
                         Button("Preview Markdown") { onOpenMarkdown(issue) }
                     }
@@ -62,6 +65,7 @@ struct ListView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
                     .contextMenu {
                         Button("Preview Markdown") { onOpenMarkdown(issue) }
                     }
@@ -73,6 +77,7 @@ struct ListView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
                     .contextMenu {
                         Button("Preview Markdown") { onOpenMarkdown(issue) }
                     }
@@ -85,6 +90,7 @@ struct ListView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) { onOpenMarkdown(issue) }
+                    .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
                     .contextMenu {
                         Button("Preview Markdown") { onOpenMarkdown(issue) }
                     }

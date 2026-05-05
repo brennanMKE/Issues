@@ -32,6 +32,8 @@ struct IssueCardView: View {
         .contentShape(Rectangle())
         .onTapGesture(count: 2) { onOpenMarkdown(issue) }
         .onTapGesture { onTap() }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
         .help(issue.title)
     }
 }

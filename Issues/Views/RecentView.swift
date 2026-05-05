@@ -57,6 +57,8 @@ struct RecentView: View {
         .contentShape(Rectangle())
         .onTapGesture(count: 2) { onOpenMarkdown(issue) }
         .onTapGesture { store.toggleSelection(issue.id) }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
     }
 
     private var emptyState: some View {
