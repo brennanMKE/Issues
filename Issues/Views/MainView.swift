@@ -50,6 +50,21 @@ struct MainView: View {
         }
         .onAppear { registerCommandHandlers() }
         .onChange(of: store.id) { _, _ in registerCommandHandlers() }
+        // Per-tab persistence (#0009): forward every user-driven UI change
+        // on the active store to `TabsModel`, which debounces and writes to
+        // UserDefaults. Each `.onChange` fires only when the bound value
+        // actually changes; `saveTabStateIfChanged` additionally compares
+        // the full snapshot before scheduling a flush, so duplicate fires
+        // are cheap. Selection is included so reopening a tab restores the
+        // detail panel on the issue the user was last looking at.
+        .onChange(of: store.statusFilters) { _, _ in tabs.saveTabStateIfChanged(store) }
+        .onChange(of: store.moduleFilter) { _, _ in tabs.saveTabStateIfChanged(store) }
+        .onChange(of: store.platformFilter) { _, _ in tabs.saveTabStateIfChanged(store) }
+        .onChange(of: store.searchQuery) { _, _ in tabs.saveTabStateIfChanged(store) }
+        .onChange(of: store.viewMode) { _, _ in tabs.saveTabStateIfChanged(store) }
+        .onChange(of: store.sortColumn) { _, _ in tabs.saveTabStateIfChanged(store) }
+        .onChange(of: store.sortAscending) { _, _ in tabs.saveTabStateIfChanged(store) }
+        .onChange(of: store.selectedIssueID) { _, _ in tabs.saveTabStateIfChanged(store) }
     }
 
     @ViewBuilder

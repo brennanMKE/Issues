@@ -50,8 +50,6 @@ final class IssueStore: Identifiable {
     var statusFilters: Set<IssueStatus> = []
     var moduleFilter: String?
     var platformFilter: String?
-    // TODO #0009: persist `searchQuery` per tab so closing/reopening a tab
-    // restores the query. v1 deliberately resets on tab close.
     var searchQuery: String = ""
     var viewMode: ViewMode = .swimlane
     var selectedIssueID: String?
@@ -301,6 +299,80 @@ final class IssueStore: Identifiable {
             selectedIssueID = order[(idx - 1 + order.count) % order.count].id
         } else {
             selectedIssueID = order.last?.id
+        }
+    }
+
+    // MARK: - Persisted-state round-trip (#0009)
+
+    /// Captures the user-visible UI state into a value type suitable for
+    /// `UserDefaults`. Transient state (`issues`, `lintFindings`, etc.) is
+    /// not included — it's recomputed by `reload()` on restore.
+    ///
+    /// Named `persistedState` to avoid collision with the `snapshot`
+    /// property used by `TabsModel` for unseen-change tracking.
+    func persistedState() -> TabPersistedState {
+        TabPersistedState(
+            statusFilters: statusFilters.map { $0.rawValue }.sorted(),
+            moduleFilter: moduleFilter,
+            platformFilter: platformFilter,
+            searchQuery: searchQuery,
+            viewMode: viewMode.rawValue,
+            sortColumn: sortColumn.rawValue,
+            sortAscending: sortAscending,
+            selectedIssueID: selectedIssueID
+        )
+    }
+
+    /// Applies a previously-persisted state. Each field is validated against
+    /// the current `issues` list so stale module names, platforms, or issue
+    /// ids don't leave the UI in an empty / broken state. Unknown enum raw
+    /// values fall back to current defaults rather than crashing.
+    ///
+    /// Must be called *after* `reload()` has populated `issues` so the
+    /// validity checks have data to compare against.
+    func apply(_ state: TabPersistedState) {
+        // Status filters: drop unknown raw values silently.
+        var resolvedStatuses: Set<IssueStatus> = []
+        for raw in state.statusFilters {
+            if let status = IssueStatus(rawValue: raw) {
+                resolvedStatuses.insert(status)
+            }
+        }
+        statusFilters = resolvedStatuses
+
+        // Module filter: drop if the module no longer appears in any issue.
+        if let saved = state.moduleFilter, uniqueModules.contains(saved) {
+            moduleFilter = saved
+        } else {
+            moduleFilter = nil
+        }
+
+        // Platform filter: drop if no current issue uses this platform.
+        if let saved = state.platformFilter, uniquePlatforms.contains(saved) {
+            platformFilter = saved
+        } else {
+            platformFilter = nil
+        }
+
+        searchQuery = state.searchQuery
+
+        if let mode = ViewMode(rawValue: state.viewMode) {
+            viewMode = mode
+        }
+
+        if let column = SortColumn(rawValue: state.sortColumn) {
+            sortColumn = column
+        }
+        sortAscending = state.sortAscending
+
+        // Selection: only restore if the issue is still present. Otherwise
+        // leave selection nil — the user will just see no detail panel,
+        // which is a fine fallback.
+        if let savedID = state.selectedIssueID,
+           issues.contains(where: { $0.id == savedID }) {
+            selectedIssueID = savedID
+        } else {
+            selectedIssueID = nil
         }
     }
 }
