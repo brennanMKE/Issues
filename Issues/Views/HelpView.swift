@@ -13,8 +13,11 @@ struct HelpView: View {
     @State private var selection: HelpSection.ID = HelpCatalog.sections.first!.id
     /// Lazy cache of section markdown keyed by `HelpSection.id`. Reads are
     /// cheap (a handful of small bundled files) but caching means flipping
-    /// back to a previously-viewed section avoids a second disk hit.
-    @State private var contentCache: [String: String] = [:]
+    /// back to a previously-viewed section avoids a second disk hit. The
+    /// cache stores `Result` so failures are remembered too — and so the
+    /// body stays a pure read of `contentCache[selection]` without any
+    /// state mutation during render.
+    @State private var contentCache: [String: Result<String, Error>] = [:]
 
     var body: some View {
         NavigationSplitView {
@@ -23,6 +26,9 @@ struct HelpView: View {
             detail
         }
         .background(Color.appBackground)
+        .task(id: selection) {
+            await loadIfNeeded(selection)
+        }
     }
 
     // MARK: - Sidebar
@@ -41,50 +47,57 @@ struct HelpView: View {
 
     @ViewBuilder
     private var detail: some View {
-        if let section = HelpCatalog.sections.first(where: { $0.id == selection }) {
-            sectionView(for: section)
-                .navigationSplitViewColumnWidth(min: 480, ideal: 540)
-        } else {
-            // Should be unreachable because `selection` is initialised to
-            // the first section and is only ever set to a known id, but a
-            // friendly fallback beats a blank pane.
-            placeholder
-                .navigationSplitViewColumnWidth(min: 480, ideal: 540)
+        Group {
+            if let result = contentCache[selection] {
+                switch result {
+                case .success(let text):
+                    successPane(text: text)
+                case .failure(let error):
+                    errorPane(error: error, sectionTitle: sectionTitle(for: selection))
+                }
+            } else {
+                // First paint before `.task` has filled the cache. The
+                // bundled files are tiny so this flashes briefly at most.
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.appBackground)
+            }
         }
+        .navigationSplitViewColumnWidth(min: 480, ideal: 540)
     }
 
     @ViewBuilder
-    private func sectionView(for section: HelpSection) -> some View {
-        switch loadMarkdown(for: section) {
-        case .success(let text):
-            ScrollView(.vertical) {
-                StructuredText(
-                    markdown: text,
-                    baseURL: bundleHelpDirectory()
-                )
-                .textual.textSelection(.enabled)
-                .font(.system(size: 12))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(20)
-            }
-            .background(Color.appBackground)
-        case .failure(let error):
-            ScrollView(.vertical) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Couldn't load \(section.title)")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Color.appText)
-                    Text(error.localizedDescription)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.appMuted)
-                        .textSelection(.enabled)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(20)
-            }
-            .background(Color.appBackground)
+    private func successPane(text: String) -> some View {
+        ScrollView(.vertical) {
+            StructuredText(
+                markdown: text,
+                baseURL: bundleHelpDirectory()
+            )
+            .textual.textSelection(.enabled)
+            .font(.system(size: 12))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
         }
+        .background(Color.appBackground)
+    }
+
+    @ViewBuilder
+    private func errorPane(error: Error, sectionTitle: String) -> some View {
+        ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Couldn't load \(sectionTitle)")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.appText)
+                Text(error.localizedDescription)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.appMuted)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
+        }
+        .background(Color.appBackground)
     }
 
     private var placeholder: some View {
@@ -95,14 +108,25 @@ struct HelpView: View {
             .background(Color.appBackground)
     }
 
+    private func sectionTitle(for id: HelpSection.ID) -> String {
+        HelpCatalog.sections.first(where: { $0.id == id })?.title ?? id
+    }
+
     // MARK: - Loading
 
-    /// Returns the markdown for the given section, populating
-    /// `contentCache` on first read. Cached lookups don't touch disk.
-    private func loadMarkdown(for section: HelpSection) -> Result<String, Error> {
-        if let cached = contentCache[section.id] {
-            return .success(cached)
-        }
+    /// Fills `contentCache[id]` if it isn't already populated. Invoked
+    /// from `.task(id: selection)` so the disk read happens outside view
+    /// body evaluation and the cache write goes through normal `@State`
+    /// mutation that SwiftUI invalidates correctly.
+    private func loadIfNeeded(_ id: HelpSection.ID) async {
+        if contentCache[id] != nil { return }
+        guard let section = HelpCatalog.sections.first(where: { $0.id == id }) else { return }
+        contentCache[id] = readMarkdown(for: section)
+    }
+
+    /// Pure read of the bundled markdown for `section`. No state access,
+    /// no caching — `loadIfNeeded` owns the cache.
+    private func readMarkdown(for section: HelpSection) -> Result<String, Error> {
         guard let url = Bundle.main.url(
             forResource: section.resourceName,
             withExtension: "md",
@@ -115,11 +139,6 @@ struct HelpView: View {
         }
         do {
             let text = try String(contentsOf: url, encoding: .utf8)
-            // SwiftUI tolerates state mutation from a view's body during
-            // a switch evaluation here because the cache write doesn't
-            // change which branch we render — we still emit `.success`
-            // for the same text on subsequent passes.
-            contentCache[section.id] = text
             return .success(text)
         } catch {
             return .failure(error)
