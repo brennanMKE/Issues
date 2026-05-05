@@ -41,6 +41,17 @@ print "==> Packaging $APP_PATH -> $ZIP_PATH"
 rm -f "$ZIP_PATH"
 ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
 
+# Tear down the intermediate build/ directory after the zip is produced.
+# Reason (#0026): leaving a Release Issues.app in build/Build/Products/
+# means LaunchServices indexes it alongside the Debug build that Xcode
+# normally runs from DerivedData. Both share bundle id co.sstools.Issues,
+# and tapping a notification can route to either — producing two
+# Issues.app dock icons. Removing the .app here keeps the zip as the
+# canonical distributable and stops LaunchServices from finding a second
+# bundle.
+print "==> Cleaning up build artifacts ($BUILD_DIR)"
+rm -rf "$BUILD_DIR"
+
 print
 print "Done. Distributable at:"
 print "  $ZIP_PATH"
