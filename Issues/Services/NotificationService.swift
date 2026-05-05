@@ -28,7 +28,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
 
     /// Keys used to round-trip routing context through
     /// `UNNotificationRequest.content.userInfo`.
-    private enum UserInfoKey {
+    nonisolated private enum UserInfoKey {
         static let tabID = "tabID"        // String (UUID)
         static let issueID = "issueID"    // String, optional (absent for rollups)
         static let kind = "kind"          // String, one of: "addition", "removal", "status", "rollup"
