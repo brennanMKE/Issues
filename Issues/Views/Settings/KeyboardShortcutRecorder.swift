@@ -68,23 +68,28 @@ final class RecorderView: NSView {
     override var acceptsFirstResponder: Bool { true }
 
     override func mouseDown(with event: NSEvent) {
-        // A click toggles recording. Clicking again with nothing typed cancels.
-        if isRecording {
-            isRecording = false
-        } else {
-            window?.makeFirstResponder(self)
-        }
+        // Clicking the recorder explicitly transfers first-responder. SwiftUI
+        // doesn't do this automatically for raw `NSView`s wrapped via
+        // `NSViewRepresentable`, so without this `keyDown:` never fires.
+        window?.makeFirstResponder(self)
     }
 
     override func becomeFirstResponder() -> Bool {
         let ok = super.becomeFirstResponder()
-        isRecording = ok
+        if ok {
+            isRecording = true
+            needsDisplay = true
+        }
         return ok
     }
 
     override func resignFirstResponder() -> Bool {
-        isRecording = false
-        return super.resignFirstResponder()
+        let ok = super.resignFirstResponder()
+        if ok {
+            isRecording = false
+            needsDisplay = true
+        }
+        return ok
     }
 
     override func keyDown(with event: NSEvent) {
@@ -93,9 +98,10 @@ final class RecorderView: NSView {
             return
         }
 
-        // Esc cancels recording without clearing the binding.
+        // Esc cancels recording without clearing the binding. Dropping first
+        // responder triggers `resignFirstResponder`, which flips `isRecording`
+        // back off and redraws the idle state.
         if Int(event.keyCode) == kVK_Escape {
-            isRecording = false
             window?.makeFirstResponder(nil)
             return
         }
@@ -110,7 +116,8 @@ final class RecorderView: NSView {
 
         onCommit?(candidate)
         binding = candidate
-        isRecording = false
+        // Drop focus so the visual returns to idle. `resignFirstResponder`
+        // clears `isRecording`.
         window?.makeFirstResponder(nil)
     }
 

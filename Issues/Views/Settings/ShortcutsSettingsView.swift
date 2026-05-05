@@ -8,11 +8,6 @@ struct ShortcutsSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Customize keyboard shortcuts. Cmd+1 through 9 (tab activation), arrow keys, and Esc are not customizable.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
             Form {
                 ForEach(ShortcutAction.allCases) { action in
                     ShortcutRow(action: action, store: store)
