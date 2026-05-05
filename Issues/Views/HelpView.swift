@@ -1,5 +1,4 @@
 import SwiftUI
-import Textual
 
 /// Help window root view. A two-pane `NavigationSplitView` with the
 /// hardcoded `HelpCatalog.sections` as the sidebar and the selected
@@ -21,7 +20,7 @@ struct HelpView: View {
 
     var body: some View {
         NavigationSplitView {
-            sidebar
+            HelpSidebarView(selection: $selection)
         } detail: {
             detail
         }
@@ -31,29 +30,18 @@ struct HelpView: View {
         }
     }
 
-    // MARK: - Sidebar
-
-    private var sidebar: some View {
-        List(HelpCatalog.sections, selection: $selection) { section in
-            Text(section.title)
-                .font(.system(size: 13))
-                .foregroundStyle(Color.appText)
-                .tag(section.id)
-        }
-        .navigationSplitViewColumnWidth(min: 200, ideal: 220)
-    }
-
-    // MARK: - Detail
-
     @ViewBuilder
     private var detail: some View {
         Group {
             if let result = contentCache[selection] {
                 switch result {
                 case .success(let text):
-                    successPane(text: text)
+                    HelpSuccessPaneView(text: text)
                 case .failure(let error):
-                    errorPane(error: error, sectionTitle: sectionTitle(for: selection))
+                    HelpErrorPaneView(
+                        error: error,
+                        sectionTitle: sectionTitle(for: selection)
+                    )
                 }
             } else {
                 // First paint before `.task` has filled the cache. The
@@ -64,48 +52,6 @@ struct HelpView: View {
             }
         }
         .navigationSplitViewColumnWidth(min: 480, ideal: 540)
-    }
-
-    @ViewBuilder
-    private func successPane(text: String) -> some View {
-        ScrollView(.vertical) {
-            StructuredText(
-                markdown: text,
-                baseURL: bundleHelpDirectory()
-            )
-            .textual.textSelection(.enabled)
-            .font(.system(size: 12))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
-        }
-        .background(Color.appBackground)
-    }
-
-    @ViewBuilder
-    private func errorPane(error: Error, sectionTitle: String) -> some View {
-        ScrollView(.vertical) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Couldn't load \(sectionTitle)")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Color.appText)
-                Text(error.localizedDescription)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.appMuted)
-                    .textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
-        }
-        .background(Color.appBackground)
-    }
-
-    private var placeholder: some View {
-        Text("Select a section")
-            .font(.system(size: 13))
-            .foregroundStyle(Color.appMuted)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.appBackground)
     }
 
     private func sectionTitle(for id: HelpSection.ID) -> String {
@@ -143,17 +89,6 @@ struct HelpView: View {
         } catch {
             return .failure(error)
         }
-    }
-
-    /// Best-effort base URL for relative image references inside the help
-    /// markdown. Returns the bundled `Help/` directory if it resolves, else
-    /// the app bundle's resource URL, else nil. Images are out of scope
-    /// for v1 but the `baseURL` keeps the door open.
-    private func bundleHelpDirectory() -> URL? {
-        if let url = Bundle.main.url(forResource: "Help", withExtension: nil) {
-            return url
-        }
-        return Bundle.main.resourceURL
     }
 }
 
