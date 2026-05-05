@@ -13,7 +13,7 @@ struct ToolbarView: View {
         HStack(spacing: 12) {
             statusPills
 
-            Picker("Module", selection: moduleBinding) {
+            Picker("Module", selection: $store.moduleFilter) {
                 Text("All Modules").tag(String?.none)
                 ForEach(store.uniqueModules, id: \.self) { module in
                     Text(module).tag(String?.some(module))
@@ -23,7 +23,7 @@ struct ToolbarView: View {
             .labelsHidden()
             .fixedSize()
 
-            Picker("Platform", selection: platformBinding) {
+            Picker("Platform", selection: $store.platformFilter) {
                 Text("All Platforms").tag(String?.none)
                 ForEach(store.uniquePlatforms, id: \.self) { platform in
                     Text(platform).tag(String?.some(platform))
@@ -104,17 +104,4 @@ struct ToolbarView: View {
         }
     }
 
-    private var moduleBinding: Binding<String?> {
-        Binding(
-            get: { store.moduleFilter },
-            set: { store.moduleFilter = $0 }
-        )
-    }
-
-    private var platformBinding: Binding<String?> {
-        Binding(
-            get: { store.platformFilter },
-            set: { store.platformFilter = $0 }
-        )
-    }
 }

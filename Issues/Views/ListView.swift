@@ -16,7 +16,7 @@ struct ListView: View {
     }()
 
     var body: some View {
-        Table(sortedIssues, selection: selectionBinding, sortOrder: $sortOrder) {
+        Table(sortedIssues, selection: $store.selectedIssueID, sortOrder: $sortOrder) {
             TableColumn("#", value: \.id) { issue in
                 Text("#\(issue.id)")
                     .font(.system(size: 11, weight: .heavy))
@@ -97,13 +97,6 @@ struct ListView: View {
 
     private var sortedIssues: [Issue] {
         store.filteredIssues.sorted(using: sortOrder)
-    }
-
-    private var selectionBinding: Binding<String?> {
-        Binding(
-            get: { store.selectedIssueID },
-            set: { store.selectedIssueID = $0 }
-        )
     }
 
     private func displayDate(_ date: Date?, raw: String) -> String {
