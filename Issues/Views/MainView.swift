@@ -10,7 +10,6 @@ struct MainView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HeaderView(store: store)
             TabBarView(tabs: tabs, bookmarks: bookmarks)
             StatsBarView(
                 store: store,
