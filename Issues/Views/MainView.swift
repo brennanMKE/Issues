@@ -101,6 +101,15 @@ struct MainView: View {
             }
             return .ignored
         }
+        .onKeyPress(.space) {
+            // Quick Look-style preview (#0044). Mirrors Enter so users coming
+            // from Finder / Mail / Music get the affordance they expect.
+            if let issue = store.selectedIssue {
+                markdownSheetIssue = issue
+                return .handled
+            }
+            return .ignored
+        }
     }
 
     /// Wires `AppCommandsController` so menu-bar shortcuts can drive the
