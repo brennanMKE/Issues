@@ -15,27 +15,24 @@ struct ListView: View {
         return f
     }()
 
+    // No per-cell gesture recognizers: any count: 2 recognizer (even
+    // simultaneousGesture) delays single-click selection enough that
+    // NSTableView intermittently drops the row click. Double-click open is
+    // covered by the right-click context menu and Enter keypress instead
+    // (#0040 / #0042 / #0043).
     var body: some View {
-        // Double-tap on a cell's visible text opens the markdown sheet.
-        // `simultaneousGesture` lets it fire alongside NSTableView's row
-        // selection instead of racing it; skipping `contentShape(Rectangle())`
-        // keeps the gesture bounded to the rendered glyph so single-clicks on
-        // surrounding cell whitespace go cleanly to the Table for selection
-        // (see #0040 / #0042).
         Table(sortedIssues, selection: $store.selectedIssueID, sortOrder: $sortOrder) {
             TableColumn("#", value: \.id) { issue in
                 Text("#\(issue.id)")
                     .font(.system(size: 11, weight: .heavy))
                     .foregroundStyle(Color.appMuted)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .simultaneousGesture(TapGesture(count: 2).onEnded { onOpenMarkdown(issue) })
             }
             .width(60)
 
             TableColumn("Status", value: \.status.rawValue) { issue in
                 StatusBadgeView(status: issue.status)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .simultaneousGesture(TapGesture(count: 2).onEnded { onOpenMarkdown(issue) })
             }
             .width(110)
 
@@ -45,7 +42,6 @@ struct ListView: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .simultaneousGesture(TapGesture(count: 2).onEnded { onOpenMarkdown(issue) })
             }
 
             TableColumn("Module", value: \.module) { issue in
@@ -54,14 +50,12 @@ struct ListView: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .simultaneousGesture(TapGesture(count: 2).onEnded { onOpenMarkdown(issue) })
             }
 
             TableColumn("Platform", value: \.platform) { issue in
                 Text(issue.platform)
                     .foregroundStyle(Color.appText)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .simultaneousGesture(TapGesture(count: 2).onEnded { onOpenMarkdown(issue) })
             }
             .width(80)
 
@@ -69,7 +63,6 @@ struct ListView: View {
                 Text(displayDate(issue.firstSeen, raw: issue.firstSeenRaw))
                     .foregroundStyle(Color.appText)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .simultaneousGesture(TapGesture(count: 2).onEnded { onOpenMarkdown(issue) })
             }
             .width(100)
         }
