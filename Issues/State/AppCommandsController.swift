@@ -32,9 +32,16 @@ final class AppCommandsController {
     /// list every time.
     var activeStore: IssueStore?
 
-    /// Bookmark service used by the "New Tab" command to present the open
-    /// panel. Set by `RootView` on appear.
+    /// Bookmark service used by the picker scene to surface remembered
+    /// folders and present the open panel. Set by `RootView` on appear.
     var bookmarks: FolderBookmarkService?
+
+    /// Invoked when "New Tab" / `+` / Cmd+T fires (#0029). Set by
+    /// `RootView.onAppear` to call `openWindow(id: "folderPicker")`. The
+    /// controller can't read `@Environment(\.openWindow)` itself — only a
+    /// `View` can — so we rely on a registered closure, same shape as
+    /// `focusSearch`.
+    var openFolderPicker: (() -> Void)?
 
     /// Invoked with the currently selected issue when the user hits Enter or
     /// triggers an "open markdown" menu shortcut. Set by `MainView` so we can
@@ -92,10 +99,11 @@ final class AppCommandsController {
     // MARK: - Tab actions
 
     func newTab() {
-        guard let bookmarks, let tabs else { return }
-        if let url = bookmarks.presentOpenPanel() {
-            tabs.openTab(url: url)
-        }
+        // Cmd+T now opens the dedicated picker scene (#0029) instead of
+        // presenting `NSOpenPanel` directly. The picker still falls
+        // through to `NSOpenPanel` for "Add folder…", but it surfaces
+        // remembered folders first.
+        openFolderPicker?()
     }
 
     func closeActiveTab() {

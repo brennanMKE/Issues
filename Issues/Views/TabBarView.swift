@@ -41,6 +41,12 @@ struct TabBarView: View {
     @Bindable var tabs: TabsModel
     @Bindable var bookmarks: FolderBookmarkService
 
+    /// Opens the dedicated folder-picker scene (#0029). The `+` button used
+    /// to call `bookmarks.presentOpenPanel()` directly, which bypassed the
+    /// remembered-folders list. Routing through the picker window means
+    /// users see recent folders before falling through to NSOpenPanel.
+    @Environment(\.openWindow) private var openWindow
+
     /// Gap between chips, matching the previous `LazyHStack(spacing: 6)`.
     private let spacing: CGFloat = 6
     /// Width used for chips whose natural size hasn't been measured yet
@@ -359,9 +365,7 @@ struct TabBarView: View {
 
     private var addButton: some View {
         Button {
-            if let url = bookmarks.presentOpenPanel() {
-                tabs.openTab(url: url)
-            }
+            openWindow(id: "folderPicker")
         } label: {
             Image(systemName: "plus")
                 .font(.system(size: 12, weight: .semibold))

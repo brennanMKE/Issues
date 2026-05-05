@@ -144,6 +144,17 @@ struct IssuesApp: App {
         .defaultSize(width: 720, height: 800)
         .windowResizability(.contentMinSize)
 
+        // Folder picker scene (#0029). Promoted out of the main window so
+        // `RootView` no longer has to swap between picker and tabbed UI.
+        // `Window` (vs. `WindowGroup`) gives us single-instance behavior:
+        // mashing the tab bar's `+` (or Cmd+T) on an already-open picker
+        // just brings it forward instead of spawning duplicates.
+        Window("Open Folder", id: "folderPicker") {
+            FolderPickerSceneView()
+        }
+        .defaultSize(width: 480, height: 520)
+        .windowResizability(.contentMinSize)
+
         // Native Settings scene (#0024). SwiftUI auto-wires the
         // "Issues → Settings…" menu item with Cmd+, and gives us
         // single-instance preferences-window behavior for free.
