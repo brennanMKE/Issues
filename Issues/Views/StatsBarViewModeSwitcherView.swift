@@ -12,6 +12,9 @@ struct StatsBarViewModeSwitcherView: View {
                 } label: {
                     Text(mode.displayName)
                         .font(.system(size: 11, weight: .medium))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .fixedSize(horizontal: true, vertical: false)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 5)
                         .foregroundStyle(active ? Color.accentForeground : Color.appMuted)
