@@ -199,7 +199,7 @@ final class TabsModel {
             // focus. We do the check inside `NotificationService.notifyChanges`
             // too; checking here avoids the diff work when it can't fire.
             if !NSApplication.shared.isActive {
-                let (additions, removals, statusChanges) = diff(
+                let (additions, removals, statusChanges) = Self.diff(
                     baseline: baseline,
                     new: newSnapshot,
                     issues: store.issues
@@ -225,7 +225,7 @@ final class TabsModel {
     /// original `Issue` row anymore, so we synthesize a placeholder with the
     /// id we know about. Issues only appear in `additions` if we can find the
     /// matching row in `issues` (we always can — `new` is derived from it).
-    private func diff(
+    static func diff(
         baseline: [String: IssueSnapshot],
         new: [String: IssueSnapshot],
         issues: [Issue]
