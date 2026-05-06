@@ -7,6 +7,10 @@ struct MainView: View {
 
     @State private var showingMarkdownSheet: Bool = false
     @State private var showingLintSheet: Bool = false
+    /// Drives the Cmd+Shift+P command palette sheet (#0055). View-local so the
+    /// palette only ever exists for the active scene; menu fires route through
+    /// `AppCommandsController.showCommandPalette` which we register on appear.
+    @State private var showingCommandPalette: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -74,6 +78,9 @@ struct MainView: View {
         .sheet(isPresented: $showingLintSheet) {
             LintSheetView(findings: store.lintFindings)
         }
+        .sheet(isPresented: $showingCommandPalette) {
+            CommandPaletteView(store: store, tabs: tabs)
+        }
         .onAppear { registerCommandHandlers() }
         .onChange(of: store.id) { _, _ in registerCommandHandlers() }
         // Per-tab persistence (#0009): forward every user-driven UI change
@@ -101,6 +108,9 @@ struct MainView: View {
         AppCommandsController.shared.openMarkdown = { issue in
             store.selectedIssueID = issue.id
             showingMarkdownSheet = true
+        }
+        AppCommandsController.shared.showCommandPalette = {
+            showingCommandPalette = true
         }
     }
 

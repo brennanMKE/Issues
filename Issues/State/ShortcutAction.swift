@@ -18,6 +18,7 @@ enum ShortcutAction: String, CaseIterable, Hashable, Identifiable {
     case timelineView
     case listView
     case recentView
+    case commandPalette
 
     var id: String { rawValue }
 
@@ -33,6 +34,7 @@ enum ShortcutAction: String, CaseIterable, Hashable, Identifiable {
         case .timelineView:   return "Timeline View"
         case .listView:       return "List View"
         case .recentView:     return "Recent View"
+        case .commandPalette: return "Show Command Palette"
         }
     }
 
@@ -61,6 +63,8 @@ enum ShortcutAction: String, CaseIterable, Hashable, Identifiable {
             return ShortcutBinding(key: "3", modifiers: EventModifiers([.command, .option]).rawValue)
         case .recentView:
             return ShortcutBinding(key: "4", modifiers: EventModifiers([.command, .option]).rawValue)
+        case .commandPalette:
+            return ShortcutBinding(key: "p", modifiers: EventModifiers([.command, .shift]).rawValue)
         }
     }
 }

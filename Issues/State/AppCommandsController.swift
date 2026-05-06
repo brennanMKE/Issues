@@ -53,6 +53,12 @@ final class AppCommandsController {
     /// the search field's host view will set this to drive `@FocusState`.
     var focusSearch: (() -> Void)?
 
+    /// Invoked when Cmd+Shift+P (or **File → Show Command Palette…**) fires
+    /// (#0055). Set by `MainView` so toggling the palette stays in view-local
+    /// `@State`. Stays `nil` when no scene is mounted (e.g. empty-tab state),
+    /// in which case the menu item no-ops.
+    var showCommandPalette: (() -> Void)?
+
     /// Routing intent deposited by the notification tap handler. Drained as
     /// soon as the tabs model is wired up — either immediately (warm app) or
     /// after `TabsModel.restore()` completes during a cold launch (#0026).
@@ -150,5 +156,12 @@ final class AppCommandsController {
     func triggerFocusSearch() {
         // TODO #0007: wired by the search field once it exists; no-op for now.
         focusSearch?()
+    }
+
+    /// Invoked by the **Show Command Palette…** menu item / Cmd+Shift+P. The
+    /// closure is registered by the active `MainView`; if it's `nil` (no scene
+    /// mounted yet) we silently no-op.
+    func triggerShowCommandPalette() {
+        showCommandPalette?()
     }
 }

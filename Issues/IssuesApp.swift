@@ -74,6 +74,15 @@ struct IssuesApp: App {
                     commands.reloadActive()
                 }
                 .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .reload))
+
+                Divider()
+
+                // Command palette (#0055). The closure is registered by
+                // `MainView`; if no scene is mounted it no-ops cleanly.
+                Button("Show Command Palette\u{2026}") {
+                    commands.triggerShowCommandPalette()
+                }
+                .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .commandPalette))
             }
 
             // View-mode shortcuts use Cmd+Opt+1..4 so they don't collide with
