@@ -33,6 +33,8 @@ struct EmptyMainView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .navigationTitle("Issues")
+        .navigationSubtitle("")
         .background(Color.appBackground)
         .folderDropTarget { url in
             // Same drop flow as `MainView` — handles the case where the

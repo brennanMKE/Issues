@@ -44,6 +44,8 @@ struct MainView: View {
                 MainErrorBannerView(message: error)
             }
         }
+        .navigationTitle(store.repoName)
+        .navigationSubtitle(windowSubtitle)
         .background(Color.appBackground)
         .folderDropTarget { url in
             // Dropping a folder onto the main window opens it as a new tab
@@ -92,6 +94,20 @@ struct MainView: View {
             store.selectedIssueID = issue.id
             showingMarkdownSheet = true
         }
+    }
+
+    /// Window-chrome subtitle: a `"\(filtered) of \(total)"` count when a
+    /// filter or search narrows the list, or a plain `"\(total) issues"`
+    /// (singular `"1 issue"`) when nothing is filtered. Drives
+    /// `.navigationSubtitle` so the title bar carries useful context across
+    /// tabs (#0052).
+    private var windowSubtitle: String {
+        let filtered = store.filteredIssues.count
+        let total = store.issues.count
+        if filtered == total {
+            return total == 1 ? "1 issue" : "\(total) issues"
+        }
+        return "\(filtered) of \(total)"
     }
 
     /// Fallback used only if the selected issue disappears between change
