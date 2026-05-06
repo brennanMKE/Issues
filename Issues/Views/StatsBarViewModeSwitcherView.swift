@@ -19,6 +19,7 @@ struct StatsBarViewModeSwitcherView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .help(helpText(for: mode))
             }
         }
         .background(Color.appBackgroundCard)
@@ -26,6 +27,20 @@ struct StatsBarViewModeSwitcherView: View {
         .overlay(
             Capsule().stroke(Color.appBorder, lineWidth: 1)
         )
+    }
+
+    /// Tooltip text for a view-mode segment. Renders the mode's display name
+    /// plus the user's currently-bound shortcut glyph, so the tooltip stays in
+    /// sync with whatever the user picked in Settings → Shortcuts (#0053).
+    private func helpText(for mode: IssueStore.ViewMode) -> String {
+        let action: ShortcutAction = switch mode {
+        case .swimlane: .swimlanesView
+        case .timeline: .timelineView
+        case .list:     .listView
+        case .recent:   .recentView
+        }
+        let glyph = AppCommandsController.shared.shortcuts.binding(for: action).displayString
+        return "\(mode.displayName) (\(glyph))"
     }
 }
 
