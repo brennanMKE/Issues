@@ -54,3 +54,62 @@ struct TimelineBarView: View {
         .offset(x: startX, y: y)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        TimelineBarView(
+            issue: PreviewSamples.issue,
+            geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+            trackWidth: 600,
+            yIndex: 0,
+            store: PreviewSamples.makeStore(),
+            onOpenMarkdown: { _ in }
+        )
+        .frame(width: 600, height: 60)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .light)
+
+        TimelineBarView(
+            issue: PreviewSamples.issue,
+            geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+            trackWidth: 600,
+            yIndex: 0,
+            store: PreviewSamples.makeStore(),
+            onOpenMarkdown: { _ in }
+        )
+        .frame(width: 600, height: 60)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    TimelineBarView(
+        issue: PreviewSamples.issue,
+        geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+        trackWidth: 600,
+        yIndex: 0,
+        store: PreviewSamples.makeStore(),
+        onOpenMarkdown: { _ in }
+    )
+    .frame(width: 600, height: 60)
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    TimelineBarView(
+        issue: PreviewSamples.issue,
+        geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+        trackWidth: 600,
+        yIndex: 0,
+        store: PreviewSamples.makeStore(),
+        onOpenMarkdown: { _ in }
+    )
+    .frame(width: 600, height: 60)
+    .preferredColorScheme(.dark)
+}
+#endif

@@ -56,3 +56,34 @@ struct FolderPickerRowView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        FolderPickerRowView(folder: PreviewSamples.rememberedFolder, bookmarks: FolderBookmarkService(), onSelect: { _ in })
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        FolderPickerRowView(folder: PreviewSamples.rememberedFolder, bookmarks: FolderBookmarkService(), onSelect: { _ in })
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    FolderPickerRowView(folder: PreviewSamples.rememberedFolder, bookmarks: FolderBookmarkService(), onSelect: { _ in })
+        .padding()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    FolderPickerRowView(folder: PreviewSamples.rememberedFolder, bookmarks: FolderBookmarkService(), onSelect: { _ in })
+        .padding()
+        .preferredColorScheme(.dark)
+}
+#endif

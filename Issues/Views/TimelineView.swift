@@ -31,3 +31,30 @@ struct TimelineView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        TimelineView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        TimelineView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    TimelineView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    TimelineView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+        .preferredColorScheme(.dark)
+}
+#endif

@@ -99,3 +99,94 @@ struct TabChipView: View {
         return store.repoName
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        VStack(spacing: 8) {
+            TabChipView(
+                store: PreviewSamples.makeStore(),
+                isActive: true,
+                hasUnseen: false,
+                isOnlyTab: false,
+                onClose: {},
+                onCloseOthers: {},
+                onRevealInFinder: {},
+                onReload: {}
+            )
+            TabChipView(
+                store: PreviewSamples.makeStore(),
+                isActive: false,
+                hasUnseen: true,
+                isOnlyTab: false,
+                onClose: {},
+                onCloseOthers: {},
+                onRevealInFinder: {},
+                onReload: {}
+            )
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .light)
+
+        VStack(spacing: 8) {
+            TabChipView(
+                store: PreviewSamples.makeStore(),
+                isActive: true,
+                hasUnseen: false,
+                isOnlyTab: false,
+                onClose: {},
+                onCloseOthers: {},
+                onRevealInFinder: {},
+                onReload: {}
+            )
+            TabChipView(
+                store: PreviewSamples.makeStore(),
+                isActive: false,
+                hasUnseen: true,
+                isOnlyTab: false,
+                onClose: {},
+                onCloseOthers: {},
+                onRevealInFinder: {},
+                onReload: {}
+            )
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    TabChipView(
+        store: PreviewSamples.makeStore(),
+        isActive: true,
+        hasUnseen: false,
+        isOnlyTab: false,
+        onClose: {},
+        onCloseOthers: {},
+        onRevealInFinder: {},
+        onReload: {}
+    )
+    .padding()
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    TabChipView(
+        store: PreviewSamples.makeStore(),
+        isActive: true,
+        hasUnseen: false,
+        isOnlyTab: false,
+        onClose: {},
+        onCloseOthers: {},
+        onRevealInFinder: {},
+        onReload: {}
+    )
+    .padding()
+    .preferredColorScheme(.dark)
+}
+#endif

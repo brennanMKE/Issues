@@ -13,3 +13,30 @@ struct HelpSidebarView: View {
         .navigationSplitViewColumnWidth(min: 200, ideal: 220)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        HelpSidebarView(selection: .constant(HelpCatalog.sections.first!.id))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        HelpSidebarView(selection: .constant(HelpCatalog.sections.first!.id))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    HelpSidebarView(selection: .constant(HelpCatalog.sections.first!.id))
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    HelpSidebarView(selection: .constant(HelpCatalog.sections.first!.id))
+        .preferredColorScheme(.dark)
+}
+#endif

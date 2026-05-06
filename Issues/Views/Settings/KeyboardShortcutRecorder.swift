@@ -38,3 +38,38 @@ struct KeyboardShortcutRecorder: NSViewRepresentable {
     /// Fixed control height keeps `Form` rows aligned.
     static var preferredHeight: CGFloat { 24 }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        KeyboardShortcutRecorder(binding: .constant(ShortcutBinding(key: "t", modifiers: EventModifiers([.command]).rawValue)))
+            .frame(width: 130, height: KeyboardShortcutRecorder.preferredHeight)
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        KeyboardShortcutRecorder(binding: .constant(ShortcutBinding(key: "t", modifiers: EventModifiers([.command]).rawValue)))
+            .frame(width: 130, height: KeyboardShortcutRecorder.preferredHeight)
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    KeyboardShortcutRecorder(binding: .constant(ShortcutBinding(key: "t", modifiers: EventModifiers([.command]).rawValue)))
+        .frame(width: 130, height: KeyboardShortcutRecorder.preferredHeight)
+        .padding()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    KeyboardShortcutRecorder(binding: .constant(ShortcutBinding(key: "t", modifiers: EventModifiers([.command]).rawValue)))
+        .frame(width: 130, height: KeyboardShortcutRecorder.preferredHeight)
+        .padding()
+        .preferredColorScheme(.dark)
+}
+#endif

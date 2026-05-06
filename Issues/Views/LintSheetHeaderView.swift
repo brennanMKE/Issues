@@ -34,3 +34,30 @@ struct LintSheetHeaderView: View {
         .background(Color.appBackgroundCard)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        LintSheetHeaderView(count: 3, onDismiss: {})
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        LintSheetHeaderView(count: 3, onDismiss: {})
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    LintSheetHeaderView(count: 3, onDismiss: {})
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    LintSheetHeaderView(count: 3, onDismiss: {})
+        .preferredColorScheme(.dark)
+}
+#endif

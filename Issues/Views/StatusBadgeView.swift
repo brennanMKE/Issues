@@ -18,3 +18,30 @@ struct StatusBadgeView: View {
             )
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        StatusBadgeView(status: .inProgress)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        StatusBadgeView(status: .inProgress)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    StatusBadgeView(status: .inProgress)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    StatusBadgeView(status: .inProgress)
+        .preferredColorScheme(.dark)
+}
+#endif

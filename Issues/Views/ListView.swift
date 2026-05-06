@@ -84,3 +84,30 @@ struct ListView: View {
         return raw
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        ListView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        ListView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    ListView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    ListView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+        .preferredColorScheme(.dark)
+}
+#endif

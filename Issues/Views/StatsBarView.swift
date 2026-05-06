@@ -44,3 +44,54 @@ struct StatsBarView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        StatsBarView(
+            store: PreviewSamples.makeStore(),
+            total: 12,
+            counts: [.open: 5, .inProgress: 2, .resolved: 3, .closed: 2],
+            lintCount: 1,
+            onShowLint: {}
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .light)
+
+        StatsBarView(
+            store: PreviewSamples.makeStore(),
+            total: 12,
+            counts: [.open: 5, .inProgress: 2, .resolved: 3, .closed: 2],
+            lintCount: 1,
+            onShowLint: {}
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    StatsBarView(
+        store: PreviewSamples.makeStore(),
+        total: 12,
+        counts: [.open: 5, .inProgress: 2, .resolved: 3, .closed: 2],
+        lintCount: 1,
+        onShowLint: {}
+    )
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    StatsBarView(
+        store: PreviewSamples.makeStore(),
+        total: 12,
+        counts: [.open: 5, .inProgress: 2, .resolved: 3, .closed: 2],
+        lintCount: 1,
+        onShowLint: {}
+    )
+    .preferredColorScheme(.dark)
+}
+#endif

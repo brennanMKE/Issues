@@ -48,3 +48,42 @@ struct KnownPathsList: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        Form {
+            KnownPathsList(bookmarks: FolderBookmarkService())
+        }
+        .formStyle(.grouped)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .light)
+
+        Form {
+            KnownPathsList(bookmarks: FolderBookmarkService())
+        }
+        .formStyle(.grouped)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    Form {
+        KnownPathsList(bookmarks: FolderBookmarkService())
+    }
+    .formStyle(.grouped)
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    Form {
+        KnownPathsList(bookmarks: FolderBookmarkService())
+    }
+    .formStyle(.grouped)
+    .preferredColorScheme(.dark)
+}
+#endif

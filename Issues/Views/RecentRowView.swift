@@ -41,3 +41,30 @@ struct RecentRowView: View {
         .accessibilityAction(named: "Preview Markdown") { onOpenMarkdown(issue) }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        RecentRowView(issue: PreviewSamples.issue, isSelected: false, onTap: {}, onOpenMarkdown: { _ in })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        RecentRowView(issue: PreviewSamples.issue, isSelected: false, onTap: {}, onOpenMarkdown: { _ in })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    RecentRowView(issue: PreviewSamples.issue, isSelected: false, onTap: {}, onOpenMarkdown: { _ in })
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    RecentRowView(issue: PreviewSamples.issue, isSelected: false, onTap: {}, onOpenMarkdown: { _ in })
+        .preferredColorScheme(.dark)
+}
+#endif

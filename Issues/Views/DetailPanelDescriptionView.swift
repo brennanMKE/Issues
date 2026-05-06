@@ -50,3 +50,34 @@ struct DetailPanelDescriptionView: View {
         return trimmed.isEmpty ? nil : trimmed
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        DetailPanelDescriptionView(issue: PreviewSamples.issue)
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        DetailPanelDescriptionView(issue: PreviewSamples.issue)
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    DetailPanelDescriptionView(issue: PreviewSamples.issue)
+        .padding()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    DetailPanelDescriptionView(issue: PreviewSamples.issue)
+        .padding()
+        .preferredColorScheme(.dark)
+}
+#endif

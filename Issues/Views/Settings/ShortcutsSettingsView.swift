@@ -26,7 +26,33 @@ struct ShortcutsSettingsView: View {
     }
 }
 
-#Preview {
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        ShortcutsSettingsView()
+            .frame(width: 520, height: 480)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        ShortcutsSettingsView()
+            .frame(width: 520, height: 480)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
     ShortcutsSettingsView()
         .frame(width: 520, height: 480)
+        .preferredColorScheme(.light)
 }
+
+#Preview("Dark") {
+    ShortcutsSettingsView()
+        .frame(width: 520, height: 480)
+        .preferredColorScheme(.dark)
+}
+#endif

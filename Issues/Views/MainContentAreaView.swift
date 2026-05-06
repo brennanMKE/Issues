@@ -49,3 +49,30 @@ struct MainContentAreaView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        MainContentAreaView(store: PreviewSamples.makeStore(), markdownSheetIssue: .constant(nil))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        MainContentAreaView(store: PreviewSamples.makeStore(), markdownSheetIssue: .constant(nil))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    MainContentAreaView(store: PreviewSamples.makeStore(), markdownSheetIssue: .constant(nil))
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    MainContentAreaView(store: PreviewSamples.makeStore(), markdownSheetIssue: .constant(nil))
+        .preferredColorScheme(.dark)
+}
+#endif

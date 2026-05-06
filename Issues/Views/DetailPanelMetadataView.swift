@@ -61,3 +61,34 @@ struct DetailPanelMetadataView: View {
         return raw.isEmpty ? "\u{2014}" : raw
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        DetailPanelMetadataView(issue: PreviewSamples.issue)
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        DetailPanelMetadataView(issue: PreviewSamples.issue)
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    DetailPanelMetadataView(issue: PreviewSamples.issue)
+        .padding()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    DetailPanelMetadataView(issue: PreviewSamples.issue)
+        .padding()
+        .preferredColorScheme(.dark)
+}
+#endif

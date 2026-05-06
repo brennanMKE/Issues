@@ -12,3 +12,30 @@ struct RecentEmptyStateView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        RecentEmptyStateView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        RecentEmptyStateView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    RecentEmptyStateView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    RecentEmptyStateView()
+        .preferredColorScheme(.dark)
+}
+#endif

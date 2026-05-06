@@ -36,3 +36,30 @@ struct EmptyMainView: View {
         .background(Color.appBackground)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        EmptyMainView(tabs: TabsModel(), bookmarks: FolderBookmarkService())
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        EmptyMainView(tabs: TabsModel(), bookmarks: FolderBookmarkService())
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    EmptyMainView(tabs: TabsModel(), bookmarks: FolderBookmarkService())
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    EmptyMainView(tabs: TabsModel(), bookmarks: FolderBookmarkService())
+        .preferredColorScheme(.dark)
+}
+#endif

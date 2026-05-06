@@ -25,3 +25,34 @@ struct TabBarAddButtonView: View {
         .help("Open another folder in a new tab")
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        TabBarAddButtonView()
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        TabBarAddButtonView()
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    TabBarAddButtonView()
+        .padding()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    TabBarAddButtonView()
+        .padding()
+        .preferredColorScheme(.dark)
+}
+#endif

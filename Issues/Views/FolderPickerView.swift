@@ -55,3 +55,30 @@ struct FolderPickerView: View {
         .background(Color.appBackground)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        FolderPickerView(bookmarks: FolderBookmarkService(), onSelect: { _ in })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        FolderPickerView(bookmarks: FolderBookmarkService(), onSelect: { _ in })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    FolderPickerView(bookmarks: FolderBookmarkService(), onSelect: { _ in })
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    FolderPickerView(bookmarks: FolderBookmarkService(), onSelect: { _ in })
+        .preferredColorScheme(.dark)
+}
+#endif

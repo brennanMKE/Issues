@@ -36,3 +36,30 @@ struct IssueMarkdownSheetHeaderView: View {
         .background(Color.appBackgroundCard)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        IssueMarkdownSheetHeaderView(issue: PreviewSamples.issue, onDismiss: {})
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        IssueMarkdownSheetHeaderView(issue: PreviewSamples.issue, onDismiss: {})
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    IssueMarkdownSheetHeaderView(issue: PreviewSamples.issue, onDismiss: {})
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    IssueMarkdownSheetHeaderView(issue: PreviewSamples.issue, onDismiss: {})
+        .preferredColorScheme(.dark)
+}
+#endif

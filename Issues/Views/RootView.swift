@@ -50,3 +50,30 @@ struct RootView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        RootView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        RootView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    RootView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    RootView()
+        .preferredColorScheme(.dark)
+}
+#endif

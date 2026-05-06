@@ -22,3 +22,30 @@ struct LintSheetView: View {
         .background(Color.appBackground)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        LintSheetView(findings: PreviewSamples.lintFindings)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        LintSheetView(findings: PreviewSamples.lintFindings)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    LintSheetView(findings: PreviewSamples.lintFindings)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    LintSheetView(findings: PreviewSamples.lintFindings)
+        .preferredColorScheme(.dark)
+}
+#endif

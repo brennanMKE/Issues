@@ -21,3 +21,30 @@ struct SwimlaneView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        SwimlaneView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        SwimlaneView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    SwimlaneView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    SwimlaneView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+        .preferredColorScheme(.dark)
+}
+#endif

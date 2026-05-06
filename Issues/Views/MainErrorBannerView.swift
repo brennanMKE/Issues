@@ -20,3 +20,30 @@ struct MainErrorBannerView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        MainErrorBannerView(message: "Failed to read folder: missing permission")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        MainErrorBannerView(message: "Failed to read folder: missing permission")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    MainErrorBannerView(message: "Failed to read folder: missing permission")
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    MainErrorBannerView(message: "Failed to read folder: missing permission")
+        .preferredColorScheme(.dark)
+}
+#endif

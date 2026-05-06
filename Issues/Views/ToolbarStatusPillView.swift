@@ -59,3 +59,34 @@ struct ToolbarStatusPillView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        ToolbarStatusPillView(status: .open, store: PreviewSamples.makeStore())
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        ToolbarStatusPillView(status: .open, store: PreviewSamples.makeStore())
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    ToolbarStatusPillView(status: .open, store: PreviewSamples.makeStore())
+        .padding()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    ToolbarStatusPillView(status: .open, store: PreviewSamples.makeStore())
+        .padding()
+        .preferredColorScheme(.dark)
+}
+#endif

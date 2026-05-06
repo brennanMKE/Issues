@@ -13,3 +13,46 @@ struct TimelineTodayMarkerView: View {
             .offset(x: x)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        TimelineTodayMarkerView(
+            geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+            trackWidth: 600
+        )
+        .frame(width: 600, height: 60)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .light)
+
+        TimelineTodayMarkerView(
+            geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+            trackWidth: 600
+        )
+        .frame(width: 600, height: 60)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    TimelineTodayMarkerView(
+        geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+        trackWidth: 600
+    )
+    .frame(width: 600, height: 60)
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    TimelineTodayMarkerView(
+        geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+        trackWidth: 600
+    )
+    .frame(width: 600, height: 60)
+    .preferredColorScheme(.dark)
+}
+#endif

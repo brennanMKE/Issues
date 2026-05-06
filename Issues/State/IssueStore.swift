@@ -367,3 +367,14 @@ final class IssueStore: Identifiable {
         }
     }
 }
+
+#if DEBUG
+extension IssueStore {
+    /// Preview-only seam: skip the FSEvents watcher and directly set the
+    /// in-memory list. Used by `PreviewSamples.makeStore`. Lives in the same
+    /// file as the class so it can write to `private(set) var issues`.
+    func setIssuesForPreview(_ issues: [Issue]) {
+        self.issues = issues
+    }
+}
+#endif

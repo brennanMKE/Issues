@@ -48,3 +48,30 @@ struct ToolbarView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        ToolbarView(store: PreviewSamples.makeStore())
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        ToolbarView(store: PreviewSamples.makeStore())
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    ToolbarView(store: PreviewSamples.makeStore())
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    ToolbarView(store: PreviewSamples.makeStore())
+        .preferredColorScheme(.dark)
+}
+#endif

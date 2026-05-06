@@ -48,3 +48,62 @@ struct TimelineModuleRowView: View {
         .padding(.vertical, 4)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        TimelineModuleRowView(
+            module: "Views",
+            issues: PreviewSamples.issues,
+            geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+            labelGutter: 180,
+            store: PreviewSamples.makeStore(),
+            onOpenMarkdown: { _ in }
+        )
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .light)
+
+        TimelineModuleRowView(
+            module: "Views",
+            issues: PreviewSamples.issues,
+            geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+            labelGutter: 180,
+            store: PreviewSamples.makeStore(),
+            onOpenMarkdown: { _ in }
+        )
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    TimelineModuleRowView(
+        module: "Views",
+        issues: PreviewSamples.issues,
+        geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+        labelGutter: 180,
+        store: PreviewSamples.makeStore(),
+        onOpenMarkdown: { _ in }
+    )
+    .padding()
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    TimelineModuleRowView(
+        module: "Views",
+        issues: PreviewSamples.issues,
+        geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+        labelGutter: 180,
+        store: PreviewSamples.makeStore(),
+        onOpenMarkdown: { _ in }
+    )
+    .padding()
+    .preferredColorScheme(.dark)
+}
+#endif

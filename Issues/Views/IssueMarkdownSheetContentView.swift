@@ -45,3 +45,30 @@ struct IssueMarkdownSheetContentView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        IssueMarkdownSheetContentView(issue: PreviewSamples.issue)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        IssueMarkdownSheetContentView(issue: PreviewSamples.issue)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    IssueMarkdownSheetContentView(issue: PreviewSamples.issue)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    IssueMarkdownSheetContentView(issue: PreviewSamples.issue)
+        .preferredColorScheme(.dark)
+}
+#endif

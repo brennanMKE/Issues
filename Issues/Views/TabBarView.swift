@@ -361,3 +361,30 @@ struct TabBarView: View {
         return tabs.tabs.count - 1
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        TabBarView(tabs: TabsModel(), bookmarks: FolderBookmarkService())
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        TabBarView(tabs: TabsModel(), bookmarks: FolderBookmarkService())
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    TabBarView(tabs: TabsModel(), bookmarks: FolderBookmarkService())
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    TabBarView(tabs: TabsModel(), bookmarks: FolderBookmarkService())
+        .preferredColorScheme(.dark)
+}
+#endif

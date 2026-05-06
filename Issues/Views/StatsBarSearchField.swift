@@ -65,3 +65,34 @@ struct StatsBarSearchField: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        StatsBarSearchField(store: PreviewSamples.makeStore())
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        StatsBarSearchField(store: PreviewSamples.makeStore())
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    StatsBarSearchField(store: PreviewSamples.makeStore())
+        .padding()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    StatsBarSearchField(store: PreviewSamples.makeStore())
+        .padding()
+        .preferredColorScheme(.dark)
+}
+#endif

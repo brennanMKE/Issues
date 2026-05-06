@@ -13,3 +13,30 @@ struct FolderPickerEmptyStateView: View {
         .padding(.vertical, 12)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        FolderPickerEmptyStateView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        FolderPickerEmptyStateView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    FolderPickerEmptyStateView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    FolderPickerEmptyStateView()
+        .preferredColorScheme(.dark)
+}
+#endif

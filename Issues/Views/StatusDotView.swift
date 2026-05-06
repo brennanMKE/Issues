@@ -10,3 +10,30 @@ struct StatusDotView: View {
             .frame(width: size, height: size)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        StatusDotView(status: .open)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        StatusDotView(status: .open)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    StatusDotView(status: .open)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    StatusDotView(status: .open)
+        .preferredColorScheme(.dark)
+}
+#endif

@@ -28,3 +28,34 @@ struct DetailPanelHeaderView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        DetailPanelHeaderView(issue: PreviewSamples.issue, onClose: {})
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        DetailPanelHeaderView(issue: PreviewSamples.issue, onClose: {})
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    DetailPanelHeaderView(issue: PreviewSamples.issue, onClose: {})
+        .padding()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    DetailPanelHeaderView(issue: PreviewSamples.issue, onClose: {})
+        .padding()
+        .preferredColorScheme(.dark)
+}
+#endif

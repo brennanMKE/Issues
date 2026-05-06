@@ -37,3 +37,46 @@ struct IssueCardView: View {
         .help(issue.title)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        VStack(spacing: 8) {
+            IssueCardView(issue: PreviewSamples.issue, isSelected: false, onTap: {}, onOpenMarkdown: { _ in })
+            IssueCardView(issue: PreviewSamples.issueOpen, isSelected: true, onTap: {}, onOpenMarkdown: { _ in })
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .light)
+
+        VStack(spacing: 8) {
+            IssueCardView(issue: PreviewSamples.issue, isSelected: false, onTap: {}, onOpenMarkdown: { _ in })
+            IssueCardView(issue: PreviewSamples.issueOpen, isSelected: true, onTap: {}, onOpenMarkdown: { _ in })
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    VStack(spacing: 8) {
+        IssueCardView(issue: PreviewSamples.issue, isSelected: false, onTap: {}, onOpenMarkdown: { _ in })
+        IssueCardView(issue: PreviewSamples.issueOpen, isSelected: true, onTap: {}, onOpenMarkdown: { _ in })
+    }
+    .padding()
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    VStack(spacing: 8) {
+        IssueCardView(issue: PreviewSamples.issue, isSelected: false, onTap: {}, onOpenMarkdown: { _ in })
+        IssueCardView(issue: PreviewSamples.issueOpen, isSelected: true, onTap: {}, onOpenMarkdown: { _ in })
+    }
+    .padding()
+    .preferredColorScheme(.dark)
+}
+#endif

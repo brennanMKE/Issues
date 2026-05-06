@@ -19,3 +19,34 @@ struct StatsBarStatRowView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        StatsBarStatRowView(color: .statusOpen, label: "Open", count: 5)
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        StatsBarStatRowView(color: .statusOpen, label: "Open", count: 5)
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    StatsBarStatRowView(color: .statusOpen, label: "Open", count: 5)
+        .padding()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    StatsBarStatRowView(color: .statusOpen, label: "Open", count: 5)
+        .padding()
+        .preferredColorScheme(.dark)
+}
+#endif

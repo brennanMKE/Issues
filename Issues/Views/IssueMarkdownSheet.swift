@@ -24,3 +24,30 @@ struct IssueMarkdownSheet: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        IssueMarkdownSheet(issue: PreviewSamples.issue)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        IssueMarkdownSheet(issue: PreviewSamples.issue)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    IssueMarkdownSheet(issue: PreviewSamples.issue)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    IssueMarkdownSheet(issue: PreviewSamples.issue)
+        .preferredColorScheme(.dark)
+}
+#endif

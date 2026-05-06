@@ -60,3 +60,46 @@ struct TimelineTickHeaderView: View {
         return dates
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        TimelineTickHeaderView(
+            geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+            labelGutter: 180
+        )
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .light)
+
+        TimelineTickHeaderView(
+            geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+            labelGutter: 180
+        )
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    TimelineTickHeaderView(
+        geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+        labelGutter: 180
+    )
+    .padding()
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    TimelineTickHeaderView(
+        geometry: TimelineGeometry.compute(issues: PreviewSamples.issues),
+        labelGutter: 180
+    )
+    .padding()
+    .preferredColorScheme(.dark)
+}
+#endif

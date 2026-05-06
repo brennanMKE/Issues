@@ -96,3 +96,30 @@ struct MainView: View {
         )
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        MainView(store: PreviewSamples.makeStore(), tabs: TabsModel(), bookmarks: FolderBookmarkService())
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        MainView(store: PreviewSamples.makeStore(), tabs: TabsModel(), bookmarks: FolderBookmarkService())
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    MainView(store: PreviewSamples.makeStore(), tabs: TabsModel(), bookmarks: FolderBookmarkService())
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    MainView(store: PreviewSamples.makeStore(), tabs: TabsModel(), bookmarks: FolderBookmarkService())
+        .preferredColorScheme(.dark)
+}
+#endif

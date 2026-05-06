@@ -24,3 +24,30 @@ struct FolderPickerSceneView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        FolderPickerSceneView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        FolderPickerSceneView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    FolderPickerSceneView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    FolderPickerSceneView()
+        .preferredColorScheme(.dark)
+}
+#endif

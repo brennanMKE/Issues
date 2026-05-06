@@ -21,3 +21,34 @@ struct DetailPanelFileLinkView: View {
         .help("Preview \(issue.fileURL.lastPathComponent)")
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        DetailPanelFileLinkView(issue: PreviewSamples.issue, onOpenMarkdown: { _ in })
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        DetailPanelFileLinkView(issue: PreviewSamples.issue, onOpenMarkdown: { _ in })
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    DetailPanelFileLinkView(issue: PreviewSamples.issue, onOpenMarkdown: { _ in })
+        .padding()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    DetailPanelFileLinkView(issue: PreviewSamples.issue, onOpenMarkdown: { _ in })
+        .padding()
+        .preferredColorScheme(.dark)
+}
+#endif

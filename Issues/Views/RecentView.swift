@@ -30,3 +30,30 @@ struct RecentView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        RecentView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        RecentView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    RecentView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    RecentView(store: PreviewSamples.makeStore(), onOpenMarkdown: { _ in })
+        .preferredColorScheme(.dark)
+}
+#endif

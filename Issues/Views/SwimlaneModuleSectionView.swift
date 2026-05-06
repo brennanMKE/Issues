@@ -25,3 +25,54 @@ struct SwimlaneModuleSectionView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        SwimlaneModuleSectionView(
+            module: "Views",
+            issues: PreviewSamples.issues,
+            store: PreviewSamples.makeStore(),
+            onOpenMarkdown: { _ in }
+        )
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .light)
+
+        SwimlaneModuleSectionView(
+            module: "Views",
+            issues: PreviewSamples.issues,
+            store: PreviewSamples.makeStore(),
+            onOpenMarkdown: { _ in }
+        )
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    SwimlaneModuleSectionView(
+        module: "Views",
+        issues: PreviewSamples.issues,
+        store: PreviewSamples.makeStore(),
+        onOpenMarkdown: { _ in }
+    )
+    .padding()
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    SwimlaneModuleSectionView(
+        module: "Views",
+        issues: PreviewSamples.issues,
+        store: PreviewSamples.makeStore(),
+        onOpenMarkdown: { _ in }
+    )
+    .padding()
+    .preferredColorScheme(.dark)
+}
+#endif

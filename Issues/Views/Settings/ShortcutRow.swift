@@ -61,3 +61,42 @@ struct ShortcutRow: View {
         .foregroundStyle(Color.statusOpen)
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        Form {
+            ShortcutRow(action: .newTab, store: ShortcutsStore())
+        }
+        .formStyle(.grouped)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .light)
+
+        Form {
+            ShortcutRow(action: .newTab, store: ShortcutsStore())
+        }
+        .formStyle(.grouped)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    Form {
+        ShortcutRow(action: .newTab, store: ShortcutsStore())
+    }
+    .formStyle(.grouped)
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    Form {
+        ShortcutRow(action: .newTab, store: ShortcutsStore())
+    }
+    .formStyle(.grouped)
+    .preferredColorScheme(.dark)
+}
+#endif

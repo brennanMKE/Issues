@@ -24,3 +24,34 @@ struct DetailPanelView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        DetailPanelView(issue: PreviewSamples.issue, onClose: {}, onOpenMarkdown: { _ in })
+            .frame(width: 360, height: 400)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        DetailPanelView(issue: PreviewSamples.issue, onClose: {}, onOpenMarkdown: { _ in })
+            .frame(width: 360, height: 400)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    DetailPanelView(issue: PreviewSamples.issue, onClose: {}, onOpenMarkdown: { _ in })
+        .frame(width: 360, height: 400)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    DetailPanelView(issue: PreviewSamples.issue, onClose: {}, onOpenMarkdown: { _ in })
+        .frame(width: 360, height: 400)
+        .preferredColorScheme(.dark)
+}
+#endif

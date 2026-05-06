@@ -28,3 +28,34 @@ struct StatsBarLintBannerView: View {
         .accessibilityLabel("\(count) lint findings")
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        StatsBarLintBannerView(count: 3, onShowLint: {})
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        StatsBarLintBannerView(count: 3, onShowLint: {})
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    StatsBarLintBannerView(count: 3, onShowLint: {})
+        .padding()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    StatsBarLintBannerView(count: 3, onShowLint: {})
+        .padding()
+        .preferredColorScheme(.dark)
+}
+#endif

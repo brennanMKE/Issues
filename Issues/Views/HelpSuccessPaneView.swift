@@ -29,3 +29,32 @@ struct HelpSuccessPaneView: View {
         return Bundle.main.resourceURL
     }
 }
+
+#if DEBUG
+private let previewHelpText = "## Sample\n\nMarkdown content for the preview."
+
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        HelpSuccessPaneView(text: previewHelpText)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        HelpSuccessPaneView(text: previewHelpText)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    HelpSuccessPaneView(text: previewHelpText)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    HelpSuccessPaneView(text: previewHelpText)
+        .preferredColorScheme(.dark)
+}
+#endif

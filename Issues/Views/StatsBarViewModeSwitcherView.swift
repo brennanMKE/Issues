@@ -28,3 +28,34 @@ struct StatsBarViewModeSwitcherView: View {
         )
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        StatsBarViewModeSwitcherView(store: PreviewSamples.makeStore())
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        StatsBarViewModeSwitcherView(store: PreviewSamples.makeStore())
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    StatsBarViewModeSwitcherView(store: PreviewSamples.makeStore())
+        .padding()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    StatsBarViewModeSwitcherView(store: PreviewSamples.makeStore())
+        .padding()
+        .preferredColorScheme(.dark)
+}
+#endif

@@ -31,6 +31,29 @@ struct GeneralSettingsView: View {
     }
 }
 
-#Preview {
-    GeneralSettingsView()
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        GeneralSettingsView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        GeneralSettingsView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
 }
+
+#Preview("Light") {
+    GeneralSettingsView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    GeneralSettingsView()
+        .preferredColorScheme(.dark)
+}
+#endif

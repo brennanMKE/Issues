@@ -28,3 +28,35 @@ struct LintSheetContentView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        LintSheetContentView(findings: PreviewSamples.lintFindings)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        LintSheetContentView(findings: PreviewSamples.lintFindings)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    LintSheetContentView(findings: PreviewSamples.lintFindings)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    LintSheetContentView(findings: PreviewSamples.lintFindings)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Empty") {
+    LintSheetContentView(findings: [])
+        .preferredColorScheme(.light)
+}
+#endif

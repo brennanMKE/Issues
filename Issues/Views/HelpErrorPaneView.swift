@@ -22,3 +22,32 @@ struct HelpErrorPaneView: View {
         .background(Color.appBackground)
     }
 }
+
+#if DEBUG
+private let previewError = NSError(domain: "preview", code: 0, userInfo: [NSLocalizedDescriptionKey: "Sample error"])
+
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        HelpErrorPaneView(error: previewError, sectionTitle: "Overview")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        HelpErrorPaneView(error: previewError, sectionTitle: "Overview")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    HelpErrorPaneView(error: previewError, sectionTitle: "Overview")
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    HelpErrorPaneView(error: previewError, sectionTitle: "Overview")
+        .preferredColorScheme(.dark)
+}
+#endif

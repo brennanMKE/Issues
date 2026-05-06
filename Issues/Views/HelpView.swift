@@ -91,3 +91,30 @@ struct HelpView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Light & Dark") {
+    VStack(spacing: 0) {
+        HelpView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .light)
+
+        HelpView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground)
+            .environment(\.colorScheme, .dark)
+    }
+    .ignoresSafeArea()
+}
+
+#Preview("Light") {
+    HelpView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    HelpView()
+        .preferredColorScheme(.dark)
+}
+#endif
