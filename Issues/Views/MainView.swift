@@ -27,6 +27,7 @@ struct MainView: View {
                 if store.selectedIssue != nil {
                     DetailPanelView(
                         issue: store.selectedIssue ?? placeholderIssue,
+                        searchQuery: store.searchQuery,
                         onClose: { store.deselect() },
                         onOpenMarkdown: { issue in
                             store.selectedIssueID = issue.id

@@ -3,6 +3,7 @@ import SwiftUI
 struct RecentRowView: View {
     let issue: Issue
     let isSelected: Bool
+    var searchQuery: String = ""
     let onTap: () -> Void
     let onOpenMarkdown: (Issue) -> Void
 
@@ -19,7 +20,7 @@ struct RecentRowView: View {
                 .font(.system(size: 11, weight: .heavy, design: .monospaced))
                 .foregroundStyle(Color.appMuted)
                 .frame(minWidth: 48, alignment: .leading)
-            Text(issue.title)
+            Text(issue.title, highlighting: searchQuery)
                 .font(.system(size: 12))
                 .foregroundStyle(Color.appText)
                 .lineLimit(1)

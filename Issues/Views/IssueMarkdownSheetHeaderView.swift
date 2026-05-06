@@ -2,12 +2,13 @@ import SwiftUI
 
 struct IssueMarkdownSheetHeaderView: View {
     let issue: Issue
+    var searchQuery: String = ""
     let onDismiss: () -> Void
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("#\(issue.id) \u{2014} \(issue.title)")
+                Text("#\(issue.id) \u{2014} \(issue.title)", highlighting: searchQuery)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.appText)
                     .lineLimit(1)

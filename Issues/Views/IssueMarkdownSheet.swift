@@ -8,7 +8,7 @@ struct IssueMarkdownSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             if let issue = store.selectedIssue {
-                IssueMarkdownSheetHeaderView(issue: issue, onDismiss: { dismiss() })
+                IssueMarkdownSheetHeaderView(issue: issue, searchQuery: store.searchQuery, onDismiss: { dismiss() })
                 Divider().background(Color.appBorder)
                 IssueMarkdownSheetContentView(issue: issue)
             } else {

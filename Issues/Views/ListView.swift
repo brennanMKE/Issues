@@ -37,7 +37,7 @@ struct ListView: View {
             .width(110)
 
             TableColumn("Title", value: \.title) { issue in
-                Text(issue.title)
+                Text(issue.title, highlighting: store.searchQuery)
                     .foregroundStyle(Color.appText)
                     .lineLimit(1)
                     .truncationMode(.tail)

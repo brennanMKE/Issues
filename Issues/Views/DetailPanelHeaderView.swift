@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DetailPanelHeaderView: View {
     let issue: Issue
+    var searchQuery: String = ""
     let onClose: () -> Void
 
     var body: some View {
@@ -10,7 +11,7 @@ struct DetailPanelHeaderView: View {
                 Text("#\(issue.id)")
                     .font(.system(size: 11, weight: .heavy))
                     .foregroundStyle(Color.appMuted)
-                Text(issue.title)
+                Text(issue.title, highlighting: searchQuery)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color.appText)
                     .fixedSize(horizontal: false, vertical: true)

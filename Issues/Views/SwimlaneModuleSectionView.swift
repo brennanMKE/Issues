@@ -17,6 +17,7 @@ struct SwimlaneModuleSectionView: View {
                     IssueCardView(
                         issue: issue,
                         isSelected: store.selectedIssueID == issue.id,
+                        searchQuery: store.searchQuery,
                         onTap: { store.toggleSelection(issue.id) },
                         onOpenMarkdown: onOpenMarkdown
                     )

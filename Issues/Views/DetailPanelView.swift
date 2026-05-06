@@ -2,13 +2,14 @@ import SwiftUI
 
 struct DetailPanelView: View {
     let issue: Issue
+    var searchQuery: String = ""
     let onClose: () -> Void
     let onOpenMarkdown: (Issue) -> Void
 
     var body: some View {
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 14) {
-                DetailPanelHeaderView(issue: issue, onClose: onClose)
+                DetailPanelHeaderView(issue: issue, searchQuery: searchQuery, onClose: onClose)
                 DetailPanelMetadataView(issue: issue)
                 Divider().background(Color.appBorder)
                 DetailPanelDescriptionView(issue: issue)
