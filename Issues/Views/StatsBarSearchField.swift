@@ -14,7 +14,7 @@ struct StatsBarSearchField: View {
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(Color.appMuted)
 
-            TextField("Search", text: $store.searchQuery)
+            TextField("Search title, description, or number", text: $store.searchQuery)
                 .textFieldStyle(.plain)
                 .font(.system(size: 12))
                 .foregroundStyle(Color.appText)

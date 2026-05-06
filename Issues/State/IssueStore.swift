@@ -160,12 +160,28 @@ final class IssueStore: Identifiable {
     var filteredIssues: [Issue] {
         let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         let lowercasedQuery = trimmedQuery.isEmpty ? nil : trimmedQuery.lowercased()
+        // Pure-numeric queries also match against the issue id (#0067).
+        // "31" matches "0031" via the zero-padded form; "003" matches all
+        // "*003*" ids via the substring form. Non-numeric queries continue
+        // to use the existing title/description match.
+        let numericPaddedID: String? = {
+            guard let q = lowercasedQuery,
+                  !q.isEmpty,
+                  q.allSatisfy(\.isNumber),
+                  let value = Int(q) else { return nil }
+            return String(format: "%04d", value)
+        }()
         return issues.filter { issue in
             if !statusFilters.isEmpty && !statusFilters.contains(issue.status) { return false }
             if let m = moduleFilter, !issue.modules.contains(m) { return false }
             if let p = platformFilter, issue.platform != p, issue.platform != "All" { return false }
             if let q = lowercasedQuery {
-                guard issue.title.lowercased().contains(q) ||
+                let idMatch: Bool = {
+                    guard let padded = numericPaddedID else { return false }
+                    return issue.id.contains(q) || issue.id.contains(padded)
+                }()
+                guard idMatch ||
+                      issue.title.lowercased().contains(q) ||
                       issue.description.lowercased().contains(q) else { return false }
             }
             return true
