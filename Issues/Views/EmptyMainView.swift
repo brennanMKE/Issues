@@ -34,6 +34,17 @@ struct EmptyMainView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(Color.appBackground)
+        .folderDropTarget { url in
+            // Same drop flow as `MainView` — handles the case where the
+            // main window is up but no tab is currently active (#0050).
+            do {
+                try bookmarks.remember(url: url)
+            } catch {
+                bookmarks.lastError = error.localizedDescription
+                return
+            }
+            tabs.openTab(url: url)
+        }
     }
 }
 

@@ -44,6 +44,19 @@ struct MainView: View {
             }
         }
         .background(Color.appBackground)
+        .folderDropTarget { url in
+            // Dropping a folder onto the main window opens it as a new tab
+            // (or activates an existing tab for the same path). Mirrors the
+            // picker's bookmark step so the folder also lands in the
+            // remembered list (#0050).
+            do {
+                try bookmarks.remember(url: url)
+            } catch {
+                bookmarks.lastError = error.localizedDescription
+                return
+            }
+            tabs.openTab(url: url)
+        }
         .sheet(isPresented: $showingMarkdownSheet) {
             IssueMarkdownSheet(store: store)
         }

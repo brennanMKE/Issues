@@ -53,6 +53,18 @@ struct FolderPickerView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.appBackground)
+        .folderDropTarget { url in
+            // Drop-from-Finder mirrors the picker buttons: persist the
+            // bookmark, then route through `onSelect` so the scene wrapper
+            // opens the tab and dismisses the picker (#0050).
+            do {
+                try bookmarks.remember(url: url)
+            } catch {
+                bookmarks.lastError = error.localizedDescription
+                return
+            }
+            onSelect(url)
+        }
     }
 }
 
