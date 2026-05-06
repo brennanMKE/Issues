@@ -5,7 +5,7 @@ struct MainView: View {
     @Bindable var tabs: TabsModel
     @Bindable var bookmarks: FolderBookmarkService
 
-    @State private var markdownSheetIssue: Issue? = nil
+    @State private var showingMarkdownSheet: Bool = false
     @State private var showingLintSheet: Bool = false
 
     var body: some View {
@@ -21,14 +21,17 @@ struct MainView: View {
             ToolbarView(store: store)
 
             HStack(spacing: 0) {
-                MainContentAreaView(store: store, markdownSheetIssue: $markdownSheetIssue)
+                MainContentAreaView(store: store, showingMarkdownSheet: $showingMarkdownSheet)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 if store.selectedIssue != nil {
                     DetailPanelView(
                         issue: store.selectedIssue ?? placeholderIssue,
                         onClose: { store.deselect() },
-                        onOpenMarkdown: { markdownSheetIssue = $0 }
+                        onOpenMarkdown: { issue in
+                            store.selectedIssueID = issue.id
+                            showingMarkdownSheet = true
+                        }
                     )
                     .frame(width: 360)
                     .transition(.move(edge: .trailing))
@@ -41,8 +44,8 @@ struct MainView: View {
             }
         }
         .background(Color.appBackground)
-        .sheet(item: $markdownSheetIssue) { issue in
-            IssueMarkdownSheet(issue: issue)
+        .sheet(isPresented: $showingMarkdownSheet) {
+            IssueMarkdownSheet(store: store)
         }
         .sheet(isPresented: $showingLintSheet) {
             LintSheetView(findings: store.lintFindings)
@@ -72,7 +75,8 @@ struct MainView: View {
     private func registerCommandHandlers() {
         AppCommandsController.shared.activeStore = store
         AppCommandsController.shared.openMarkdown = { issue in
-            markdownSheetIssue = issue
+            store.selectedIssueID = issue.id
+            showingMarkdownSheet = true
         }
     }
 
