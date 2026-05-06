@@ -32,6 +32,14 @@ struct MainView: View {
                         onOpenMarkdown: { issue in
                             store.selectedIssueID = issue.id
                             showingMarkdownSheet = true
+                        },
+                        // Cross-reference clicks (#0054) — swap the panel's
+                        // selection in place. If the referenced id isn't in
+                        // the current folder, leave selection untouched so
+                        // the click no-ops cleanly.
+                        onOpenIssue: { id in
+                            guard store.issues.contains(where: { $0.id == id }) else { return }
+                            store.selectedIssueID = id
                         }
                     )
                     .frame(width: 360)

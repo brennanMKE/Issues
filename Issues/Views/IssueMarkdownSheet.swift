@@ -10,7 +10,7 @@ struct IssueMarkdownSheet: View {
             if let issue = store.selectedIssue {
                 IssueMarkdownSheetHeaderView(issue: issue, searchQuery: store.searchQuery, onDismiss: { dismiss() })
                 Divider().background(Color.appBorder)
-                IssueMarkdownSheetContentView(issue: issue)
+                IssueMarkdownSheetContentView(issue: issue, onOpenIssue: openIssue)
             } else {
                 // Defensive: callers should always set selection before
                 // presenting, but render a clean empty surface and dismiss
@@ -41,6 +41,16 @@ struct IssueMarkdownSheet: View {
             store.selectNext()
             return .handled
         }
+    }
+
+    /// Routes a `#NNNN` cross-reference click (#0054) to the underlying store.
+    /// The sheet stays mounted; `IssueMarkdownSheetContentView` re-resolves
+    /// `store.selectedIssue` and Textual rebuilds via `.id(issue.id)`. Misses
+    /// (referenced id not in this folder) leave selection untouched so the
+    /// click no-ops cleanly rather than blanking the sheet.
+    private func openIssue(_ id: String) {
+        guard store.issues.contains(where: { $0.id == id }) else { return }
+        store.selectedIssueID = id
     }
 }
 

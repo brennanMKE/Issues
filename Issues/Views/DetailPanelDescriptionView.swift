@@ -3,17 +3,34 @@ import Textual
 
 struct DetailPanelDescriptionView: View {
     let issue: Issue
+    /// Optional callback invoked when the user clicks a `#NNNN` cross-
+    /// reference link inside the markdown body (#0054). The argument is the
+    /// four-digit id parsed out of the `issue://NNNN` URL. When `nil`, the
+    /// click no-ops cleanly — previews and standalone hosts that don't have a
+    /// store don't crash.
+    var onOpenIssue: ((String) -> Void)? = nil
 
     var body: some View {
         Group {
             if let body = bodyMarkdown() {
                 StructuredText(
-                    markdown: body,
+                    markdown: IssueCrossRef.rewrite(body),
                     baseURL: issue.fileURL.deletingLastPathComponent()
                 )
                 .textual.textSelection(.enabled)
                 .font(.system(size: 12))
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .environment(\.openURL, OpenURLAction { url in
+                    // Intercept the custom `issue://NNNN` scheme and route it
+                    // back to the host. Everything else (https, mailto, file)
+                    // falls through to the system handler so external links
+                    // keep working.
+                    if let id = IssueCrossRef.issueID(from: url) {
+                        onOpenIssue?(id)
+                        return .handled
+                    }
+                    return .systemAction
+                })
             } else if !issue.description.isEmpty {
                 Text(issue.description)
                     .font(.system(size: 12))

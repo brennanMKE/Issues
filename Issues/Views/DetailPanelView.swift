@@ -5,6 +5,9 @@ struct DetailPanelView: View {
     var searchQuery: String = ""
     let onClose: () -> Void
     let onOpenMarkdown: (Issue) -> Void
+    /// Forwarded to `DetailPanelDescriptionView` so `#NNNN` mentions inside
+    /// the body are clickable (#0054). `nil` in previews / standalone hosts.
+    var onOpenIssue: ((String) -> Void)? = nil
 
     var body: some View {
         ScrollView(.vertical) {
@@ -12,7 +15,7 @@ struct DetailPanelView: View {
                 DetailPanelHeaderView(issue: issue, searchQuery: searchQuery, onClose: onClose)
                 DetailPanelMetadataView(issue: issue)
                 Divider().background(Color.appBorder)
-                DetailPanelDescriptionView(issue: issue)
+                DetailPanelDescriptionView(issue: issue, onOpenIssue: onOpenIssue)
                 DetailPanelFileLinkView(issue: issue, onOpenMarkdown: onOpenMarkdown)
             }
             .padding(16)
