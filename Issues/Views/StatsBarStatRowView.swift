@@ -13,9 +13,15 @@ struct StatsBarStatRowView: View {
             Text("\(count)")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(Color.appText)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .fixedSize(horizontal: true, vertical: false)
             Text(label)
                 .font(.system(size: 12))
                 .foregroundStyle(Color.appMuted)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .fixedSize(horizontal: true, vertical: false)
         }
     }
 }
