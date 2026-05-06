@@ -182,7 +182,7 @@ final class RecorderView: NSView {
         if flags.contains(.option)   { mods.insert(.option) }
         if flags.contains(.shift)    { mods.insert(.shift) }
         if flags.contains(.control)  { mods.insert(.control) }
-        if flags.contains(.function) { mods.insert(.function) }
+        // .function intentionally dropped — reserved for system use as of macOS 12.
         return mods
     }
 
@@ -194,7 +194,7 @@ final class RecorderView: NSView {
 
         // Plain character keys: require at least one non-shift modifier so the
         // user can't bind `t` and shadow text input.
-        let nonShiftMods: SwiftUI.EventModifiers = modifiers.subtracting([.shift, .function])
+        let nonShiftMods: SwiftUI.EventModifiers = modifiers.subtracting([.shift])
         guard !nonShiftMods.isEmpty else {
             return nil
         }
