@@ -2,18 +2,21 @@ import SwiftUI
 import AppKit
 
 /// Full-size image viewer presented when the user clicks an inline attachment
-/// thumbnail (#0056). Round 1 wrapped the image in a `ScrollView` at native
-/// resolution — large screenshots opened with scrollbars and no zoom controls.
-/// Round 2 makes the sheet a proper viewer:
+/// thumbnail (#0056).
 ///
-/// - On open the image is scaled to fit the available area (no scrollbars at
-///   the default 1× zoom).
-/// - `MagnificationGesture` drives a `@State zoom` clamped to `[0.5, 8]`.
-/// - When zoom > fit, a `DragGesture` pans the image inside the sheet.
-/// - Double-click toggles between fit and 2×.
-/// - Keyboard: Esc / space dismiss; Cmd-0 reset to fit; Cmd-= / Cmd-+
-///   zoom in; Cmd-- zoom out.
-/// - Reveal-in-Finder is unchanged.
+/// - Round 1 wrapped the image in a `ScrollView` at native resolution — large
+///   screenshots opened with scrollbars and no zoom controls.
+/// - Round 2 added a fit-scale + manual `offset`/`DragGesture` pan, with
+///   visible zoom buttons and a percent label in the toolbar.
+/// - Round 3 (this revision): the manual offset model pushed zoomed content
+///   into the top-left corner instead of letting the user roam around the
+///   image. The toolbar zoom buttons + percent label were also visual noise.
+///   The image now lives inside a `ScrollView([.horizontal, .vertical])` so
+///   native macOS scrollbars + drag-pan handle navigation once the image
+///   exceeds the visible area. The toolbar drops to filename, Reveal-in-Finder,
+///   and close. Pinch-zoom, double-click toggle, and the Cmd-0 / Cmd-= /
+///   Cmd-- keyboard shortcuts are preserved (the shortcuts now live on hidden
+///   buttons so they don't add visual clutter).
 struct AttachmentSheet: View {
     let url: URL
 
@@ -21,17 +24,13 @@ struct AttachmentSheet: View {
 
     /// Multiplier applied on top of the fit-scale baseline. 1 means
     /// "size to fit"; the magnification gesture and Cmd-=/Cmd-- both
-    /// adjust this value.
+    /// adjust this value. When `zoom > 1` the image's framed size exceeds
+    /// the ScrollView's visible area and the scrollbars activate.
     @State private var zoom: CGFloat = 1
     /// Snapshot of `zoom` at the start of a magnification gesture; the
     /// gesture's `value` is multiplied against this so a slow pinch
     /// composes naturally with previous zooms.
     @State private var zoomAnchor: CGFloat = 1
-    /// User-applied pan offset in points, in the unzoomed coordinate space
-    /// of the image container. Reset to .zero whenever zoom returns to 1
-    /// so the next double-click-to-fit recenters cleanly.
-    @State private var offset: CGSize = .zero
-    @State private var dragAnchor: CGSize = .zero
 
     private static let minZoom: CGFloat = 0.5
     private static let maxZoom: CGFloat = 8
@@ -51,6 +50,7 @@ struct AttachmentSheet: View {
         .frame(minWidth: 480, idealWidth: 900, maxWidth: .infinity,
                minHeight: 320, idealHeight: 700, maxHeight: .infinity)
         .background(Color.appBackground)
+        .background(keyboardShortcutShim)
         .focusable()
         .focusEffectDisabled()
         .onKeyPress(.escape) {
@@ -71,7 +71,6 @@ struct AttachmentSheet: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer()
-            zoomControls
             Button(action: revealInFinder) {
                 Label("Reveal in Finder", systemImage: "folder")
             }
@@ -89,41 +88,22 @@ struct AttachmentSheet: View {
         .padding(.vertical, 10)
     }
 
-    /// Cmd-= / Cmd-- / Cmd-0 keyboard shortcuts plus matching buttons. The
-    /// hidden shortcut buttons keep the keyboard wiring colocated with the
-    /// visible controls and avoid a separate `.keyboardShortcut` chain on
-    /// invisible elements that's easy to lose track of.
-    private var zoomControls: some View {
-        HStack(spacing: 4) {
-            Button(action: zoomOut) {
-                Image(systemName: "minus.magnifyingglass")
-            }
-            .buttonStyle(.borderless)
-            .help("Zoom out (Cmd-)")
-            .keyboardShortcut("-", modifiers: .command)
-            .disabled(image == nil)
-
-            Text(zoomLabel)
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(Color.appMuted)
-                .frame(minWidth: 44)
-
-            Button(action: zoomIn) {
-                Image(systemName: "plus.magnifyingglass")
-            }
-            .buttonStyle(.borderless)
-            .help("Zoom in (Cmd=)")
-            .keyboardShortcut("=", modifiers: .command)
-            .disabled(image == nil)
-
-            Button(action: resetZoom) {
-                Image(systemName: "arrow.up.left.and.down.right.magnifyingglass")
-            }
-            .buttonStyle(.borderless)
-            .help("Fit to window (Cmd-0)")
-            .keyboardShortcut("0", modifiers: .command)
-            .disabled(image == nil)
+    /// Hidden buttons that exist solely to register the Cmd-0 / Cmd-= /
+    /// Cmd-- keyboard shortcuts. They stay out of the layout via
+    /// `.frame(width: 0, height: 0)` and `.hidden()` so the toolbar can be
+    /// uncluttered while the shortcuts still fire.
+    private var keyboardShortcutShim: some View {
+        ZStack {
+            Button("Zoom out", action: zoomOut)
+                .keyboardShortcut("-", modifiers: .command)
+            Button("Zoom in", action: zoomIn)
+                .keyboardShortcut("=", modifiers: .command)
+            Button("Fit", action: resetZoom)
+                .keyboardShortcut("0", modifiers: .command)
         }
+        .frame(width: 0, height: 0)
+        .hidden()
+        .accessibilityHidden(true)
     }
 
     @ViewBuilder
@@ -135,32 +115,36 @@ struct AttachmentSheet: View {
         }
     }
 
-    /// Renders the image at fit-scale (computed from the GeometryProxy) then
-    /// multiplies in the user's zoom and pan. Manual offset + scale (rather
-    /// than wrapping a ScrollView) gives us pinch-to-zoom-while-panning
-    /// without the focus/scroll-clipping conflicts a nested ScrollView
-    /// introduces, and lets a single double-tap reset both axes.
+    /// Renders the image inside a horizontal+vertical `ScrollView`. At
+    /// `zoom == 1` the framed size matches the fit size, so the image
+    /// fills the visible area and the scrollbars stay quiet. Once the user
+    /// pinches past fit (`zoom > 1`) the framed size exceeds the visible
+    /// area and native scrollbars + drag-pan let them inspect any region
+    /// of the image. Manual `offset`/`DragGesture` pan was deliberately
+    /// dropped because it pushed content into the top-left rather than
+    /// scrolling around the zoomed image.
     @ViewBuilder
     private func zoomableImage(_ image: NSImage) -> some View {
         GeometryReader { geometry in
             let fitScale = computeFitScale(imageSize: image.size, container: geometry.size)
-            let displayWidth = image.size.width * fitScale * zoom
-            let displayHeight = image.size.height * fitScale * zoom
+            let fitWidth = image.size.width * fitScale
+            let fitHeight = image.size.height * fitScale
+            let displayWidth = max(fitWidth * zoom, fitWidth)
+            let displayHeight = max(fitHeight * zoom, fitHeight)
 
-            Image(nsImage: image)
-                .resizable()
-                .interpolation(.high)
-                .frame(width: displayWidth, height: displayHeight)
-                .offset(offset)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.appBackgroundCard)
-                .contentShape(Rectangle())
-                .gesture(magnification)
-                .simultaneousGesture(panGesture)
-                .onTapGesture(count: 2) {
-                    toggleFitOrTwoX()
-                }
-                .accessibilityLabel(Text(url.lastPathComponent))
+            ScrollView([.horizontal, .vertical], showsIndicators: true) {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: displayWidth, height: displayHeight)
+                    .gesture(magnification)
+                    .onTapGesture(count: 2) {
+                        toggleFitOrTwoX()
+                    }
+                    .accessibilityLabel(Text(url.lastPathComponent))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackgroundCard)
         }
     }
 
@@ -194,38 +178,14 @@ struct AttachmentSheet: View {
                 zoomAnchor = zoom
                 if zoom <= 1 {
                     // Snapping fit-or-below back to exactly 1 cleans up any
-                    // accumulated rounding and recenters the image.
+                    // accumulated rounding so the image refits cleanly.
                     zoom = 1
                     zoomAnchor = 1
-                    offset = .zero
-                    dragAnchor = .zero
                 }
             }
     }
 
-    /// Panning is only meaningful when the image is larger than the
-    /// container. At zoom == 1 the image already fits so a drag would just
-    /// slide it off-center for no reason.
-    private var panGesture: some Gesture {
-        DragGesture()
-            .onChanged { value in
-                guard zoom > 1 else { return }
-                offset = CGSize(
-                    width: dragAnchor.width + value.translation.width,
-                    height: dragAnchor.height + value.translation.height
-                )
-            }
-            .onEnded { _ in
-                dragAnchor = offset
-            }
-    }
-
     // MARK: - Zoom helpers
-
-    private var zoomLabel: String {
-        let percent = Int((zoom * 100).rounded())
-        return "\(percent)%"
-    }
 
     private func zoomIn() {
         let next = clampZoom(zoom * Self.zoomStep)
@@ -240,10 +200,6 @@ struct AttachmentSheet: View {
         withAnimation(.easeInOut(duration: 0.15)) {
             zoom = next
             zoomAnchor = next
-            if next <= 1 {
-                offset = .zero
-                dragAnchor = .zero
-            }
         }
     }
 
@@ -251,8 +207,6 @@ struct AttachmentSheet: View {
         withAnimation(.easeInOut(duration: 0.15)) {
             zoom = 1
             zoomAnchor = 1
-            offset = .zero
-            dragAnchor = .zero
         }
     }
 
@@ -261,8 +215,6 @@ struct AttachmentSheet: View {
             if zoom > 1.05 {
                 zoom = 1
                 zoomAnchor = 1
-                offset = .zero
-                dragAnchor = .zero
             } else {
                 zoom = 2
                 zoomAnchor = 2
