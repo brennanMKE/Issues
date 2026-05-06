@@ -1,48 +1,21 @@
 import SwiftUI
-import Textual
 
+/// Sheet body for `IssueMarkdownSheet`. Reuses `DetailPanelDescriptionView`
+/// so the sheet and the right-side detail panel render identically (#0048).
+/// `DetailPanelDescriptionView` already crops above the H1 + metadata table
+/// (the sheet's own header carries id + title), falls back gracefully on read
+/// failure, and tags the subtree with `.id(issue.id)` from #0041 so Textual's
+/// internal cache is invalidated on selection change.
 struct IssueMarkdownSheetContentView: View {
     let issue: Issue
 
     var body: some View {
-        switch loadMarkdown() {
-        case .success(let text):
-            ScrollView(.vertical) {
-                StructuredText(
-                    markdown: text,
-                    baseURL: issue.fileURL.deletingLastPathComponent()
-                )
-                .textual.textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        ScrollView(.vertical) {
+            DetailPanelDescriptionView(issue: issue)
                 .padding(20)
-            }
-            .background(Color.appBackground)
-        case .failure(let error):
-            ScrollView(.vertical) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Couldn't read \(issue.fileURL.lastPathComponent)")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Color.appText)
-                    Text(error.localizedDescription)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.appMuted)
-                        .textSelection(.enabled)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(20)
-            }
-            .background(Color.appBackground)
         }
-    }
-
-    private func loadMarkdown() -> Result<String, Error> {
-        do {
-            let text = try String(contentsOf: issue.fileURL, encoding: .utf8)
-            return .success(text)
-        } catch {
-            return .failure(error)
-        }
+        .background(Color.appBackground)
     }
 }
 

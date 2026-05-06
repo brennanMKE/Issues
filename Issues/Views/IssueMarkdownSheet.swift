@@ -11,7 +11,7 @@ struct IssueMarkdownSheet: View {
             Divider().background(Color.appBorder)
             IssueMarkdownSheetContentView(issue: issue)
         }
-        .frame(minWidth: 600, idealWidth: 900, maxWidth: .infinity,
+        .frame(minWidth: 720, idealWidth: 1080, maxWidth: .infinity,
                minHeight: 400, idealHeight: 800, maxHeight: .infinity)
         .background(Color.appBackground)
         .focusable()
