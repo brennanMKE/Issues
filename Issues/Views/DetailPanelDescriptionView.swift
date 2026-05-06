@@ -10,27 +10,15 @@ struct DetailPanelDescriptionView: View {
     /// store don't crash.
     var onOpenIssue: ((String) -> Void)? = nil
 
+    /// File URL of an attachment the user clicked (#0056). Drives a sheet
+    /// presentation so the host doesn't have to track per-thumbnail state. Set
+    /// to nil to dismiss.
+    @State private var attachmentURL: URL?
+
     var body: some View {
         Group {
             if let body = bodyMarkdown() {
-                StructuredText(
-                    markdown: IssueCrossRef.rewrite(body),
-                    baseURL: issue.fileURL.deletingLastPathComponent()
-                )
-                .textual.textSelection(.enabled)
-                .font(.system(size: 12))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .environment(\.openURL, OpenURLAction { url in
-                    // Intercept the custom `issue://NNNN` scheme and route it
-                    // back to the host. Everything else (https, mailto, file)
-                    // falls through to the system handler so external links
-                    // keep working.
-                    if let id = IssueCrossRef.issueID(from: url) {
-                        onOpenIssue?(id)
-                        return .handled
-                    }
-                    return .systemAction
-                })
+                bodyView(for: body)
             } else if !issue.description.isEmpty {
                 Text(issue.description)
                     .font(.system(size: 12))
@@ -49,6 +37,56 @@ struct DetailPanelDescriptionView: View {
         // identity view. Tagging the subtree with the issue id forces SwiftUI
         // to discard and rebuild on every selection change.
         .id(issue.id)
+        .sheet(isPresented: Binding(
+            get: { attachmentURL != nil },
+            set: { if !$0 { attachmentURL = nil } }
+        )) {
+            if let url = attachmentURL {
+                AttachmentSheet(url: url)
+            }
+        }
+    }
+
+    /// Renders the body as an ordered stack of prose chunks (via
+    /// `StructuredText`) and image chunks (via `AttachmentThumbnailView`).
+    /// Splitting happens because `Canvas`-drawn Textual attachments don't
+    /// receive gesture hits — see `InlineImageMarkdown` for the rationale.
+    @ViewBuilder
+    private func bodyView(for body: String) -> some View {
+        let chunks = InlineImageMarkdown.split(IssueCrossRef.rewrite(body))
+        let baseURL = issue.fileURL.deletingLastPathComponent()
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(Array(chunks.enumerated()), id: \.offset) { _, chunk in
+                switch chunk {
+                case .prose(let markdown):
+                    StructuredText(
+                        markdown: markdown,
+                        baseURL: baseURL
+                    )
+                    .textual.textSelection(.enabled)
+                    .font(.system(size: 12))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .environment(\.openURL, OpenURLAction { url in
+                        // Intercept the custom `issue://NNNN` scheme and
+                        // route it back to the host. Everything else (https,
+                        // mailto, file) falls through to the system handler
+                        // so external links keep working.
+                        if let id = IssueCrossRef.issueID(from: url) {
+                            onOpenIssue?(id)
+                            return .handled
+                        }
+                        return .systemAction
+                    })
+                case .image(let alt, let path):
+                    AttachmentThumbnailView(
+                        alt: alt,
+                        path: path,
+                        baseURL: baseURL,
+                        onOpen: { attachmentURL = $0 }
+                    )
+                }
+            }
+        }
     }
 
     /// Returns the markdown body below the H1 title and metadata table,
