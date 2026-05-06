@@ -14,6 +14,8 @@ struct TimelineView: View {
 
         ScrollView([.horizontal, .vertical]) {
             VStack(alignment: .leading, spacing: 0) {
+                TimelineActivitySparkline(issues: issues)
+                    .padding(.bottom, 8)
                 TimelineTickHeaderView(geometry: geometry, labelGutter: Self.labelGutter)
                 ForEach(groups, id: \.module) { group in
                     TimelineModuleRowView(
