@@ -16,7 +16,13 @@ import AppKit
 ///   already surfaced by `LintFinding.missingAttachment` so the lint sheet
 ///   keeps the actionable channel; this view just avoids blank space.
 struct AttachmentThumbnailView: View {
-    static let maxInlineWidth: CGFloat = 480
+    /// Hard caps for the inline thumbnail. Round 1 only constrained width
+    /// (480pt) and computed height from the aspect ratio, which let tall
+    /// portrait screenshots run 1000pt+ vertically. Round 2 caps both axes
+    /// at recognizable-but-compact sizes so the thumbnail behaves like a
+    /// thumbnail regardless of source orientation.
+    static let maxInlineWidth: CGFloat = 360
+    static let maxInlineHeight: CGFloat = 240
 
     let alt: String
     let path: String
@@ -43,12 +49,21 @@ struct AttachmentThumbnailView: View {
         return NSImage(contentsOf: url)
     }
 
+    /// Returns the rendered thumbnail size, fit inside `maxInlineWidth` x
+    /// `maxInlineHeight` while preserving aspect ratio. Round 1 only fit
+    /// width, so a portrait capture stayed full-height; round 2 picks the
+    /// limiting axis and scales the other proportionally.
     private var displaySize: CGSize? {
         guard let image, image.size.width > 0, image.size.height > 0 else { return nil }
         let intrinsic = image.size
-        let width = min(Self.maxInlineWidth, intrinsic.width)
-        let height = width * (intrinsic.height / intrinsic.width)
-        return CGSize(width: width, height: height)
+        let widthRatio = Self.maxInlineWidth / intrinsic.width
+        let heightRatio = Self.maxInlineHeight / intrinsic.height
+        // Never upscale tiny images — clamp ratio to 1.
+        let scale = min(1, min(widthRatio, heightRatio))
+        return CGSize(
+            width: intrinsic.width * scale,
+            height: intrinsic.height * scale
+        )
     }
 
     var body: some View {
@@ -58,6 +73,7 @@ struct AttachmentThumbnailView: View {
                     Image(nsImage: image)
                         .resizable()
                         .interpolation(.high)
+                        .scaledToFit()
                         .frame(width: size.width, height: size.height)
                         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                         .overlay(
