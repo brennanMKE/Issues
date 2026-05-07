@@ -12,6 +12,18 @@ struct MainView: View {
     /// `AppCommandsController.showCommandPalette` which we register on appear.
     @State private var showingCommandPalette: Bool = false
 
+    /// Persisted detail-panel width (#0069). Default 360pt matches the pre-fix
+    /// layout. Clamped on read against the live window width via
+    /// `clampedPanelWidth(for:)` so a previously-saved value larger than the
+    /// current window's `width / 3` cap is honored as the intent but never
+    /// rendered larger than the cap.
+    @AppStorage("detailPanelWidth") private var detailPanelWidth: Double = 360
+
+    /// Smallest width that still leaves room for the metadata grid plus a
+    /// 240pt-wide attachment thumbnail with breathing room. Matches the
+    /// behavior contract in `project-issues/0069.md`.
+    private static let minDetailPanelWidth: CGFloat = 280
+
     var body: some View {
         VStack(spacing: 0) {
             TabBarView(tabs: tabs, bookmarks: bookmarks)
@@ -24,33 +36,63 @@ struct MainView: View {
             )
             ToolbarView(store: store)
 
-            HStack(spacing: 0) {
-                MainContentAreaView(store: store, showingMarkdownSheet: $showingMarkdownSheet)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // GeometryReader gives us the live width of the content+panel
+            // strip so the panel's max-width clamp (`width / 3` per #0069)
+            // tracks window resizes in real time. Wrapping just this HStack
+            // (not the whole MainView) keeps tabs/stats/toolbar out of the
+            // GeometryReader's layout pass.
+            GeometryReader { geometry in
+                let panelWidth = clampedPanelWidth(for: geometry.size.width)
+                HStack(spacing: 0) {
+                    MainContentAreaView(store: store, showingMarkdownSheet: $showingMarkdownSheet)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                if store.selectedIssue != nil {
-                    DetailPanelView(
-                        issue: store.selectedIssue ?? placeholderIssue,
-                        searchQuery: store.searchQuery,
-                        onClose: { store.deselect() },
-                        onOpenMarkdown: { issue in
-                            store.selectedIssueID = issue.id
-                            showingMarkdownSheet = true
-                        },
-                        // Cross-reference clicks (#0054) — swap the panel's
-                        // selection in place. If the referenced id isn't in
-                        // the current folder, leave selection untouched so
-                        // the click no-ops cleanly.
-                        onOpenIssue: { id in
-                            guard store.issues.contains(where: { $0.id == id }) else { return }
-                            store.selectedIssueID = id
-                        }
-                    )
-                    .frame(width: 360)
-                    .transition(.move(edge: .trailing))
+                    if store.selectedIssue != nil {
+                        // Resize handle sits on the panel's leading edge
+                        // (#0069). It's a 6pt invisible strip that flips the
+                        // cursor to horizontal-resize on hover; dragging
+                        // mutates `detailPanelWidth` which flows back through
+                        // `clampedPanelWidth(for:)` on the next layout pass.
+                        DetailPanelResizeHandle(
+                            currentWidth: panelWidth,
+                            onResize: { proposed in
+                                detailPanelWidth = Double(
+                                    clampedPanelWidth(
+                                        proposed,
+                                        windowWidth: geometry.size.width
+                                    )
+                                )
+                            }
+                        )
+
+                        DetailPanelView(
+                            issue: store.selectedIssue ?? placeholderIssue,
+                            searchQuery: store.searchQuery,
+                            onClose: { store.deselect() },
+                            onOpenMarkdown: { issue in
+                                store.selectedIssueID = issue.id
+                                showingMarkdownSheet = true
+                            },
+                            // Cross-reference clicks (#0054) — swap the panel's
+                            // selection in place. If the referenced id isn't in
+                            // the current folder, leave selection untouched so
+                            // the click no-ops cleanly.
+                            onOpenIssue: { id in
+                                guard store.issues.contains(where: { $0.id == id }) else { return }
+                                store.selectedIssueID = id
+                            }
+                        )
+                        // Pinning the panel's width here is the core of #0069:
+                        // without `.frame(width:)`, the ScrollView reports the
+                        // intrinsic width of its content and the panel jiggles
+                        // as the user navigates between issues with different
+                        // body lengths or thumbnail widths.
+                        .frame(width: panelWidth)
+                        .transition(.move(edge: .trailing))
+                    }
                 }
+                .animation(.easeInOut(duration: 0.2), value: store.selectedIssueID)
             }
-            .animation(.easeInOut(duration: 0.2), value: store.selectedIssueID)
 
             if let error = store.loadError {
                 MainErrorBannerView(message: error)
@@ -126,6 +168,25 @@ struct MainView: View {
             return total == 1 ? "1 issue" : "\(total) issues"
         }
         return "\(filtered) of \(total)"
+    }
+
+    /// Clamps the persisted `detailPanelWidth` against `[minDetailPanelWidth,
+    /// windowWidth / 3]` for the current window width (#0069). Called on
+    /// every layout pass so the panel shrinks live when the window shrinks
+    /// past `currentPanelWidth × 3`. The persisted value itself is left
+    /// untouched — the user's intent is preserved and re-honored as soon as
+    /// the window grows back.
+    private func clampedPanelWidth(for windowWidth: CGFloat) -> CGFloat {
+        clampedPanelWidth(CGFloat(detailPanelWidth), windowWidth: windowWidth)
+    }
+
+    /// Pure clamp helper shared by the layout path and the resize-handle
+    /// callback. Falls back to `minDetailPanelWidth` if the window is so
+    /// narrow that `width / 3` would go below the floor — the panel still
+    /// renders at the floor in that case rather than collapsing.
+    private func clampedPanelWidth(_ proposed: CGFloat, windowWidth: CGFloat) -> CGFloat {
+        let maxWidth = max(MainView.minDetailPanelWidth, windowWidth / 3)
+        return min(max(proposed, MainView.minDetailPanelWidth), maxWidth)
     }
 
     /// Fallback used only if the selected issue disappears between change
