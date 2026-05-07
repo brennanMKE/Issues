@@ -41,6 +41,16 @@ struct FolderPickerView: View {
             }
             .buttonStyle(.plain)
 
+            // Compact dashed drop-zone hint (#0067). The whole picker is
+            // already a `folderDropTarget`; this widget only advertises the
+            // affordance so first-time users discover it.
+            FolderDropHintView(
+                systemImage: nil,
+                caption: "\u{2026}or drop a folder here"
+            )
+            .frame(maxWidth: 320)
+            .padding(.horizontal, 24)
+
             if let error = bookmarks.lastError {
                 Text(error)
                     .font(.system(size: 11))

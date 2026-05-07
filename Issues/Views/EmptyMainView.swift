@@ -15,22 +15,30 @@ struct EmptyMainView: View {
         VStack(spacing: 0) {
             TabBarView(tabs: tabs, bookmarks: bookmarks)
 
-            VStack(spacing: 12) {
-                Image(systemName: "folder")
-                    .font(.system(size: 40))
-                    .foregroundStyle(Color.appMuted)
-                Text("No folder open")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.appText)
-                Text("Click the + button or press \u{2318}T to open an issues folder.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.appMuted)
-                    .multilineTextAlignment(.center)
+            VStack(spacing: 16) {
+                VStack(spacing: 12) {
+                    Image(systemName: "folder")
+                        .font(.system(size: 40))
+                        .foregroundStyle(Color.appMuted)
+                    Text("No folder open")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Color.appText)
+                    // Dashed drop-zone hint (#0067) advertises that the
+                    // surrounding window accepts a folder drag from Finder.
+                    // The actual drop handler lives on the outer
+                    // `folderDropTarget`; the accent border on hover drawn by
+                    // that modifier supersedes this dashed style visually.
+                    FolderDropHintView(
+                        caption: "Drag an issues folder here to open it",
+                        detail: "or click the + button \u{2014} \u{2318}T"
+                    )
+                    .frame(maxWidth: 360)
+                }
                 Button("Open Folder\u{2026}") {
                     openWindow(id: "folderPicker")
                 }
-                .padding(.top, 4)
             }
+            .padding(.horizontal, 24)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .navigationTitle("Issues")
