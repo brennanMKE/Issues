@@ -29,7 +29,7 @@ final class FolderWatcher {
         stop()
         Watcher.logSubsystem = Logging.subsystem
 
-        var options = Options()
+        var options = Watcher.Options()
         options.throttle = .milliseconds(150)
         options.scope = .all
         options.depth = .infinite
@@ -39,7 +39,7 @@ final class FolderWatcher {
 
         task = Task {
             do {
-                let session = try await Session(path: url, options: options)
+                let session = try await Watcher.Session(path: url, options: options)
                 logger.notice("watching \(url.path, privacy: .public)")
                 for try await event in session.events {
                     if Task.isCancelled { break }
