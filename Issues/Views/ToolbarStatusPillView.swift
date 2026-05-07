@@ -4,7 +4,10 @@ import AppKit
 /// A single status filter pill in the toolbar. Plain-click collapses the
 /// active status filter to just this status (or clears it if it was the
 /// only one already selected); Option-click toggles this status's
-/// membership in the active set.
+/// membership in the active set, with one exception (#0068): when the
+/// clicked pill is the *only* active status, Option-click inverts the
+/// selection — every other status becomes active and this one is
+/// dropped. That makes "show me everything but X" a single keystroke.
 struct ToolbarStatusPillView: View {
     let status: IssueStatus
     @Bindable var store: IssueStore
@@ -36,16 +39,23 @@ struct ToolbarStatusPillView: View {
         }
         .buttonStyle(.plain)
         .fixedSize(horizontal: true, vertical: false)
-        .help("Click to filter by \(status.displayName). Option-click to add/remove from the current selection.")
+        .help("Click to filter by \(status.displayName). Option-click to add/remove from the current selection; Option-click the only active pill to invert the selection.")
     }
 
     /// Plain click: collapse selection to just this status, or clear if it
     /// was the only one already selected.
     /// Option-click: toggle this status's membership in the active set.
+    /// Option-click special case (#0068): if this pill is the *only*
+    /// currently-active status, invert the selection — every other status
+    /// becomes active and this one is dropped.
     private func handleClick(isActive: Bool) {
         let optionHeld = NSEvent.modifierFlags.contains(.option)
         if optionHeld {
-            if isActive {
+            if isActive && store.statusFilters.count == 1 {
+                // Invert: this was the sole active filter, so flip to
+                // "everything except this one".
+                store.statusFilters = Set(IssueStatus.displayOrder).subtracting([status])
+            } else if isActive {
                 store.statusFilters.remove(status)
             } else {
                 store.statusFilters.insert(status)
