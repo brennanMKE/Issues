@@ -26,10 +26,30 @@ struct DetailPanelDescriptionView: View {
     /// SwiftUI clears it back to nil when the user dismisses the panel.
     @State private var quickLookURL: URL?
 
+    /// Cached body parse keyed by `(issue.id, modifiedAt)` (#0072). Reading
+    /// the file from disk and rebuilding the chunk list on every body recompute
+    /// caused visible jitter when the user dragged the resize handle (#0069):
+    /// each drag tick changed `panelWidth` upstream in `MainView`, which re-ran
+    /// this view's body, which re-read the file and re-parsed it. The cache
+    /// short-circuits the disk I/O and the split, and `BodyView`'s `Equatable`
+    /// conformance further short-circuits the rendered subtree on width-only
+    /// changes. Refreshed via `.task(id:)` keyed on issue identity + mtime so
+    /// FSEvents-driven content edits still surface.
+    @State private var parsedBody: ParsedBody = .empty
+
     var body: some View {
         Group {
-            if let body = bodyMarkdown() {
-                bodyView(for: body)
+            if let body = parsedBody.body {
+                EquatableView(content: BodyView(
+                    issueID: parsedBody.issueID,
+                    modifiedAt: parsedBody.modifiedAt,
+                    bodyText: body,
+                    baseURL: issue.fileURL.deletingLastPathComponent(),
+                    chunks: parsedBody.chunks,
+                    onOpenIssue: onOpenIssue,
+                    onOpenAttachment: { attachmentURL = $0 },
+                    onPlayVideo: { quickLookURL = $0 }
+                ))
             } else if !issue.description.isEmpty {
                 Text(issue.description)
                     .font(.system(size: 12))
@@ -48,6 +68,17 @@ struct DetailPanelDescriptionView: View {
         // identity view. Tagging the subtree with the issue id forces SwiftUI
         // to discard and rebuild on every selection change.
         .id(issue.id)
+        // Refresh the cached parse whenever the issue changes identity OR the
+        // file's `modifiedAt` ticks (FSEvents-driven save in #0072 territory).
+        // The body of `task` runs synchronously up to the first `await`; we
+        // load synchronously here because the parse is millisecond-scale on
+        // typical inputs and `IssueStore` already runs on the main actor.
+        .task(id: parseCacheKey) {
+            let fresh = ParsedBody.load(from: issue)
+            if fresh != parsedBody {
+                parsedBody = fresh
+            }
+        }
         .sheet(isPresented: Binding(
             get: { attachmentURL != nil },
             set: { if !$0 { attachmentURL = nil } }
@@ -64,14 +95,102 @@ struct DetailPanelDescriptionView: View {
         .quickLookPreview($quickLookURL)
     }
 
-    /// Renders the body as an ordered stack of prose chunks (via
-    /// `StructuredText`) and image chunks (via `AttachmentThumbnailView`).
-    /// Splitting happens because `Canvas`-drawn Textual attachments don't
-    /// receive gesture hits — see `InlineImageMarkdown` for the rationale.
-    @ViewBuilder
-    private func bodyView(for body: String) -> some View {
-        let chunks = InlineImageMarkdown.split(IssueCrossRef.rewrite(body))
-        let baseURL = issue.fileURL.deletingLastPathComponent()
+    /// Composite key for `.task(id:)`. The cache must invalidate on either a
+    /// new issue (covered by `.id(issue.id)` for the view subtree, but the
+    /// task fires before that takes effect) or an in-place edit detected by
+    /// FSEvents bumping `modifiedAt`.
+    private var parseCacheKey: String {
+        "\(issue.id)|\(issue.modifiedAt.timeIntervalSinceReferenceDate)"
+    }
+}
+
+/// Cached parse of an issue's markdown body. Stored as `@State` on
+/// `DetailPanelDescriptionView` so the disk read and chunk split happen once
+/// per `(issue.id, modifiedAt)` rather than once per body recompute (#0072).
+private struct ParsedBody: Equatable {
+    let issueID: String
+    let modifiedAt: Date
+    /// The raw body markdown (everything from the first `## ` onward) or
+    /// `nil` when the file can't be read or contains no H2 — callers fall
+    /// back to a plain `Text` view in that case.
+    let body: String?
+    /// Pre-split image / prose chunks. `body == nil` ⇒ empty.
+    let chunks: [InlineImageMarkdown.Chunk]
+
+    /// Sentinel used as the initial `@State` value before the first
+    /// `.task(id:)` fires. The empty `issueID` keeps it from accidentally
+    /// matching a real issue's cache key.
+    static let empty = ParsedBody(
+        issueID: "",
+        modifiedAt: .distantPast,
+        body: nil,
+        chunks: []
+    )
+
+    static func load(from issue: Issue) -> ParsedBody {
+        let body = Self.bodyMarkdown(at: issue.fileURL)
+        let chunks: [InlineImageMarkdown.Chunk] = {
+            guard let body else { return [] }
+            return InlineImageMarkdown.split(IssueCrossRef.rewrite(body))
+        }()
+        return ParsedBody(
+            issueID: issue.id,
+            modifiedAt: issue.modifiedAt,
+            body: body,
+            chunks: chunks
+        )
+    }
+
+    /// Returns the markdown body below the H1 title and metadata table,
+    /// starting at the first H2 (`## `). Returns nil if the file can't be
+    /// read or no H2 is found, so callers can fall back to plain text.
+    private static func bodyMarkdown(at url: URL) -> String? {
+        guard let raw = try? String(contentsOf: url, encoding: .utf8) else {
+            return nil
+        }
+        guard let range = raw.range(of: "\n## ") else {
+            return nil
+        }
+        // Include the H2 marker itself; drop the leading newline.
+        let body = raw[range.lowerBound...].dropFirst()
+        let trimmed = body.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+}
+
+/// Renders the parsed body chunks as an ordered stack of prose
+/// (`StructuredText`) and images (`AttachmentThumbnailView`). Conforms to
+/// `Equatable` keyed on `(issueID, modifiedAt, body, baseURL)` so
+/// `EquatableView` short-circuits the rebuild when only an upstream non-
+/// content state changes — most importantly the detail-panel `panelWidth`
+/// from #0069, which fires on every frame of a resize drag and used to
+/// flicker the rendered prose (#0072). Callbacks are intentionally excluded
+/// from equality: they're recreated on every parent body call but their
+/// *behavior* doesn't depend on width, so treating them as equal is safe and
+/// is the whole point of the short-circuit.
+private struct BodyView: View, Equatable {
+    let issueID: String
+    let modifiedAt: Date
+    /// Raw body markdown — used only for the equality fingerprint. The chunks
+    /// are derived from this string upstream and are what actually drives the
+    /// rendered subtree.
+    let bodyText: String
+    let baseURL: URL
+    let chunks: [InlineImageMarkdown.Chunk]
+    let onOpenIssue: ((String) -> Void)?
+    let onOpenAttachment: (URL) -> Void
+    let onPlayVideo: (URL) -> Void
+
+    static func == (lhs: BodyView, rhs: BodyView) -> Bool {
+        // Identity + content fingerprint is enough — the chunks list is a
+        // pure function of `bodyText`, and the callbacks are width-independent.
+        lhs.issueID == rhs.issueID
+            && lhs.modifiedAt == rhs.modifiedAt
+            && lhs.bodyText == rhs.bodyText
+            && lhs.baseURL == rhs.baseURL
+    }
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             ForEach(Array(chunks.enumerated()), id: \.offset) { _, chunk in
                 switch chunk {
@@ -100,28 +219,12 @@ struct DetailPanelDescriptionView: View {
                         path: path,
                         baseURL: baseURL,
                         videoPath: linkPath,
-                        onOpen: { attachmentURL = $0 },
-                        onPlay: { quickLookURL = $0 }
+                        onOpen: onOpenAttachment,
+                        onPlay: onPlayVideo
                     )
                 }
             }
         }
-    }
-
-    /// Returns the markdown body below the H1 title and metadata table,
-    /// starting at the first H2 (`## `). Returns nil if the file can't be
-    /// read or no H2 is found, so callers can fall back to plain text.
-    private func bodyMarkdown() -> String? {
-        guard let raw = try? String(contentsOf: issue.fileURL, encoding: .utf8) else {
-            return nil
-        }
-        guard let range = raw.range(of: "\n## ") else {
-            return nil
-        }
-        // Include the H2 marker itself; drop the leading newline.
-        let body = raw[range.lowerBound...].dropFirst()
-        let trimmed = body.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
     }
 }
 
