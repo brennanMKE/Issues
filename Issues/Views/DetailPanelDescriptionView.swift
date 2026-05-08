@@ -1,5 +1,10 @@
 import SwiftUI
 import Textual
+// `.quickLookPreview($url)` (#0073) is declared in the QuickLook overlay
+// module — SwiftUI re-exports it on iOS but on macOS the symbol lives behind
+// `import QuickLook`. Without this import the compiler reports the modifier
+// missing on `some View`.
+import QuickLook
 
 struct DetailPanelDescriptionView: View {
     let issue: Issue
@@ -14,6 +19,12 @@ struct DetailPanelDescriptionView: View {
     /// presentation so the host doesn't have to track per-thumbnail state. Set
     /// to nil to dismiss.
     @State private var attachmentURL: URL?
+
+    /// File URL of a video attachment the user clicked (#0073). Bound to the
+    /// system Quick Look panel via `.quickLookPreview`. Setting it non-nil
+    /// presents Quick Look (the same panel Finder shows on Space-bar);
+    /// SwiftUI clears it back to nil when the user dismisses the panel.
+    @State private var quickLookURL: URL?
 
     var body: some View {
         Group {
@@ -45,6 +56,12 @@ struct DetailPanelDescriptionView: View {
                 AttachmentSheet(url: url)
             }
         }
+        // System Quick Look preview for video attachments (#0073). Renders
+        // the standard transport controls (play/pause, scrub, volume,
+        // fullscreen) for free; when the user dismisses the panel SwiftUI
+        // resets the binding to nil. macOS 13+ API; this project is 15+ so
+        // no availability annotation is needed.
+        .quickLookPreview($quickLookURL)
     }
 
     /// Renders the body as an ordered stack of prose chunks (via
@@ -77,12 +94,14 @@ struct DetailPanelDescriptionView: View {
                         }
                         return .systemAction
                     })
-                case .image(let alt, let path):
+                case .image(let alt, let path, let linkPath):
                     AttachmentThumbnailView(
                         alt: alt,
                         path: path,
                         baseURL: baseURL,
-                        onOpen: { attachmentURL = $0 }
+                        videoPath: linkPath,
+                        onOpen: { attachmentURL = $0 },
+                        onPlay: { quickLookURL = $0 }
                     )
                 }
             }

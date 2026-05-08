@@ -20,9 +20,16 @@ enum InlineImageMarkdown {
     /// One contiguous span of the body. Either prose (markdown that
     /// `StructuredText` will render) or an image reference (lifted out so the
     /// host can render a clickable thumbnail).
+    ///
+    /// The `linkPath` on `.image` is the optional surrounding link target —
+    /// the markdown shape `[![alt](image)](linkPath)` (#0073). When set and
+    /// the link's UTI conforms to `.movie`, the host renders a play-button
+    /// overlay and routes clicks to Quick Look instead of the attachment
+    /// sheet. Plain `![alt](image)` (no surrounding link) leaves `linkPath`
+    /// nil and behaves exactly as before.
     enum Chunk: Equatable {
         case prose(String)
-        case image(alt: String, path: String)
+        case image(alt: String, path: String, linkPath: String? = nil)
     }
 
     /// Walks `markdown` once and returns it as an ordered chunk list. Empty
@@ -50,13 +57,21 @@ enum InlineImageMarkdown {
 
     // MARK: - Image extraction within prose
 
-    /// Matches a Markdown image ref `![alt](path)`. Same shape as
-    /// `LintRunner.imageRefPattern` plus a capture for the alt text. Constrained
-    /// to a single line so a stray `!` followed by a multi-line stretch can't
-    /// swallow real prose.
+    /// Matches a Markdown image ref `![alt](path)` with an optional
+    /// surrounding `[…](linkPath)` wrapper for the video-poster shape
+    /// (#0073). Capture groups:
+    ///   1. alt text
+    ///   2. image path
+    ///   3. (optional) link target — the wrapping `](linkPath)`, present
+    ///      only when the image is enclosed in `[ … ](linkPath)`.
+    /// Constrained to a single line so a stray `!` followed by a multi-line
+    /// stretch can't swallow real prose. Same single-line constraint as
+    /// `LintRunner.imageRefPattern`.
     private static let imageRefPattern: NSRegularExpression = {
         // swiftlint:disable:next force_try
-        try! NSRegularExpression(pattern: #"!\[([^\]\n]*)\]\(([^)\n]+)\)"#)
+        try! NSRegularExpression(
+            pattern: #"\[?!\[([^\]\n]*)\]\(([^)\n]+)\)(?:\]\(([^)\n]+)\))?"#
+        )
     }()
 
     private static func splitImagesInProse(_ text: String, into chunks: inout [Chunk]) {
@@ -70,22 +85,48 @@ enum InlineImageMarkdown {
         var cursor = 0
         for match in matches where match.numberOfRanges >= 3 {
             let full = match.range(at: 0)
-            if full.location > cursor {
+            // The optional `[` only "counts" as part of the wrapper when the
+            // closing `](linkPath)` was actually captured. If we matched the
+            // bracket but not the wrapper, fall back to the inner image
+            // range so a stray `[` before the image stays in prose.
+            let hasWrapper = match.numberOfRanges >= 4
+                && match.range(at: 3).location != NSNotFound
+            let leadingBracket = ns.substring(
+                with: NSRange(location: full.location, length: 1)
+            ) == "["
+            let effectiveStart: Int = (hasWrapper && leadingBracket)
+                ? full.location
+                : (leadingBracket ? full.location + 1 : full.location)
+            if effectiveStart > cursor {
                 appendProse(
-                    ns.substring(with: NSRange(location: cursor, length: full.location - cursor)),
+                    ns.substring(
+                        with: NSRange(location: cursor, length: effectiveStart - cursor)
+                    ),
                     into: &chunks
                 )
+            }
+            // If the regex matched a leading `[` but no wrapper closed it,
+            // emit the bracket as a single-character prose chunk so it isn't
+            // silently dropped.
+            if leadingBracket && !hasWrapper {
+                appendProse("[", into: &chunks)
             }
             let alt = ns.substring(with: match.range(at: 1))
             let path = ns.substring(with: match.range(at: 2))
                 .trimmingCharacters(in: .whitespaces)
+            let linkPath: String? = {
+                guard hasWrapper else { return nil }
+                let raw = ns.substring(with: match.range(at: 3))
+                    .trimmingCharacters(in: .whitespaces)
+                return raw.isEmpty ? nil : raw
+            }()
             // External references (`https://…`, `data:…`) are left in the
             // prose so Textual can still inline them — the size-cap concern
             // doesn't apply to remote images we don't already render.
             if isLikelyExternalReference(path) {
                 appendProse(ns.substring(with: full), into: &chunks)
             } else if !path.isEmpty {
-                chunks.append(.image(alt: alt, path: path))
+                chunks.append(.image(alt: alt, path: path, linkPath: linkPath))
             }
             cursor = full.location + full.length
         }
