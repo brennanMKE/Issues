@@ -43,7 +43,8 @@ struct LintRunnerTests {
             closedRaw: "",
             description: "",
             fileURL: fileURL,
-            modifiedAt: modifiedAt
+            modifiedAt: modifiedAt,
+            hasAttachments: false
         )
     }
 

@@ -35,7 +35,8 @@ struct TabsModelTests {
             closedRaw: "",
             description: "",
             fileURL: URL(fileURLWithPath: "/tmp/\(id).md"),
-            modifiedAt: modifiedAt
+            modifiedAt: modifiedAt,
+            hasAttachments: false
         )
     }
 

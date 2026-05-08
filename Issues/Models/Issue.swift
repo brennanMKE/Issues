@@ -18,6 +18,11 @@ struct Issue: Identifiable, Equatable, Hashable, Sendable {
     let description: String
     let fileURL: URL
     let modifiedAt: Date
+    /// Whether the sibling `<id>/` folder exists *and* contains at least one
+    /// regular file. Computed once during reload (#0071) by stat'ing the
+    /// folder so the attachment filter doesn't re-stat on every view update.
+    /// An empty `<id>/` folder counts as "no attachments".
+    let hasAttachments: Bool
 
     var modules: [String] {
         module

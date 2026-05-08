@@ -36,6 +36,18 @@ struct ToolbarView: View {
             .labelsHidden()
             .fixedSize()
 
+            // Tri-state attachment filter (#0071). Styled as a menu picker
+            // to match the Module / Platform dropdowns; AND-composes with
+            // them in `IssueStore.filteredIssues`.
+            Picker("Attachments", selection: $store.attachmentFilter) {
+                Text("All Attachments").tag(IssueStore.AttachmentFilter.all)
+                Text("With attachments").tag(IssueStore.AttachmentFilter.withAttachments)
+                Text("Without attachments").tag(IssueStore.AttachmentFilter.withoutAttachments)
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .fixedSize()
+
             Spacer()
         }
         .padding(.horizontal, 16)

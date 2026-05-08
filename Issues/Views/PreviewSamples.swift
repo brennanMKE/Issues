@@ -18,7 +18,8 @@ enum PreviewSamples {
         closedRaw: "",
         description: "Tapping reply does nothing. The button highlights but no action fires.",
         fileURL: URL(fileURLWithPath: "/tmp/preview/0042.md"),
-        modifiedAt: Date()
+        modifiedAt: Date(),
+        hasAttachments: true
     )
 
     static let issueOpen = Issue(
@@ -34,7 +35,8 @@ enum PreviewSamples {
         closedRaw: "",
         description: "Add a search field that filters by title + description.",
         fileURL: URL(fileURLWithPath: "/tmp/preview/0007.md"),
-        modifiedAt: Date(timeIntervalSinceNow: -3600)
+        modifiedAt: Date(timeIntervalSinceNow: -3600),
+        hasAttachments: false
     )
 
     static let issueResolved = Issue(
@@ -50,7 +52,8 @@ enum PreviewSamples {
         closedRaw: "2026-04-20",
         description: "Promote inline color values to the asset catalog so designers can iterate.",
         fileURL: URL(fileURLWithPath: "/tmp/preview/0030.md"),
-        modifiedAt: Date(timeIntervalSinceNow: -86400)
+        modifiedAt: Date(timeIntervalSinceNow: -86400),
+        hasAttachments: false
     )
 
     static let issues: [Issue] = [issue, issueOpen, issueResolved]

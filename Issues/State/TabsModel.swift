@@ -263,7 +263,8 @@ final class TabsModel {
                 closedRaw: "",
                 description: "",
                 fileURL: URL(fileURLWithPath: "/"),
-                modifiedAt: prev.modifiedAt
+                modifiedAt: prev.modifiedAt,
+                hasAttachments: false
             ))
         }
         return (additions, removals, statusChanges)

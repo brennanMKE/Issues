@@ -28,6 +28,10 @@ struct TabPersistedState: Codable, Hashable {
     var statusFilters: [String]
     var moduleFilter: String?
     var platformFilter: String?
+    /// Tri-state attachment filter raw value (#0071). Optional so a
+    /// persisted blob from before the filter existed decodes cleanly with
+    /// `nil`, which `IssueStore.apply` treats as the default `.all`.
+    var attachmentFilter: String?
     var searchQuery: String
     var viewMode: String
     var sortColumn: String

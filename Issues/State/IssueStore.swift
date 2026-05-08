@@ -24,6 +24,23 @@ final class IssueStore: Identifiable {
         case id, status, title, module, platform, firstSeen
     }
 
+    /// Tri-state filter on attachment presence (#0071). The signal is
+    /// "sibling `<id>/` folder exists and contains at least one regular
+    /// file" — captured per-issue in `Issue.hasAttachments` during
+    /// `reload()`. Composed AND-style with the status / module / platform
+    /// / search filters in `filteredIssues`.
+    enum AttachmentFilter: String, CaseIterable, Hashable {
+        case all, withAttachments, withoutAttachments
+
+        var displayName: String {
+            switch self {
+            case .all: return "All Attachments"
+            case .withAttachments: return "With attachments"
+            case .withoutAttachments: return "Without attachments"
+            }
+        }
+    }
+
     /// Stable per-store identity used as the tab id by `TabsModel`. Survives
     /// across reloads; not persisted (tabs are persisted by bookmark, ids are
     /// regenerated on launch).
@@ -41,6 +58,7 @@ final class IssueStore: Identifiable {
     var statusFilters: Set<IssueStatus> = []
     var moduleFilter: String?
     var platformFilter: String?
+    var attachmentFilter: AttachmentFilter = .all
     var searchQuery: String = ""
     var viewMode: ViewMode = .swimlane
     var selectedIssueID: String?
@@ -175,6 +193,12 @@ final class IssueStore: Identifiable {
             if !statusFilters.isEmpty && !statusFilters.contains(issue.status) { return false }
             if let m = moduleFilter, !issue.modules.contains(m) { return false }
             if let p = platformFilter, issue.platform != p, issue.platform != "All" { return false }
+            switch attachmentFilter {
+            case .all: break
+            case .withAttachments where !issue.hasAttachments: return false
+            case .withoutAttachments where issue.hasAttachments: return false
+            default: break
+            }
             if let q = lowercasedQuery {
                 let idMatch: Bool = {
                     guard let padded = numericPaddedID else { return false }
@@ -322,6 +346,7 @@ final class IssueStore: Identifiable {
             statusFilters: statusFilters.map { $0.rawValue }.sorted(),
             moduleFilter: moduleFilter,
             platformFilter: platformFilter,
+            attachmentFilter: attachmentFilter.rawValue,
             searchQuery: searchQuery,
             viewMode: viewMode.rawValue,
             sortColumn: sortColumn.rawValue,
@@ -359,6 +384,14 @@ final class IssueStore: Identifiable {
             platformFilter = saved
         } else {
             platformFilter = nil
+        }
+
+        // Attachment filter: fall back to `.all` for missing or unknown raw
+        // values so old persisted blobs (pre-#0071) decode cleanly.
+        if let raw = state.attachmentFilter, let parsed = AttachmentFilter(rawValue: raw) {
+            attachmentFilter = parsed
+        } else {
+            attachmentFilter = .all
         }
 
         searchQuery = state.searchQuery

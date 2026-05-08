@@ -17,7 +17,8 @@ struct IssueStoreTests {
         status: IssueStatus = .open,
         module: String = "State",
         platform: String = "macOS",
-        modifiedAt: Date = Date(timeIntervalSince1970: 0)
+        modifiedAt: Date = Date(timeIntervalSince1970: 0),
+        hasAttachments: Bool = false
     ) -> Issues.Issue {
         Issues.Issue(
             id: id,
@@ -32,7 +33,8 @@ struct IssueStoreTests {
             closedRaw: "",
             description: "",
             fileURL: URL(fileURLWithPath: "/tmp/\(id).md"),
-            modifiedAt: modifiedAt
+            modifiedAt: modifiedAt,
+            hasAttachments: hasAttachments
         )
     }
 
@@ -82,6 +84,7 @@ struct IssueStoreTests {
             statusFilters: ["open", "no-such-status", "inProgress" /* underscore-folded raw */],
             moduleFilter: nil,
             platformFilter: nil,
+            attachmentFilter: nil,
             searchQuery: "",
             viewMode: "swimlane",
             sortColumn: "id",
@@ -99,6 +102,7 @@ struct IssueStoreTests {
             statusFilters: [],
             moduleFilter: "Vanished",
             platformFilter: nil,
+            attachmentFilter: nil,
             searchQuery: "",
             viewMode: "swimlane",
             sortColumn: "id",
@@ -115,6 +119,7 @@ struct IssueStoreTests {
             statusFilters: [],
             moduleFilter: "State",
             platformFilter: nil,
+            attachmentFilter: nil,
             searchQuery: "",
             viewMode: "swimlane",
             sortColumn: "id",
@@ -131,6 +136,7 @@ struct IssueStoreTests {
             statusFilters: [],
             moduleFilter: nil,
             platformFilter: "tvOS",
+            attachmentFilter: nil,
             searchQuery: "",
             viewMode: "swimlane",
             sortColumn: "id",
@@ -147,6 +153,7 @@ struct IssueStoreTests {
             statusFilters: [],
             moduleFilter: nil,
             platformFilter: nil,
+            attachmentFilter: nil,
             searchQuery: "",
             viewMode: "swimlane",
             sortColumn: "id",
@@ -168,6 +175,7 @@ struct IssueStoreTests {
             statusFilters: [],
             moduleFilter: nil,
             platformFilter: nil,
+            attachmentFilter: nil,
             searchQuery: "",
             viewMode: "definitely-not-a-mode",
             sortColumn: "id",
@@ -185,6 +193,7 @@ struct IssueStoreTests {
             statusFilters: [],
             moduleFilter: nil,
             platformFilter: nil,
+            attachmentFilter: nil,
             searchQuery: "",
             viewMode: "swimlane",
             sortColumn: "definitely-not-a-column",

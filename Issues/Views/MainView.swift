@@ -205,7 +205,8 @@ struct MainView: View {
             closedRaw: "",
             description: "",
             fileURL: store.folderURL,
-            modifiedAt: Date()
+            modifiedAt: Date(),
+            hasAttachments: false
         )
     }
 }

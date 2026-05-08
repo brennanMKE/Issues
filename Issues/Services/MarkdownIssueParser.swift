@@ -59,12 +59,28 @@ enum MarkdownIssueParser {
         let contents = try String(contentsOf: fileURL, encoding: .utf8)
         let resourceValues = try? fileURL.resourceValues(forKeys: [.contentModificationDateKey])
         let modifiedAt = resourceValues?.contentModificationDate ?? Date()
-        return parse(fileURL: fileURL, contents: contents, modifiedAt: modifiedAt)
+        let hasAttachments = attachmentFolderHasFiles(for: fileURL)
+        return parse(
+            fileURL: fileURL,
+            contents: contents,
+            modifiedAt: modifiedAt,
+            hasAttachments: hasAttachments
+        )
     }
 
     /// Pure parsing entry point — testable without disk access.
-    static func parse(fileURL: URL, contents: String, modifiedAt: Date = Date()) -> Issue? {
-        switch parseDetailed(fileURL: fileURL, contents: contents, modifiedAt: modifiedAt) {
+    static func parse(
+        fileURL: URL,
+        contents: String,
+        modifiedAt: Date = Date(),
+        hasAttachments: Bool = false
+    ) -> Issue? {
+        switch parseDetailed(
+            fileURL: fileURL,
+            contents: contents,
+            modifiedAt: modifiedAt,
+            hasAttachments: hasAttachments
+        ) {
         case .success(let issue):
             return issue
         case .failure(let error):
@@ -82,7 +98,8 @@ enum MarkdownIssueParser {
     static func parseDetailed(
         fileURL: URL,
         contents: String,
-        modifiedAt: Date = Date()
+        modifiedAt: Date = Date(),
+        hasAttachments: Bool = false
     ) -> Result<Issue, MarkdownIssueParseError> {
         let filename = fileURL.lastPathComponent
         guard filenameMatchesIssuePattern(filename) else {
@@ -132,9 +149,41 @@ enum MarkdownIssueParser {
                 closedRaw: closedRaw,
                 description: description,
                 fileURL: fileURL,
-                modifiedAt: modifiedAt
+                modifiedAt: modifiedAt,
+                hasAttachments: hasAttachments
             )
         )
+    }
+
+    /// Returns `true` when a sibling `<id>/` directory next to `<id>.md`
+    /// exists and contains at least one regular file. Used by
+    /// `IssueStore.reload()` to decorate parsed issues with attachment
+    /// presence (#0071), so the attachment filter can run as a pure
+    /// in-memory predicate.
+    ///
+    /// An empty `<id>/` folder counts as "no attachments". A symlink target
+    /// is followed via `FileManager.default.contentsOfDirectory` semantics.
+    /// Errors (folder missing, unreadable, etc.) all map to `false`.
+    static func attachmentFolderHasFiles(for issueFileURL: URL) -> Bool {
+        let filename = issueFileURL.lastPathComponent
+        guard filenameMatchesIssuePattern(filename) else { return false }
+        let id = String(filename.prefix(4))
+        let folderURL = issueFileURL.deletingLastPathComponent().appendingPathComponent(id, isDirectory: true)
+        let fm = FileManager.default
+        var isDir: ObjCBool = false
+        guard fm.fileExists(atPath: folderURL.path, isDirectory: &isDir), isDir.boolValue else {
+            return false
+        }
+        guard let entries = try? fm.contentsOfDirectory(
+            at: folderURL,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles, .skipsSubdirectoryDescendants]
+        ) else { return false }
+        for url in entries {
+            let isRegular = (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) ?? false
+            if isRegular { return true }
+        }
+        return false
     }
 
     private static func parseDate(_ raw: String) -> Date? {
