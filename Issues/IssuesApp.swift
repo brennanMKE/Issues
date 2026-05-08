@@ -1,14 +1,28 @@
 import SwiftUI
+import AppKit
 import UserNotifications
 import os.log
 
 nonisolated private let appLogger = Logger(subsystem: Logging.subsystem, category: "IssuesApp")
+
+/// Terminates the app when the last window closes. Issues.app is a
+/// single-main-window utility (#0074) — closing the main window should
+/// exit the process rather than leave a stranded menu bar.
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        true
+    }
+}
 
 @main
 struct IssuesApp: App {
     /// Singleton menu controller so `.commands` items can drive view-model
     /// state. `RootView`/`MainView` populate its references on appear.
     @State private var commands = AppCommandsController.shared
+
+    /// AppKit delegate for behaviors SwiftUI doesn't surface as Scene
+    /// modifiers — currently just terminate-after-last-window-closed.
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {
         appLogger.notice("IssuesApp init \(NotificationService.processTag(), privacy: .public) args=\(CommandLine.arguments.joined(separator: " "), privacy: .public)")
@@ -36,6 +50,11 @@ struct IssuesApp: App {
         }
         .defaultSize(width: 1200, height: 800)
         .commands {
+            // Suppress `File → New Window` (#0074). With single-window
+            // `Window` scenes there's no second main window to spawn, and
+            // hiding the menu item avoids a no-op entry in File.
+            CommandGroup(replacing: .newItem) {}
+
             // Replace the standard Help menu with one that opens our own
             // `HelpView` window. `CommandGroup(replacing: .help)` keeps the
             // Cmd+? binding macOS users expect; the action just points at
