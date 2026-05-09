@@ -106,6 +106,12 @@ final class IssueStore: Identifiable {
         source.stop()
     }
 
+    /// Force a re-read from the source. Used by the Reload menu command
+    /// (`AppCommandsController.reloadActive`).
+    func reload() {
+        source.reload()
+    }
+
     // MARK: - Loading
 
     /// Mirror the source's latest state and decide whether to fan the signal
