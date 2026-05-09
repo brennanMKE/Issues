@@ -1,8 +1,5 @@
 import Foundation
 import Observation
-import os.log
-
-nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: "IssueStore")
 
 @Observable
 final class IssueStore: Identifiable {
@@ -26,9 +23,9 @@ final class IssueStore: Identifiable {
 
     /// Tri-state filter on attachment presence (#0071). The signal is
     /// "sibling `<id>/` folder exists and contains at least one regular
-    /// file" — captured per-issue in `Issue.hasAttachments` during
-    /// `reload()`. Composed AND-style with the status / module / platform
-    /// / search filters in `filteredIssues`.
+    /// file" — captured per-issue in `Issue.hasAttachments` during the
+    /// source's reload pass. Composed AND-style with the status / module /
+    /// platform / search filters in `filteredIssues`.
     enum AttachmentFilter: String, CaseIterable, Hashable {
         case all, withAttachments, withoutAttachments
 
@@ -45,12 +42,17 @@ final class IssueStore: Identifiable {
     /// across reloads; not persisted (tabs are persisted by bookmark, ids are
     /// regenerated on launch).
     let id: UUID = UUID()
-    let folderURL: URL
+
+    /// File-IO and watcher concerns live here. The store holds the source as
+    /// an existential so a remote source (RemoteAccess.md Phase 3, #0094) can
+    /// drop in without touching this layer.
+    private let source: any IssueSource
+
     private(set) var issues: [Issue] = []
     /// Read-only lint findings produced by `LintRunner` after each successful
     /// reload. Surfaced via the lint banner in `StatsBarView` (#0019); empty
-    /// list means a clean folder. Recomputed on every `reload()` so it stays
-    /// in sync with `issues`.
+    /// list means a clean folder. Mirrored from the source on every update so
+    /// it stays in sync with `issues`.
     private(set) var lintFindings: [LintFinding] = []
     private(set) var loadError: String?
     private(set) var folderInvalidated: Bool = false
@@ -65,111 +67,66 @@ final class IssueStore: Identifiable {
     var sortColumn: SortColumn = .id
     var sortAscending: Bool = true
 
-    private var watcher: FolderWatcher?
-    private var didStartAccess: Bool = false
-
-    /// Fires after every successful `reload()` (i.e. after `issues` has been
-    /// reassigned). Used by `TabsModel` to drive the per-tab "unseen changes"
-    /// indicator. Not fired on read failures — those leave `issues` untouched
-    /// and shouldn't flip the indicator. In practice this always fires on the
-    /// main actor: the initial `reload()` is called from `TabsModel`
-    /// (main-isolated) and subsequent reloads come through
-    /// `FolderWatcher.onChange`, which is `@MainActor` by contract.
+    /// Fires after every successful reload (issues populated, no error). Used
+    /// by `TabsModel` to drive the per-tab "unseen changes" indicator. Not
+    /// fired on read failures or folder-invalidation ticks — those leave
+    /// `issues` untouched and shouldn't flip the indicator.
     var onReload: ((IssueStore) -> Void)?
+
+    /// The folder URL the source reads from. Local-source surrogate for tab
+    /// identity in `TabsModel`'s persistence keys and security-scoped bookmark
+    /// path. Future remote sources will replace this with a richer identifier.
+    var folderURL: URL { source.folderURL }
 
     /// Repo-style label for the watched folder, e.g. for a folder
     /// `/path/to/MyRepo/issues` this is `MyRepo`. Used for tab titles and log
     /// labels so multi-folder log streams stay readable.
-    var repoName: String {
-        folderURL.deletingLastPathComponent().lastPathComponent
+    var repoName: String { source.repoName }
+
+    /// Convenience init: wraps the URL in a `LocalFolderIssueSource`. Existing
+    /// call sites (`TabsModel.openTab(url:)`, restore) keep using this form.
+    convenience init(folderURL: URL) {
+        self.init(source: LocalFolderIssueSource(folderURL: folderURL))
     }
 
-    init(folderURL: URL) {
-        self.folderURL = folderURL
-    }
-
-    deinit {
-        // Synchronous cleanup; SwiftUI lifetime ends here. Avoid touching
-        // observable storage from deinit.
-        if didStartAccess {
-            folderURL.stopAccessingSecurityScopedResource()
+    init(source: any IssueSource) {
+        self.source = source
+        self.source.onUpdate = { [weak self] src in
+            self?.handleSourceUpdate(src)
         }
     }
 
     // MARK: - Lifecycle
 
     func start() {
-        didStartAccess = folderURL.startAccessingSecurityScopedResource()
-        logger.notice("[\(self.repoName, privacy: .public)] start folder=\(self.folderURL.path, privacy: .public) scopedAccess=\(self.didStartAccess, privacy: .public)")
-        reload()
-        let repoName = self.repoName
-        let watcher = FolderWatcher(
-            onChange: { [weak self] in self?.reload() },
-            onInvalidated: { [weak self] in
-                logger.notice("[\(repoName, privacy: .public)] folder invalidated — clearing store")
-                self?.folderInvalidated = true
-            }
-        )
-        watcher.start(url: folderURL)
-        self.watcher = watcher
+        source.start()
     }
 
     func stop() {
-        logger.notice("[\(self.repoName, privacy: .public)] stop")
-        watcher?.stop()
-        watcher = nil
-        if didStartAccess {
-            folderURL.stopAccessingSecurityScopedResource()
-            didStartAccess = false
-        }
+        source.stop()
     }
 
     // MARK: - Loading
 
-    func reload() {
-        let started = Date()
-        do {
-            let fm = FileManager.default
-            let entries = try fm.contentsOfDirectory(
-                at: folderURL,
-                includingPropertiesForKeys: [.isRegularFileKey],
-                options: [.skipsHiddenFiles, .skipsSubdirectoryDescendants]
-            )
-            var parsed: [Issue] = []
-            var skippedNames: [String] = []
-            for url in entries {
-                let name = url.lastPathComponent
-                guard MarkdownIssueParser.filenameMatchesIssuePattern(name) else {
-                    continue
-                }
-                do {
-                    if let issue = try MarkdownIssueParser.parse(fileURL: url) {
-                        parsed.append(issue)
-                    } else {
-                        skippedNames.append(name)
-                    }
-                } catch {
-                    skippedNames.append(name)
-                    logger.warning("[\(self.repoName, privacy: .public)] read \(name, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
-                }
-            }
-            parsed.sort { $0.id < $1.id }
-            let prevCount = self.issues.count
-            self.issues = parsed
-            self.lintFindings = LintRunner.run(folderURL: folderURL, parsedIssues: parsed)
-            if let id = selectedIssueID, !parsed.contains(where: { $0.id == id }) {
-                selectedIssueID = nil
-            }
-            self.loadError = nil
-            let ms = Int(Date().timeIntervalSince(started) * 1000)
-            logger.notice("[\(self.repoName, privacy: .public)] reload parsed=\(parsed.count, privacy: .public) skipped=\(skippedNames.count, privacy: .public) lint=\(self.lintFindings.count, privacy: .public) wasCount=\(prevCount, privacy: .public) elapsedMs=\(ms, privacy: .public)")
-            if !skippedNames.isEmpty {
-                logger.warning("[\(self.repoName, privacy: .public)] skipped files: \(skippedNames.joined(separator: ", "), privacy: .public)")
-            }
+    /// Mirror the source's latest state and decide whether to fan the signal
+    /// upstream. Called from `IssueSource.onUpdate` after each reload attempt
+    /// or watcher invalidation.
+    private func handleSourceUpdate(_ src: any IssueSource) {
+        self.issues = src.issues
+        self.lintFindings = src.lintFindings
+        self.loadError = src.loadError
+        self.folderInvalidated = src.folderInvalidated
+        // Selection cleanup: clear the highlight if the previously-selected
+        // issue is no longer present in the parsed list.
+        if let id = selectedIssueID, !src.issues.contains(where: { $0.id == id }) {
+            selectedIssueID = nil
+        }
+        // Match today's `onReload` contract: success-only. Failed reloads and
+        // folder-invalidation ticks update observable state silently; views
+        // re-render via @Observable diffs without the unseen-changes path
+        // running.
+        if src.loadError == nil && !src.folderInvalidated {
             onReload?(self)
-        } catch {
-            self.loadError = "Failed to read folder: \(error.localizedDescription)"
-            logger.error("[\(self.repoName, privacy: .public)] reload failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -337,7 +294,7 @@ final class IssueStore: Identifiable {
 
     /// Captures the user-visible UI state into a value type suitable for
     /// `UserDefaults`. Transient state (`issues`, `lintFindings`, etc.) is
-    /// not included — it's recomputed by `reload()` on restore.
+    /// not included — it's recomputed by `start()` on restore.
     ///
     /// Named `persistedState` to avoid collision with the `snapshot`
     /// property used by `TabsModel` for unseen-change tracking.
@@ -360,8 +317,9 @@ final class IssueStore: Identifiable {
     /// ids don't leave the UI in an empty / broken state. Unknown enum raw
     /// values fall back to current defaults rather than crashing.
     ///
-    /// Must be called *after* `reload()` has populated `issues` so the
-    /// validity checks have data to compare against.
+    /// Must be called *after* `start()` has populated `issues` (via the
+    /// source's first reload) so the validity checks have data to compare
+    /// against.
     func apply(_ state: TabPersistedState) {
         // Status filters: drop unknown raw values silently.
         var resolvedStatuses: Set<IssueStatus> = []
@@ -419,9 +377,10 @@ final class IssueStore: Identifiable {
 
 #if DEBUG
 extension IssueStore {
-    /// Preview-only seam: skip the FSEvents watcher and directly set the
-    /// in-memory list. Used by `PreviewSamples.makeStore`. Lives in the same
-    /// file as the class so it can write to `private(set) var issues`.
+    /// Preview-only seam: bypass the source and directly set the in-memory
+    /// list. Used by `PreviewSamples.makeStore` and the tests in
+    /// `IssueStoreTests`. Lives in the same file as the class so it can write
+    /// to `private(set) var issues`.
     func setIssuesForPreview(_ issues: [Issue]) {
         self.issues = issues
     }
