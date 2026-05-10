@@ -47,6 +47,50 @@ enum MarkdownIssueParser {
         return formatter
     }()
 
+    /// Extracts the raw markdown body — everything after the title line
+    /// and the metadata table — preserving line breaks and formatting
+    /// verbatim. Used by the remote `IssueDetail` endpoint (#0080) so the
+    /// viewer can render the same body the local detail panel renders.
+    ///
+    /// Strategy: locate the metadata table (a markdown pipe table that
+    /// begins right after the H1 title), skip past its trailing blank
+    /// line, and return the rest. If the title or table is missing the
+    /// function returns the contents trimmed of any leading H1 line — a
+    /// best-effort fallback for malformed files.
+    static func body(from contents: String) -> String {
+        let lines = contents.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        var idx = 0
+
+        // Skip the first H1 if present.
+        while idx < lines.count, lines[idx].trimmingCharacters(in: .whitespaces).isEmpty {
+            idx += 1
+        }
+        if idx < lines.count, lines[idx].hasPrefix("# ") {
+            idx += 1
+        }
+
+        // Walk through the metadata table — any contiguous block of `|...|`
+        // lines (with optional leading whitespace) plus blank lines that
+        // separate it from the rest.
+        while idx < lines.count, lines[idx].trimmingCharacters(in: .whitespaces).isEmpty {
+            idx += 1
+        }
+        while idx < lines.count {
+            let trimmed = lines[idx].trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("|") && trimmed.hasSuffix("|") {
+                idx += 1
+            } else {
+                break
+            }
+        }
+        // Eat one trailing blank line after the table.
+        if idx < lines.count, lines[idx].trimmingCharacters(in: .whitespaces).isEmpty {
+            idx += 1
+        }
+
+        return lines[idx...].joined(separator: "\n")
+    }
+
     /// Returns true if the file's last path component matches `^\d{4}\.md$`.
     static func filenameMatchesIssuePattern(_ filename: String) -> Bool {
         let range = NSRange(filename.startIndex..<filename.endIndex, in: filename)

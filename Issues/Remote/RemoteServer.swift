@@ -5,14 +5,44 @@ import os.log
 import Network
 #endif
 
-/// Forward-declared shape for the multi-folder host store. Filled in by
-/// #0085 (per-folder hosting toggles); for #0079 it just declares the
-/// minimum the route handlers will need so the server is decoupled from
-/// the concrete tab model.
+/// Forward-declared shape for the multi-folder host store. Grown alongside
+/// #0080's REST handlers; #0085 (per-folder hosting toggles) is the
+/// concrete implementation that filters open tabs by the user's hosting
+/// preferences.
 protocol MultiFolderStore: AnyObject {
-    /// Folder ids currently being served (#0082). Empty list returns an
-    /// empty `/v1/folders` payload; the server itself doesn't care.
-    var hostedFolderIds: [String] { get }
+    /// User-visible host label, e.g. "Brennan's MacBook Air". Surfaced in
+    /// `/v1/host`. The concrete host reads from system APIs; tests stub
+    /// directly.
+    var hostDisplayName: String { get }
+
+    /// Snapshot of folders currently being served. Each call returns fresh
+    /// values so the wire response reflects the latest in-memory state.
+    func currentlyHostedFolders() -> [HostedFolder]
+
+    /// Lookup by `folderId` (#0082). Returns nil for unknown ids; the
+    /// handlers map that to `404 not_found`.
+    func currentlyHostedFolder(forId id: String) -> HostedFolder?
+}
+
+extension MultiFolderStore {
+    /// Compatibility shim for callers that only need the id list (#0079
+    /// placeholder routes). Defaults to deriving from
+    /// `currentlyHostedFolders()`.
+    var hostedFolderIds: [String] {
+        currentlyHostedFolders().map { $0.id }
+    }
+}
+
+/// Adapter the server uses to read a single served folder. The concrete
+/// host populates these from its `IssueStore` instances; tests can build
+/// them directly without touching disk.
+struct HostedFolder: Equatable {
+    let id: String
+    let folderURL: URL
+    let displayName: String
+    let projectMetadata: ProjectMetadata?
+    let issues: [Issue]
+    let modifiedAt: Date
 }
 
 /// Information about a peer that has connected to the host. Surfaced in
@@ -324,22 +354,11 @@ final class RemoteServer {
 
     // MARK: Routes
 
-    /// Wires up the placeholder routes for #0079. Real handlers (#0080,
-    /// #0081, #0100) replace these as they land.
+    /// Wires up the v1 REST endpoints (#0080). Each handler returns a
+    /// fully-formed `HTTPResponse`; failures map to `404 not_found` or
+    /// `500 internal_error` per the issue's error table.
     private func installDefaultRoutes() {
-        routes.routes.append(Route(
-            method: "GET",
-            pathPattern: "/v1/host",
-            handler: { _, _ in .ok(payload: ["ok": true]) }
-        ))
-        routes.routes.append(Route(
-            method: "GET",
-            pathPattern: "/v1/folders",
-            handler: { [weak self] _, _ in
-                let ids = self?.store.hostedFolderIds ?? []
-                return .ok(payload: ["folders": ids])
-            }
-        ))
+        routes.routes.append(contentsOf: RemoteHandlers.routes(store: store))
     }
 
     // MARK: Lifecycle
