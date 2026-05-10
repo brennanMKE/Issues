@@ -38,6 +38,11 @@ enum RemoteHandlers {
                 method: "GET",
                 pathPattern: "/v1/folders/{folderId}/issues/{id}",
                 handler: { _, captures in try issueDetail(store: store, captures: captures) }
+            ),
+            Route(
+                method: "GET",
+                pathPattern: "/v1/folders/{folderId}/issues/{id}/attachments/{name}",
+                handler: { _, captures in try attachment(store: store, captures: captures) }
             )
         ]
     }
@@ -72,6 +77,89 @@ enum RemoteHandlers {
         }
         let metas = folder.issues.map(issueMetadata(from:))
         return try response(200, statusText: "OK", encoding: metas)
+    }
+
+    static func attachment(store: MultiFolderStore, captures: [String: String]) throws -> HTTPResponse {
+        guard let folderId = captures["folderId"],
+              let folder = store.currentlyHostedFolder(forId: folderId) else {
+            return .notFound()
+        }
+        guard let issueId = captures["id"],
+              let issue = folder.issues.first(where: { $0.id == issueId }) else {
+            return .notFound()
+        }
+        guard let name = captures["name"], isSafeAttachmentName(name) else {
+            return .badRequest(reason: "invalid_name")
+        }
+
+        let attachmentDir = issue.fileURL
+            .deletingLastPathComponent()
+            .appendingPathComponent(issue.id, isDirectory: true)
+        let candidate = attachmentDir.appendingPathComponent(name, isDirectory: false)
+
+        // Canonicalize both sides and require the resolved attachment path
+        // to live under the resolved attachment directory. Catches symlink
+        // and `.` / `..` shenanigans even after `isSafeAttachmentName`.
+        let resolvedDir = attachmentDir.standardizedFileURL.resolvingSymlinksInPath().path
+        let resolvedFile = candidate.standardizedFileURL.resolvingSymlinksInPath().path
+        guard resolvedFile.hasPrefix(resolvedDir + "/") else {
+            return .badRequest(reason: "invalid_name")
+        }
+
+        let fm = FileManager.default
+        var isDir: ObjCBool = false
+        guard fm.fileExists(atPath: candidate.path, isDirectory: &isDir), !isDir.boolValue else {
+            return .notFound()
+        }
+        let attrs: [FileAttributeKey: Any]
+        do {
+            attrs = try fm.attributesOfItem(atPath: candidate.path)
+        } catch {
+            return .notFound()
+        }
+        // Reject anything that isn't a regular file (symlinks, directories).
+        guard let type = attrs[.type] as? FileAttributeType, type == .typeRegular else {
+            return .badRequest(reason: "invalid_name")
+        }
+        let size = (attrs[.size] as? NSNumber)?.intValue ?? 0
+        let modified = (attrs[.modificationDate] as? Date) ?? Date()
+
+        return .file(
+            url: candidate,
+            contentType: contentType(for: name),
+            contentLength: size,
+            lastModified: modified
+        )
+    }
+
+    /// Validates that `name` is a single, well-formed path component. Rejects
+    /// anything containing `/`, `\\`, NUL, or that's exactly `.` / `..`.
+    /// The canonical-prefix check in `attachment` is the second line of
+    /// defense; this is the cheap first-pass.
+    static func isSafeAttachmentName(_ name: String) -> Bool {
+        if name.isEmpty || name == "." || name == ".." { return false }
+        if name.contains("/") || name.contains("\\") || name.contains("\0") { return false }
+        return true
+    }
+
+    /// Maps the filename extension to a MIME type. Covers the formats this
+    /// project's attachments folder is likely to hold; unknown extensions
+    /// fall back to `application/octet-stream`.
+    static func contentType(for filename: String) -> String {
+        let ext = (filename as NSString).pathExtension.lowercased()
+        switch ext {
+        case "png":  return "image/png"
+        case "jpg", "jpeg": return "image/jpeg"
+        case "gif":  return "image/gif"
+        case "heic": return "image/heic"
+        case "webp": return "image/webp"
+        case "mov":  return "video/quicktime"
+        case "mp4":  return "video/mp4"
+        case "log", "txt": return "text/plain; charset=utf-8"
+        case "json": return "application/json; charset=utf-8"
+        case "md":   return "text/markdown; charset=utf-8"
+        default:     return "application/octet-stream"
+        }
     }
 
     static func issueDetail(store: MultiFolderStore, captures: [String: String]) throws -> HTTPResponse {

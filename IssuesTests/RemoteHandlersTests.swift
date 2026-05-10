@@ -219,6 +219,154 @@ struct RemoteHandlersTests {
         #expect(response.status == 404)
     }
 
+    // MARK: - Attachment endpoint (#0081)
+
+    @Test func attachmentReturnsStreamingResponseWithCorrectHeaders() throws {
+        let folder = try makeTempFolder()
+        defer { try? FileManager.default.removeItem(at: folder.deletingLastPathComponent()) }
+        let issueURL = folder.appendingPathComponent("0001.md")
+        try Data().write(to: issueURL)
+
+        let attachmentDir = folder.appendingPathComponent("0001", isDirectory: true)
+        try FileManager.default.createDirectory(at: attachmentDir, withIntermediateDirectories: true)
+        let payload = Data((0..<2048).map { UInt8($0 & 0xff) })
+        let attachmentURL = attachmentDir.appendingPathComponent("screenshot.png")
+        try payload.write(to: attachmentURL)
+
+        let store = StubStore()
+        store.folders = [
+            Self.makeFolder(
+                id: "ffffffffffffffff",
+                url: folder,
+                issues: [Self.makeIssue(id: "0001", fileURL: issueURL, hasAttachments: true)]
+            )
+        ]
+
+        let response = try RemoteHandlers.attachment(
+            store: store,
+            captures: ["folderId": "ffffffffffffffff", "id": "0001", "name": "screenshot.png"]
+        )
+
+        #expect(response.status == 200)
+        #expect(response.streamingFile == attachmentURL)
+        #expect(response.contentLength == payload.count)
+        #expect(response.headers["Content-Type"] == "image/png")
+        #expect(response.headers["Last-Modified"]?.hasSuffix("GMT") == true)
+    }
+
+    @Test func attachmentRejectsPathTraversalNames() throws {
+        let store = StubStore()
+        store.folders = [Self.makeFolder(id: "abc", issues: [Self.makeIssue(id: "0001")])]
+
+        for badName in ["..", ".", "../etc/passwd", "subdir/file.png", "back\\slash.png", "with\u{0}null"] {
+            let response = try RemoteHandlers.attachment(
+                store: store,
+                captures: ["folderId": "abc", "id": "0001", "name": badName]
+            )
+            #expect(response.status == 400, "expected 400 for \(badName)")
+        }
+    }
+
+    @Test func attachmentReturns404ForUnknownFile() throws {
+        let folder = try makeTempFolder()
+        defer { try? FileManager.default.removeItem(at: folder.deletingLastPathComponent()) }
+        let issueURL = folder.appendingPathComponent("0001.md")
+        try Data().write(to: issueURL)
+        let attachmentDir = folder.appendingPathComponent("0001", isDirectory: true)
+        try FileManager.default.createDirectory(at: attachmentDir, withIntermediateDirectories: true)
+
+        let store = StubStore()
+        store.folders = [
+            Self.makeFolder(
+                id: "abc",
+                url: folder,
+                issues: [Self.makeIssue(id: "0001", fileURL: issueURL)]
+            )
+        ]
+        let response = try RemoteHandlers.attachment(
+            store: store,
+            captures: ["folderId": "abc", "id": "0001", "name": "missing.png"]
+        )
+        #expect(response.status == 404)
+    }
+
+    @Test func attachmentReturns404ForUnknownFolderOrIssue() throws {
+        let store = StubStore()
+        let unknownFolder = try RemoteHandlers.attachment(
+            store: store,
+            captures: ["folderId": "missing", "id": "0001", "name": "x.png"]
+        )
+        #expect(unknownFolder.status == 404)
+
+        store.folders = [Self.makeFolder(id: "abc", issues: [])]
+        let unknownIssue = try RemoteHandlers.attachment(
+            store: store,
+            captures: ["folderId": "abc", "id": "9999", "name": "x.png"]
+        )
+        #expect(unknownIssue.status == 404)
+    }
+
+    @Test func attachmentRejectsSymlinkEscape() throws {
+        let folder = try makeTempFolder()
+        defer { try? FileManager.default.removeItem(at: folder.deletingLastPathComponent()) }
+        let issueURL = folder.appendingPathComponent("0001.md")
+        try Data().write(to: issueURL)
+        let attachmentDir = folder.appendingPathComponent("0001", isDirectory: true)
+        try FileManager.default.createDirectory(at: attachmentDir, withIntermediateDirectories: true)
+
+        // Create a symlink under the attachment dir pointing to /etc/hosts.
+        let symlink = attachmentDir.appendingPathComponent("escape.png")
+        try FileManager.default.createSymbolicLink(at: symlink, withDestinationURL: URL(fileURLWithPath: "/etc/hosts"))
+
+        let store = StubStore()
+        store.folders = [
+            Self.makeFolder(
+                id: "abc",
+                url: folder,
+                issues: [Self.makeIssue(id: "0001", fileURL: issueURL)]
+            )
+        ]
+        let response = try RemoteHandlers.attachment(
+            store: store,
+            captures: ["folderId": "abc", "id": "0001", "name": "escape.png"]
+        )
+        // Symlink target is outside the attachment dir → 400 invalid_name.
+        // (`isFile` sees the link target as a regular file but the canonical
+        // prefix check fails before that.)
+        #expect(response.status == 400)
+    }
+
+    // MARK: - Content-type mapping
+
+    @Test func contentTypeMapsCommonExtensions() {
+        #expect(RemoteHandlers.contentType(for: "x.png") == "image/png")
+        #expect(RemoteHandlers.contentType(for: "x.PNG") == "image/png")
+        #expect(RemoteHandlers.contentType(for: "x.jpg") == "image/jpeg")
+        #expect(RemoteHandlers.contentType(for: "x.jpeg") == "image/jpeg")
+        #expect(RemoteHandlers.contentType(for: "x.mov") == "video/quicktime")
+        #expect(RemoteHandlers.contentType(for: "x.mp4") == "video/mp4")
+        #expect(RemoteHandlers.contentType(for: "x.log") == "text/plain; charset=utf-8")
+        #expect(RemoteHandlers.contentType(for: "x.weird") == "application/octet-stream")
+        #expect(RemoteHandlers.contentType(for: "noext") == "application/octet-stream")
+    }
+
+    // MARK: - HTTPResponse.file shape
+
+    @Test func fileResponseSerializationOmitsBodyAndUsesContentLength() {
+        let response = HTTPResponse.file(
+            url: URL(fileURLWithPath: "/tmp/whatever.png"),
+            contentType: "image/png",
+            contentLength: 12345,
+            lastModified: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+        let serialized = response.serialized()
+        let text = String(data: serialized, encoding: .utf8) ?? ""
+        #expect(text.contains("Content-Length: 12345"))
+        #expect(text.contains("Content-Type: image/png"))
+        #expect(text.contains("Last-Modified: "))
+        #expect(text.hasSuffix("\r\n\r\n"))
+    }
+
     // MARK: - Body extractor
 
     @Test func bodyStripsTitleAndMetadataTable() {

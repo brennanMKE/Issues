@@ -75,26 +75,55 @@ struct HTTPRequest: Equatable {
     }
 }
 
-/// Outbound HTTP response. `body` is sent as-is; callers set
-/// `Content-Type` via the `headers` dictionary.
+/// Outbound HTTP response. For JSON responses `body` is sent as-is and
+/// `Content-Length` is computed from `body.count`. For attachment streaming
+/// (#0081), `streamingFile` and `contentLength` together tell the server to
+/// send headers then stream the file in chunks; `body` is unused.
 struct HTTPResponse: Equatable {
     var status: Int
     var statusText: String
     var headers: [String: String]
     var body: Data
+    /// When non-nil, the server streams the file at this URL after the
+    /// header block. `contentLength` must be set so the wire `Content-Length`
+    /// is correct without reading the file twice.
+    var streamingFile: URL?
+    /// Required when `streamingFile` is set; ignored otherwise.
+    var contentLength: Int?
 
-    /// Serialize to wire bytes (HTTP/1.1, `Connection: close`).
+    init(
+        status: Int,
+        statusText: String,
+        headers: [String: String],
+        body: Data = Data(),
+        streamingFile: URL? = nil,
+        contentLength: Int? = nil
+    ) {
+        self.status = status
+        self.statusText = statusText
+        self.headers = headers
+        self.body = body
+        self.streamingFile = streamingFile
+        self.contentLength = contentLength
+    }
+
+    /// Serialize to wire bytes (HTTP/1.1, `Connection: close`). For
+    /// streaming responses this returns the headers only — the server
+    /// streams the body separately.
     func serialized() -> Data {
         var out = "HTTP/1.1 \(status) \(statusText)\r\n"
         var allHeaders = headers
-        allHeaders["Content-Length"] = "\(body.count)"
+        let length = streamingFile != nil ? (contentLength ?? 0) : body.count
+        allHeaders["Content-Length"] = "\(length)"
         allHeaders["Connection"] = "close"
         for (key, value) in allHeaders.sorted(by: { $0.key < $1.key }) {
             out += "\(key): \(value)\r\n"
         }
         out += "\r\n"
         var data = Data(out.utf8)
-        data.append(body)
+        if streamingFile == nil {
+            data.append(body)
+        }
         return data
     }
 
@@ -132,6 +161,33 @@ struct HTTPResponse: Equatable {
         }
         #endif
         return json(500, statusText: "Internal Server Error", payload: payload)
+    }
+
+    /// Streaming response for attachment downloads (#0081). The body is
+    /// sent in chunks from `fileURL`; callers must already have validated
+    /// `contentLength` via a stat / `attributesOfItem`.
+    static func file(
+        url: URL,
+        contentType: String,
+        contentLength: Int,
+        lastModified: Date
+    ) -> HTTPResponse {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "GMT")
+        // RFC 7231 IMF-fixdate.
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss 'GMT'"
+        return HTTPResponse(
+            status: 200,
+            statusText: "OK",
+            headers: [
+                "Content-Type": contentType,
+                "Last-Modified": formatter.string(from: lastModified)
+            ],
+            body: Data(),
+            streamingFile: url,
+            contentLength: contentLength
+        )
     }
 }
 
@@ -540,7 +596,18 @@ final class RemoteServer {
     }
 
     private func send(_ response: HTTPResponse, on connection: NWConnection) async {
-        let bytes = response.serialized()
+        // Headers (the call honors `streamingFile` to write headers only).
+        let header = response.serialized()
+        await sendBytes(header, on: connection)
+        // Stream the file body in chunks if requested. Errors abort the
+        // stream — the connection will close, the viewer's URLSession
+        // surfaces the truncation.
+        if let fileURL = response.streamingFile {
+            await streamFile(at: fileURL, on: connection)
+        }
+    }
+
+    private func sendBytes(_ bytes: Data, on connection: NWConnection) async {
         await withCheckedContinuation { cont in
             connection.send(content: bytes, completion: .contentProcessed { error in
                 if let error {
@@ -548,6 +615,30 @@ final class RemoteServer {
                 }
                 cont.resume()
             })
+        }
+    }
+
+    private static let streamChunkSize = 64 * 1024
+
+    private func streamFile(at fileURL: URL, on connection: NWConnection) async {
+        let handle: FileHandle
+        do {
+            handle = try FileHandle(forReadingFrom: fileURL)
+        } catch {
+            logger.warning("attachment stream open failed: \(error.localizedDescription, privacy: .public)")
+            return
+        }
+        defer { try? handle.close() }
+        while true {
+            let chunk: Data
+            do {
+                chunk = try handle.read(upToCount: Self.streamChunkSize) ?? Data()
+            } catch {
+                logger.warning("attachment stream read failed: \(error.localizedDescription, privacy: .public)")
+                return
+            }
+            if chunk.isEmpty { return }
+            await sendBytes(chunk, on: connection)
         }
     }
 
