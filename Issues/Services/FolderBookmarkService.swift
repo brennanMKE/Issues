@@ -1,10 +1,24 @@
 import Foundation
 import AppKit
+import CryptoKit
 import Observation
 
 @Observable
 final class FolderBookmarkService {
     private static let defaultsKey = "rememberedFolders"
+
+    /// Wire-stable folder identifier derived from a security-scoped bookmark
+    /// blob (#0082). 16 lowercase hex characters = 8 bytes of SHA-256 prefix
+    /// — short enough for log lines and URL paths, far past collision risk
+    /// for any realistic folder count.
+    ///
+    /// Stable across launches as long as the persisted bookmark bytes stay
+    /// the same; if the user re-locates a missing folder the bookmark is
+    /// re-created and the id legitimately changes.
+    nonisolated static func folderId(for bookmarkData: Data) -> String {
+        let digest = SHA256.hash(data: bookmarkData)
+        return digest.prefix(8).map { String(format: "%02x", $0) }.joined()
+    }
 
     private(set) var remembered: [RememberedFolder] = []
     var lastError: String?

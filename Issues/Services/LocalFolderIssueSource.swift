@@ -12,6 +12,12 @@ nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: 
 /// equivalent to the pre-refactor `IssueStore.start/stop/reload`.
 final class LocalFolderIssueSource: IssueSource {
     let folderURL: URL
+    /// Security-scoped bookmark bytes captured at construction time. Held
+    /// here (rather than re-derived from `folderURL`) so `IssueStore.folderId`
+    /// stays stable across the lifetime of this source even if a fresh
+    /// `bookmarkData(...)` call would produce different bytes for the same
+    /// URL (#0082).
+    let bookmarkData: Data?
     private(set) var issues: [Issue] = []
     private(set) var lintFindings: [LintFinding] = []
     private(set) var loadError: String?
@@ -38,8 +44,9 @@ final class LocalFolderIssueSource: IssueSource {
         folderURL.deletingLastPathComponent().lastPathComponent
     }
 
-    init(folderURL: URL) {
+    init(folderURL: URL, bookmarkData: Data? = nil) {
         self.folderURL = folderURL
+        self.bookmarkData = bookmarkData
     }
 
     deinit {

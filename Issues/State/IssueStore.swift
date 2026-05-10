@@ -96,10 +96,24 @@ final class IssueStore: Identifiable {
     /// "Open repository" follow-up).
     var projectMetadata: ProjectMetadata? { source.projectMetadata }
 
+    /// Persisted security-scoped bookmark bytes captured when this store
+    /// was opened or restored. Exposed so `TabsModel.persist()` can write
+    /// the same bytes that were used to derive `folderId` rather than
+    /// regenerating a fresh blob from the URL on every save (#0082).
+    var bookmarkData: Data? { source.bookmarkData }
+
+    /// Wire-stable identifier for the watched folder, derived from the
+    /// security-scoped bookmark bytes via `FolderBookmarkService.folderId`
+    /// (#0082). Nil when the source has no bookmark (preview / tests /
+    /// future remote sources that publish their own id).
+    var folderId: String? {
+        source.bookmarkData.map(FolderBookmarkService.folderId(for:))
+    }
+
     /// Convenience init: wraps the URL in a `LocalFolderIssueSource`. Existing
     /// call sites (`TabsModel.openTab(url:)`, restore) keep using this form.
-    convenience init(folderURL: URL) {
-        self.init(source: LocalFolderIssueSource(folderURL: folderURL))
+    convenience init(folderURL: URL, bookmarkData: Data? = nil) {
+        self.init(source: LocalFolderIssueSource(folderURL: folderURL, bookmarkData: bookmarkData))
     }
 
     init(source: any IssueSource) {

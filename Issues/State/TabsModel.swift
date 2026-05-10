@@ -90,7 +90,17 @@ final class TabsModel {
             persist()
             return existing
         }
-        let store = IssueStore(folderURL: url)
+        // Capture the security-scoped bookmark once at open time so the
+        // store's `folderId` (#0082) stays stable for this tab's lifetime.
+        // Any failure to mint a bookmark falls back to a nil id — the tab
+        // still works locally; only remote-access surfaces care about the
+        // id.
+        let bookmark = try? url.bookmarkData(
+            options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess],
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil
+        )
+        let store = IssueStore(folderURL: url, bookmarkData: bookmark)
         attachReloadHook(to: store)
         // If we have a previously-saved state for this folder (the user
         // closed and is now reopening the same tab), apply it after the
@@ -307,6 +317,14 @@ final class TabsModel {
     private func persist() {
         var blobs: [Data] = []
         for store in tabs {
+            // Prefer the bytes captured at openTab/restore time so the same
+            // bookmark blob round-trips through UserDefaults — that keeps
+            // `IssueStore.folderId` stable across launches (#0082).
+            // Re-mint only if we somehow opened the tab without a bookmark.
+            if let existing = store.bookmarkData {
+                blobs.append(existing)
+                continue
+            }
             do {
                 let data = try store.folderURL.bookmarkData(
                     options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess],
@@ -351,7 +369,10 @@ final class TabsModel {
                     logger.warning("restore: skipping missing folder \(url.path, privacy: .public)")
                     continue
                 }
-                let store = IssueStore(folderURL: url)
+                // Pass the resolved bookmark blob into the store so
+                // `folderId` (#0082) hashes the same bytes that were
+                // persisted, keeping the id stable across launches.
+                let store = IssueStore(folderURL: url, bookmarkData: blob)
                 attachReloadHook(to: store)
                 // Seed pending restore state *before* `start()` so the very
                 // first `onReload` tick (fired synchronously by `start()`'s

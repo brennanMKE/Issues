@@ -35,6 +35,13 @@ protocol IssueSource: AnyObject {
     /// remote source can populate it without another protocol change.
     var projectMetadata: ProjectMetadata? { get }
 
+    /// Persisted security-scoped bookmark bytes for the local case, or nil
+    /// when the source has no bookmark (e.g. a remote source, or a unit
+    /// test that constructed the source directly from a URL). Used by
+    /// `IssueStore.folderId` so the wire identifier is derived from the
+    /// same bytes that survive across launches (#0082).
+    var bookmarkData: Data? { get }
+
     /// Short repo-style label for log lines, e.g. `MyRepo` for
     /// `/path/to/MyRepo/issues`.
     var repoName: String { get }
