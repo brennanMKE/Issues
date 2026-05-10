@@ -7,16 +7,16 @@ import Foundation
 /// file so they can't drift in field names or types. JSON keys match the
 /// Swift property names verbatim — `JSONEncoder` defaults are fine, no
 /// `CodingKeys` overrides.
-enum RemoteProtocol {
+public enum RemoteProtocol {
 
     /// Current protocol version. A future v2 host signals via `HostInfo.version`
     /// and a viewer that doesn't recognize the value falls back to
     /// disconnect-with-message rather than guessing the new shape.
-    static let version: Int = 1
+    public static let version: Int = 1
 
     /// Shared encoder used by every handler. ISO8601 with fractional seconds
     /// for compactness and lossless `Date` round-trip.
-    static let encoder: JSONEncoder = {
+    public static let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -30,7 +30,7 @@ enum RemoteProtocol {
 
     /// Shared decoder mirroring `encoder`. Same formatter so round-tripping
     /// is exact.
-    static let decoder: JSONDecoder = {
+    public static let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -53,50 +53,102 @@ enum RemoteProtocol {
     }()
 }
 
-struct HostInfo: Codable, Equatable {
+public struct HostInfo: Codable, Equatable {
     /// User-visible host label (e.g. "Brennan's MacBook Air"). Sourced from
     /// the system's localized computer name on the concrete host.
-    let displayName: String
-    let version: Int
-    let folderCount: Int
+    public let displayName: String
+    public let version: Int
+    public let folderCount: Int
+
+    public init(displayName: String, version: Int, folderCount: Int) {
+        self.displayName = displayName
+        self.version = version
+        self.folderCount = folderCount
+    }
 }
 
-struct FolderInfo: Codable, Equatable {
+public struct FolderInfo: Codable, Equatable {
     /// Stable wire identifier (#0082). 16 lowercase hex chars.
-    let id: String
+    public let id: String
     /// Human label: `project.json` `name` if present, else parent folder name.
-    let name: String
-    let repository: URL?
-    let description: String?
+    public let name: String
+    public let repository: URL?
+    public let description: String?
     /// The path of the folder containing the issues folder, e.g.
     /// `/Users/x/Code/MyRepo`. Used for picker disambiguation when two
     /// folders have the same `name` (#0097).
-    let parentPath: String
-    let issueCount: Int
-    let modifiedAt: Date
+    public let parentPath: String
+    public let issueCount: Int
+    public let modifiedAt: Date
+
+    public init(
+        id: String,
+        name: String,
+        repository: URL?,
+        description: String?,
+        parentPath: String,
+        issueCount: Int,
+        modifiedAt: Date
+    ) {
+        self.id = id
+        self.name = name
+        self.repository = repository
+        self.description = description
+        self.parentPath = parentPath
+        self.issueCount = issueCount
+        self.modifiedAt = modifiedAt
+    }
 }
 
-struct IssueMetadata: Codable, Equatable {
-    let id: String
-    let title: String
+public struct IssueMetadata: Codable, Equatable {
+    public let id: String
+    public let title: String
     /// Raw status (e.g. `"in-progress"`). The viewer maps to its own
     /// `IssueStatus` enum.
-    let status: String
-    let modules: [String]
-    let platform: String
-    let firstSeen: Date?
-    let closedAt: Date?
-    let hasAttachments: Bool
-    let modifiedAt: Date
+    public let status: String
+    public let modules: [String]
+    public let platform: String
+    public let firstSeen: Date?
+    public let closedAt: Date?
+    public let hasAttachments: Bool
+    public let modifiedAt: Date
+
+    public init(
+        id: String,
+        title: String,
+        status: String,
+        modules: [String],
+        platform: String,
+        firstSeen: Date?,
+        closedAt: Date?,
+        hasAttachments: Bool,
+        modifiedAt: Date
+    ) {
+        self.id = id
+        self.title = title
+        self.status = status
+        self.modules = modules
+        self.platform = platform
+        self.firstSeen = firstSeen
+        self.closedAt = closedAt
+        self.hasAttachments = hasAttachments
+        self.modifiedAt = modifiedAt
+    }
 }
 
-struct IssueDetail: Codable, Equatable {
-    let metadata: IssueMetadata
+public struct IssueDetail: Codable, Equatable {
+    public let metadata: IssueMetadata
     /// Raw markdown body — everything after the title line and the metadata
     /// table, preserved verbatim. The viewer renders it the same way the
     /// local detail panel renders the on-disk file.
-    let body: String
+    public let body: String
     /// Relative filenames under `<folder>/<id>/`, e.g. `["screenshot.png"]`.
     /// Bytes are fetched separately via #0081's attachment endpoint.
-    let attachments: [String]
+    public let attachments: [String]
+
+    public init(metadata: IssueMetadata, body: String, attachments: [String]) {
+        self.metadata = metadata
+        self.body = body
+        self.attachments = attachments
+    }
 }
