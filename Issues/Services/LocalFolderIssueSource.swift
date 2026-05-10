@@ -21,12 +21,16 @@ final class LocalFolderIssueSource: IssueSource {
     private var watcher: FolderWatcher?
     private var didStartAccess: Bool = false
 
-    /// project.json reading is wired up in #0075. Until then this returns nil
-    /// and `displayName` falls back to the parent folder name.
-    var projectMetadata: ProjectMetadata? { nil }
+    /// Decoded `<folderURL>/project.json`. Refreshed on every `reload()`.
+    /// Missing/empty/malformed → nil; the FSEvents pass that runs on `.json`
+    /// edits already coalesces into the same reload that re-reads the issues.
+    private(set) var projectMetadata: ProjectMetadata?
 
     var displayName: String {
-        projectMetadata?.name ?? repoName
+        // `project.json` with an empty `name` should fall back to the parent
+        // folder name, same as if the field were missing (#0075 spec).
+        if let name = projectMetadata?.name, !name.isEmpty { return name }
+        return repoName
     }
 
     /// Repo-style label for log lines, e.g. `MyRepo` for `/path/to/MyRepo/issues`.
@@ -107,6 +111,7 @@ final class LocalFolderIssueSource: IssueSource {
             let prevCount = self.issues.count
             self.issues = parsed
             self.lintFindings = LintRunner.run(folderURL: folderURL, parsedIssues: parsed)
+            self.projectMetadata = Self.readProjectMetadata(folderURL: folderURL, repoName: self.repoName)
             self.loadError = nil
             let ms = Int(Date().timeIntervalSince(started) * 1000)
             logger.notice("[\(self.repoName, privacy: .public)] reload parsed=\(parsed.count, privacy: .public) skipped=\(skippedNames.count, privacy: .public) lint=\(self.lintFindings.count, privacy: .public) wasCount=\(prevCount, privacy: .public) elapsedMs=\(ms, privacy: .public)")
@@ -127,5 +132,31 @@ final class LocalFolderIssueSource: IssueSource {
     private func handleInvalidated() {
         folderInvalidated = true
         onUpdate?(self)
+    }
+
+    /// Reads `<folderURL>/project.json`. Returns nil for missing files; logs
+    /// a warning and returns nil for malformed JSON or unreadable files.
+    /// Schema is owned by the IssuesSkill (see `RemoteAccess.md`); unknown
+    /// fields decode as nil via `ProjectMetadata`.
+    static func readProjectMetadata(folderURL: URL, repoName: String) -> ProjectMetadata? {
+        let url = folderURL.appendingPathComponent("project.json")
+        let data: Data
+        do {
+            data = try Data(contentsOf: url)
+        } catch CocoaError.fileReadNoSuchFile {
+            return nil
+        } catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError {
+            return nil
+        } catch {
+            logger.warning("[\(repoName, privacy: .public)] project.json read failed: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+        guard !data.isEmpty else { return nil }
+        do {
+            return try JSONDecoder().decode(ProjectMetadata.self, from: data)
+        } catch {
+            logger.warning("[\(repoName, privacy: .public)] project.json malformed: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
     }
 }

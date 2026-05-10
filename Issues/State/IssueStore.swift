@@ -79,9 +79,22 @@ final class IssueStore: Identifiable {
     var folderURL: URL { source.folderURL }
 
     /// Repo-style label for the watched folder, e.g. for a folder
-    /// `/path/to/MyRepo/issues` this is `MyRepo`. Used for tab titles and log
-    /// labels so multi-folder log streams stay readable.
+    /// `/path/to/MyRepo/issues` this is `MyRepo`. Used for log labels so
+    /// multi-folder log streams stay readable. User-facing labels should use
+    /// `displayName` instead so a folder's `project.json` `name` wins.
     var repoName: String { source.repoName }
+
+    /// User-facing label: `projectMetadata?.name` when present, else
+    /// `repoName`. Tabs, window title, and notifications use this so a
+    /// folder's `project.json` "name" surfaces wherever the parent folder
+    /// name used to (#0075).
+    var displayName: String { source.displayName }
+
+    /// Decoded `project.json` for the watched folder. Refreshed on every
+    /// reload. Currently the `name` field drives `displayName`; `url` is
+    /// decoded but not yet surfaced in the UI (tracked in the RemoteAccess
+    /// "Open repository" follow-up).
+    var projectMetadata: ProjectMetadata? { source.projectMetadata }
 
     /// Convenience init: wraps the URL in a `LocalFolderIssueSource`. Existing
     /// call sites (`TabsModel.openTab(url:)`, restore) keep using this form.

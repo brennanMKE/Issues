@@ -143,18 +143,20 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     // MARK: - Posting
 
     /// Builds and submits notifications for the changes detected on a single
-    /// reload of `repoName`'s tab. Suppressed entirely when the app is active.
-    /// If the total change count exceeds the rollup threshold, a single
-    /// summary notification is posted instead.
+    /// reload of a tab. `displayName` is the user-facing folder label
+    /// (project.json `name` when present, else the parent folder name) and
+    /// is what appears in the notification title/body. Suppressed entirely
+    /// when the app is active. If the total change count exceeds the
+    /// rollup threshold, a single summary notification is posted instead.
     func notifyChanges(
-        repoName: String,
+        displayName: String,
         tabID: UUID,
         additions: [Issue],
         removals: [Issue],
         statusChanges: [(issue: Issue, oldStatus: IssueStatus, newStatus: IssueStatus)]
     ) {
         let total = additions.count + removals.count + statusChanges.count
-        logger.debug("notifyChanges repo=\(repoName, privacy: .public) tabID=\(tabID.uuidString.prefix(8), privacy: .public) additions=\(additions.count, privacy: .public) removals=\(removals.count, privacy: .public) statusChanges=\(statusChanges.count, privacy: .public) isActive=\(NSApplication.shared.isActive, privacy: .public)")
+        logger.debug("notifyChanges repo=\(displayName, privacy: .public) tabID=\(tabID.uuidString.prefix(8), privacy: .public) additions=\(additions.count, privacy: .public) removals=\(removals.count, privacy: .public) statusChanges=\(statusChanges.count, privacy: .public) isActive=\(NSApplication.shared.isActive, privacy: .public)")
 
         // The dot indicator from #0003 already tells the user about changes
         // while they're looking; a banner on top would be noise.
@@ -166,42 +168,38 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         guard total > 0 else { return }
 
         if total > Self.rollupThreshold {
-            logger.info("notifyChanges rollup repo=\(repoName, privacy: .public) count=\(total, privacy: .public)")
-            postRollup(repoName: repoName, tabID: tabID, count: total)
+            logger.info("notifyChanges rollup repo=\(displayName, privacy: .public) count=\(total, privacy: .public)")
+            postRollup(displayName: displayName, tabID: tabID, count: total)
             return
         }
 
         for issue in additions {
             postIndividual(
-                repoName: repoName,
                 tabID: tabID,
                 issue: issue,
                 kind: "addition",
-                body: "New in \(repoName)"
+                body: "New in \(displayName)"
             )
         }
         for issue in removals {
             postIndividual(
-                repoName: repoName,
                 tabID: tabID,
                 issue: issue,
                 kind: "removal",
-                body: "Removed from \(repoName)"
+                body: "Removed from \(displayName)"
             )
         }
         for change in statusChanges {
             postIndividual(
-                repoName: repoName,
                 tabID: tabID,
                 issue: change.issue,
                 kind: "status",
-                body: "\(repoName) · Status: \(change.oldStatus.displayName) → \(change.newStatus.displayName)"
+                body: "\(displayName) · Status: \(change.oldStatus.displayName) → \(change.newStatus.displayName)"
             )
         }
     }
 
     private func postIndividual(
-        repoName: String,
         tabID: UUID,
         issue: Issue,
         kind: String,
@@ -229,9 +227,9 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    private func postRollup(repoName: String, tabID: UUID, count: Int) {
+    private func postRollup(displayName: String, tabID: UUID, count: Int) {
         let content = UNMutableNotificationContent()
-        content.title = "\(repoName) · \(count) issue changes"
+        content.title = "\(displayName) · \(count) issue changes"
         content.body = "Multiple changes detected — open the tab to review."
         content.userInfo = [
             UserInfoKey.tabID: tabID.uuidString,

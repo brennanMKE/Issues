@@ -98,7 +98,7 @@ struct MainView: View {
                 MainErrorBannerView(message: error)
             }
         }
-        .navigationTitle(store.repoName)
+        .navigationTitle(store.displayName)
         .navigationSubtitle(windowSubtitle)
         .background(Color.appBackground)
         .folderDropTarget { url in

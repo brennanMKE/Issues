@@ -35,7 +35,7 @@ struct TabChipView: View {
                 .font(.system(size: 10))
                 .foregroundStyle(isActive ? Color.appAccent : Color.appMuted)
 
-            Text(store.repoName)
+            Text(store.displayName)
                 .font(.system(size: 12, weight: isActive ? .semibold : .regular))
                 .foregroundStyle(Color.appText)
                 .lineLimit(1)
@@ -94,9 +94,9 @@ struct TabChipView: View {
 
     private var accessibilityText: String {
         if showsUnseenDot {
-            return "\(store.repoName), updated since last viewed"
+            return "\(store.displayName), updated since last viewed"
         }
-        return store.repoName
+        return store.displayName
     }
 }
 

@@ -6,8 +6,8 @@ import SwiftUI
 /// presents a single text field and a fuzzy-filtered list of:
 /// - Every parsed issue in the active tab (id + title).
 /// - View-mode actions ("Switch to Swimlanes/Timeline/List/Recent").
-/// - Tab-switching actions ("Go to <repoName>") — for every tab other than the
-///   currently-active one, in tab order.
+/// - Tab-switching actions ("Go to <displayName>") — for every tab other than
+///   the currently-active one, in tab order.
 ///
 /// Keyboard model:
 /// - Up/down walks the result list (wrap-around).
@@ -230,7 +230,7 @@ enum PaletteCommand: Identifiable {
         case .viewMode(let mode):
             return "Switch to \(mode.displayName)"
         case .tab(let store):
-            return "Go to \(store.repoName)"
+            return "Go to \(store.displayName)"
         }
     }
 
@@ -253,7 +253,7 @@ enum PaletteCommand: Identifiable {
         case .viewMode(let mode):
             return "Switch to \(mode.displayName) view mode"
         case .tab(let store):
-            return "Go to \(store.repoName) tab"
+            return "Go to \(store.displayName) tab"
         }
     }
 }

@@ -206,7 +206,7 @@ final class TabsModel {
                 )
                 if !additions.isEmpty || !removals.isEmpty || !statusChanges.isEmpty {
                     NotificationService.shared.notifyChanges(
-                        repoName: store.repoName,
+                        displayName: store.displayName,
                         tabID: id,
                         additions: additions,
                         removals: removals,
