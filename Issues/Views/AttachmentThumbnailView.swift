@@ -12,7 +12,10 @@ import UniformTypeIdentifiers
 /// - On-disk image → `NSImage` loaded synchronously (these are small local
 ///   files, ~hundreds of KB; no need for an async loader for v1).
 /// - Width capped at `Self.maxInlineWidth` (480pt), proportional height.
-/// - Click presents `AttachmentSheet` at full resolution.
+/// - Click opens the system Quick Look panel via the host's
+///   `.quickLookPreview` binding (#0109). Quick Look handles images, PDFs,
+///   logs, etc. natively, replacing the previous custom `AttachmentSheet`
+///   modal.
 /// - Missing file → "Missing attachment" placeholder. The same condition is
 ///   already surfaced by `LintFinding.missingAttachment` so the lint sheet
 ///   keeps the actionable channel; this view just avoids blank space.
@@ -20,12 +23,12 @@ import UniformTypeIdentifiers
 /// Video posters (#0073): when the parser detects the
 /// `[![alt](poster.png)](video.mov)` shape, the host passes a non-nil
 /// `videoPath`. If the link's UTI conforms to `.movie` and the file exists, a
-/// centered play-button overlay is drawn on the poster and the click invokes
-/// `onPlay` (the host wires this to `.quickLookPreview`). Non-video link
-/// targets (e.g. `.pdf`) skip the overlay and route through `onOpen` /
-/// `NSWorkspace` instead. A missing video file falls back to the standard
-/// "Missing attachment" placeholder for the video path so the user can tell
-/// which file is gone.
+/// centered play-button overlay is drawn on the poster and the click opens
+/// the video itself in Quick Look (via `onPlay`). Non-video link targets
+/// (e.g. `.pdf`) skip the overlay; clicking still opens the link target in
+/// Quick Look since the panel previews those types too. A missing video file
+/// falls back to the standard "Missing attachment" placeholder for the video
+/// path so the user can tell which file is gone.
 struct AttachmentThumbnailView: View {
     /// Hard caps for the inline thumbnail. Round 1 only constrained width
     /// (480pt) and computed height from the aspect ratio, which let tall
@@ -46,14 +49,15 @@ struct AttachmentThumbnailView: View {
     /// UTI conforms to `.movie`, the click opens Quick Look via `onPlay`;
     /// otherwise the link is opened with `NSWorkspace`. Nil for plain images.
     var videoPath: String? = nil
-    /// Invoked on click with the resolved file URL so the host can present
-    /// `AttachmentSheet`. Hoisting presentation up keeps sheet state in the
-    /// description view rather than per-thumbnail, which avoids stacking
-    /// sheets if the body has multiple attachments.
+    /// Invoked on click with the resolved file URL so the host can drive its
+    /// `.quickLookPreview` binding. Hoisting presentation up keeps the
+    /// binding state in the description view rather than per-thumbnail.
     let onOpen: (URL) -> Void
-    /// Invoked on click for the video case (#0073). The host binds this to a
-    /// `@State URL?` driving `.quickLookPreview()`. Defaults to no-op so
-    /// existing call sites that only pass `onOpen` keep compiling.
+    /// Invoked on click for the video case (#0073). The host binds this to
+    /// the same `@State URL?` driving `.quickLookPreview()` as `onOpen`
+    /// (#0109); kept as a separate callback so the play-button overlay can
+    /// route to the *video* path rather than the poster image. Defaults to
+    /// no-op so existing call sites that only pass `onOpen` keep compiling.
     var onPlay: (URL) -> Void = { _ in }
 
     private var resolvedURL: URL {
@@ -155,21 +159,20 @@ struct AttachmentThumbnailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Routes the click depending on what the wrapping link looked like:
+    /// Routes the click through the host's Quick Look binding (#0109):
     /// - `.movie`-conforming link with file present → `onPlay(videoURL)`
-    ///   (Quick Look via the host's `.quickLookPreview` binding).
-    /// - Non-video link (e.g. `.pdf`) → open in default app with
-    ///   `NSWorkspace`, since Quick Look isn't the right metaphor here and
-    ///   `AttachmentSheet` is image-only.
-    /// - No link at all → existing behavior, `onOpen(posterURL)` to present
-    ///   `AttachmentSheet`.
+    ///   so the *video* path is what Quick Look opens, not the poster.
+    /// - Non-video wrapping link (e.g. `.pdf`) → `onOpen(linkURL)` to
+    ///   preview the link target in Quick Look — the panel previews PDFs,
+    ///   logs, etc. natively.
+    /// - No wrapping link → `onOpen(resolvedURL)` previews the image itself.
     private func handleClick() {
         if hasPlayableVideo, let url = resolvedVideoURL {
             onPlay(url)
             return
         }
         if let url = resolvedVideoURL, !isVideoLink {
-            NSWorkspace.shared.open(url)
+            onOpen(url)
             return
         }
         onOpen(resolvedURL)

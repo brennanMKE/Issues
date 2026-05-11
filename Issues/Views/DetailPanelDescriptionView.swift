@@ -15,15 +15,15 @@ struct DetailPanelDescriptionView: View {
     /// store don't crash.
     var onOpenIssue: ((String) -> Void)? = nil
 
-    /// File URL of an attachment the user clicked (#0056). Drives a sheet
-    /// presentation so the host doesn't have to track per-thumbnail state. Set
-    /// to nil to dismiss.
-    @State private var attachmentURL: URL?
-
-    /// File URL of a video attachment the user clicked (#0073). Bound to the
-    /// system Quick Look panel via `.quickLookPreview`. Setting it non-nil
-    /// presents Quick Look (the same panel Finder shows on Space-bar);
-    /// SwiftUI clears it back to nil when the user dismisses the panel.
+    /// File URL of an attachment the user clicked. Bound to the system Quick
+    /// Look panel via `.quickLookPreview`. Setting it non-nil presents Quick
+    /// Look (the same panel Finder shows on Space-bar); SwiftUI clears it back
+    /// to nil when the user dismisses the panel.
+    ///
+    /// Images and videos both flow through this single binding (#0109);
+    /// before, images used a custom `AttachmentSheet` and only videos used
+    /// Quick Look (#0073). Quick Look handles images, PDFs, logs, etc.
+    /// natively, so a single panel covers every attachment type.
     @State private var quickLookURL: URL?
 
     /// Cached body parse keyed by `(issue.id, modifiedAt)` (#0072). Reading
@@ -47,7 +47,7 @@ struct DetailPanelDescriptionView: View {
                     baseURL: issue.fileURL.deletingLastPathComponent(),
                     chunks: parsedBody.chunks,
                     onOpenIssue: onOpenIssue,
-                    onOpenAttachment: { attachmentURL = $0 },
+                    onOpenAttachment: { quickLookURL = $0 },
                     onPlayVideo: { quickLookURL = $0 }
                 ))
             } else if !issue.description.isEmpty {
@@ -79,19 +79,13 @@ struct DetailPanelDescriptionView: View {
                 parsedBody = fresh
             }
         }
-        .sheet(isPresented: Binding(
-            get: { attachmentURL != nil },
-            set: { if !$0 { attachmentURL = nil } }
-        )) {
-            if let url = attachmentURL {
-                AttachmentSheet(url: url)
-            }
-        }
-        // System Quick Look preview for video attachments (#0073). Renders
-        // the standard transport controls (play/pause, scrub, volume,
-        // fullscreen) for free; when the user dismisses the panel SwiftUI
-        // resets the binding to nil. macOS 13+ API; this project is 15+ so
-        // no availability annotation is needed.
+        // System Quick Look preview for every attachment (images, videos,
+        // PDFs, logs — anything Quick Look has a generator for). Renders
+        // standard pan / pinch-zoom / arrow-key navigation / "open with" /
+        // share affordances for free; when the user dismisses the panel
+        // SwiftUI resets the binding to nil. macOS 13+ API; this project is
+        // 15+ so no availability annotation is needed. Replaces the custom
+        // `AttachmentSheet` modal that previously handled images (#0109).
         .quickLookPreview($quickLookURL)
     }
 
