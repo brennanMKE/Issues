@@ -152,3 +152,100 @@ public struct IssueDetail: Codable, Equatable {
         self.attachments = attachments
     }
 }
+
+// MARK: - WebSocket events (#0100, #0101)
+
+/// Server → Client event sent over `/v1/events`. The `type` field is the
+/// discriminator; other fields are populated conditionally. Encoded as a flat
+/// JSON object so the viewer can decode without a wrapper. `JSONEncoder` skips
+/// `nil` optionals when the field is `Optional`, so a `hello` event won't
+/// include `folderId` / `id`.
+public struct RemoteEvent: Codable, Equatable {
+    public enum Kind: String, Codable, Equatable, Sendable {
+        case hello
+        case reload
+        case update
+        case delete
+        case unsubscribed
+        case pong
+    }
+
+    public let type: Kind
+    public let displayName: String?
+    public let version: Int?
+    public let folderId: String?
+    public let id: String?
+    public let reason: String?
+
+    public init(
+        type: Kind,
+        displayName: String? = nil,
+        version: Int? = nil,
+        folderId: String? = nil,
+        id: String? = nil,
+        reason: String? = nil
+    ) {
+        self.type = type
+        self.displayName = displayName
+        self.version = version
+        self.folderId = folderId
+        self.id = id
+        self.reason = reason
+    }
+
+    public static func hello(displayName: String) -> RemoteEvent {
+        RemoteEvent(type: .hello, displayName: displayName, version: RemoteProtocol.version)
+    }
+
+    public static func reload(folderId: String) -> RemoteEvent {
+        RemoteEvent(type: .reload, folderId: folderId)
+    }
+
+    public static func update(folderId: String, id: String) -> RemoteEvent {
+        RemoteEvent(type: .update, folderId: folderId, id: id)
+    }
+
+    public static func delete(folderId: String, id: String) -> RemoteEvent {
+        RemoteEvent(type: .delete, folderId: folderId, id: id)
+    }
+
+    public static func unsubscribed(folderId: String, reason: String) -> RemoteEvent {
+        RemoteEvent(type: .unsubscribed, folderId: folderId, reason: reason)
+    }
+
+    public static let pong = RemoteEvent(type: .pong)
+
+    private enum CodingKeys: String, CodingKey {
+        case type, displayName, version, folderId, id, reason
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        // Skip nil fields on encode so e.g. `hello` doesn't write `folderId:null`.
+        try container.encodeIfPresent(displayName, forKey: .displayName)
+        try container.encodeIfPresent(version, forKey: .version)
+        try container.encodeIfPresent(folderId, forKey: .folderId)
+        try container.encodeIfPresent(id, forKey: .id)
+        try container.encodeIfPresent(reason, forKey: .reason)
+    }
+}
+
+/// Client → Server message decoded from inbound text frames on `/v1/events`.
+/// Same flat-object shape as `RemoteEvent` for symmetry; only the fields a
+/// command actually carries are populated.
+public struct RemoteCommand: Codable, Equatable {
+    public enum Kind: String, Codable, Equatable, Sendable {
+        case subscribe
+        case unsubscribe
+        case ping
+    }
+
+    public let type: Kind
+    public let folderIds: [String]?
+
+    public init(type: Kind, folderIds: [String]? = nil) {
+        self.type = type
+        self.folderIds = folderIds
+    }
+}

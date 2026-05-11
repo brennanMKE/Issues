@@ -404,6 +404,20 @@ final class RemoteServer {
     private(set) var connectedPeers: [PeerInfo] = []
     private(set) var listeningPort: UInt16?
 
+    // MARK: WebSocket state (#0100, #0101)
+
+    /// Open WebSocket sessions keyed by their `ObjectIdentifier`. The set
+    /// is the source of truth for "this connection is now in WS mode"; the
+    /// underlying `NWConnection` lifetime is owned by the session, so we
+    /// don't keep it in `connections` while WS is active.
+    private var sessions: [ObjectIdentifier: WebSocketSession] = [:]
+
+    /// Fan-out map: `folderId → set of session keys subscribed to it`. A
+    /// session's `subscribedFolderIds` mirrors the inverse — both are kept
+    /// in sync on every subscribe/unsubscribe so broadcast is an O(1) map
+    /// lookup + a single iteration.
+    private var subscribers: [String: Set<ObjectIdentifier>] = [:]
+
     /// Persistence key for the chosen port — `0` means "let the OS pick".
     private static let portDefaultsKey = "RemoteServer.port"
 
@@ -460,6 +474,14 @@ final class RemoteServer {
             connection.cancel()
         }
         connections.removeAll()
+        // Close any active WS sessions before clearing peer state — the
+        // session's close path also clears its entries from the fanout map.
+        let openSessions = Array(sessions.values)
+        for session in openSessions {
+            session.close(code: .goingAway, reason: "server_stopping")
+        }
+        sessions.removeAll()
+        subscribers.removeAll()
         peerInfo.removeAll()
         connectedPeers.removeAll()
     }
@@ -504,8 +526,10 @@ final class RemoteServer {
         connection.start(queue: .global(qos: .userInitiated))
 
         Task { @MainActor in
-            await self.handleRequest(on: connection, key: key, remote: remote)
-            self.dropConnection(key: key)
+            let upgraded = await self.handleRequest(on: connection, key: key, remote: remote)
+            if !upgraded {
+                self.dropConnection(key: key)
+            }
         }
     }
 
@@ -517,27 +541,32 @@ final class RemoteServer {
         connectedPeers = Array(peerInfo.values)
     }
 
-    private func handleRequest(on connection: NWConnection, key: ObjectIdentifier, remote: String) async {
+    /// Returns `true` when the request was upgraded to a WebSocket session
+    /// (so the caller skips `dropConnection`); `false` for the normal
+    /// REST request/response path.
+    private func handleRequest(on connection: NWConnection, key: ObjectIdentifier, remote: String) async -> Bool {
         let buffer = await readHeaders(on: connection)
         guard let buffer else {
             await send(.badRequest(reason: "read_failed"), on: connection)
-            return
+            return false
         }
         let request: HTTPRequest
         do {
             request = try HTTPRequestParser.parse(buffer)
         } catch let error as HTTPRequestParser.ParseError {
             await send(.badRequest(reason: "\(error)"), on: connection)
-            return
+            return false
         } catch {
             await send(.badRequest(reason: "parse_error"), on: connection)
-            return
+            return false
         }
 
         let outcome = AuthMiddleware.authenticate(authorizationHeader: request.authorizationHeader)
         if let failure = AuthMiddleware.failureResponse(for: outcome) {
+            // Auth runs *before* the upgrade per #0100: a 401 is plain HTTP,
+            // not a WS close frame.
             await send(failure, on: connection)
-            return
+            return false
         }
         // Thread the token's user-chosen name into the peer record so
         // the connected-viewers list (#0092) shows it.
@@ -547,9 +576,28 @@ final class RemoteServer {
             connectedPeers = Array(peerInfo.values)
         }
 
+        // WebSocket upgrade path (#0100). The endpoint isn't in the route
+        // table — it's a special-cased HTTP→WS hop.
+        if request.path == "/v1/events", request.method.caseInsensitiveCompare("GET") == .orderedSame {
+            if WebSocketHandshake.isUpgradeRequest(headers: request.headers),
+               let clientKey = WebSocketHandshake.header(request.headers, "Sec-WebSocket-Key") {
+                let upgraded = await performWebSocketUpgrade(
+                    on: connection,
+                    key: key,
+                    remote: remote,
+                    clientKey: clientKey,
+                    outcome: outcome
+                )
+                return upgraded
+            } else {
+                await send(.badRequest(reason: "invalid_upgrade"), on: connection)
+                return false
+            }
+        }
+
         guard let (route, captures) = routes.match(method: request.method, path: request.path) else {
             await send(.notFound(), on: connection)
-            return
+            return false
         }
         do {
             let response = try route.handler(request, captures)
@@ -569,6 +617,130 @@ final class RemoteServer {
         } catch {
             await send(.internalError(debugMessage: error.localizedDescription), on: connection)
         }
+        return false
+    }
+
+    /// Performs the 101 handshake on `connection`, registers a
+    /// `WebSocketSession`, and hands the connection off to it. Returns
+    /// `true` so the caller skips the post-request `dropConnection`.
+    private func performWebSocketUpgrade(
+        on connection: NWConnection,
+        key: ObjectIdentifier,
+        remote: String,
+        clientKey: String,
+        outcome: AuthOutcome
+    ) async -> Bool {
+        // Flush the 101 response. The connection stays open after this; we
+        // pull it out of `connections` (so `stop()` doesn't double-cancel)
+        // and let the session own its lifecycle.
+        let response = WebSocketHandshake.upgradeResponse(clientKey: clientKey)
+        await sendBytes(response, on: connection)
+        connections.removeValue(forKey: key)
+
+        let peer = peerInfo[key] ?? PeerInfo(remoteAddress: remote, tokenName: nil, connectedAt: Date())
+        let session = WebSocketSession(connection: connection, peer: peer)
+        sessions[key] = session
+        session.onSubscribe = { [weak self] session, ids in
+            self?.handleSubscribe(session: session, key: key, ids: ids)
+        }
+        session.onUnsubscribe = { [weak self] session, ids in
+            self?.handleUnsubscribe(session: session, key: key, ids: ids)
+        }
+        session.onClose = { [weak self] _ in
+            self?.handleSessionClose(key: key)
+        }
+
+        // Greet the viewer with the hello frame so it can render the host
+        // display name and verify protocol version immediately.
+        session.send(.hello(displayName: store.hostDisplayName))
+        session.start()
+
+        // Touch the token off the response path.
+        if case .ok(let record) = outcome {
+            Task.detached {
+                do {
+                    try AccessToken.touch(hash: record.hash, from: remote)
+                } catch {
+                    logger.warning("token touch failed: \(error.localizedDescription, privacy: .public)")
+                }
+            }
+        }
+
+        logger.notice("ws upgraded peer=\(remote, privacy: .public)")
+        return true
+    }
+
+    // MARK: - WS subscription / fanout
+
+    private func handleSubscribe(session: WebSocketSession, key: ObjectIdentifier, ids: [String]) {
+        for id in ids {
+            subscribers[id, default: []].insert(key)
+        }
+    }
+
+    private func handleUnsubscribe(session: WebSocketSession, key: ObjectIdentifier, ids: [String]) {
+        for id in ids {
+            subscribers[id]?.remove(key)
+            if subscribers[id]?.isEmpty == true {
+                subscribers.removeValue(forKey: id)
+            }
+        }
+    }
+
+    private func handleSessionClose(key: ObjectIdentifier) {
+        // Drop from fanout, peer list, session map. The session has
+        // already cancelled the underlying connection on its own.
+        if let session = sessions.removeValue(forKey: key) {
+            for id in session.subscribedFolderIds {
+                subscribers[id]?.remove(key)
+                if subscribers[id]?.isEmpty == true {
+                    subscribers.removeValue(forKey: id)
+                }
+            }
+        }
+        peerInfo.removeValue(forKey: key)
+        connectedPeers = Array(peerInfo.values)
+    }
+
+    /// Server-owned broadcast entry point. Iterates the fan-out map and
+    /// hands the event to each subscribed session's send queue. Called by
+    /// `RemoteHostController` after an `IssueStore.onReloadBroadcast` tick.
+    func broadcast(_ event: RemoteEvent, toFolderId folderId: String) {
+        guard let keys = subscribers[folderId], !keys.isEmpty else { return }
+        for key in keys {
+            sessions[key]?.send(event)
+        }
+    }
+
+    /// Drop all subscriptions to `folderId` (host flipped the share toggle
+    /// off, or the bookmark went stale). Emits `unsubscribed` to each
+    /// subscriber and removes them from the map.
+    func unshareFolder(folderId: String, reason: String) {
+        guard let keys = subscribers.removeValue(forKey: folderId) else { return }
+        for key in keys {
+            sessions[key]?.dropSubscription(folderId: folderId, reason: reason)
+        }
+    }
+
+    /// Force-close every WS session — used when the host revokes the
+    /// underlying access token (#0084). The wire code is 4001
+    /// "token revoked"; viewers surface the expired-token UI (#0104).
+    /// Optional `predicate` lets callers target a specific token (e.g.
+    /// match by token name); when nil every session is closed.
+    func closeSessions(matching predicate: ((WebSocketSession) -> Bool)? = nil, code: WebSocketCloseCode = .tokenRevoked) {
+        let open = Array(sessions.values)
+        for session in open {
+            if predicate?(session) ?? true {
+                session.close(code: code, reason: "token_revoked")
+            }
+        }
+    }
+
+    /// Test seam — surfaces the count of subscribers to a given folder.
+    var _subscriberCountByFolder: [String: Int] {
+        var out: [String: Int] = [:]
+        for (id, keys) in subscribers { out[id] = keys.count }
+        return out
     }
 
     /// Reads bytes from `connection` until `\r\n\r\n` is seen or

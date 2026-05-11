@@ -188,11 +188,52 @@ final class RemoteHostController {
 
     // MARK: - Tab integration
 
+    /// Tracks which stores we've attached the broadcast hook to so we can
+    /// detach cleanly when a tab closes. Keyed by `IssueStore.id`.
+    private var hookedStores: Set<UUID> = []
+
     /// Forward the current tab list into the underlying `HostFolderStore`
     /// so `/v1/folders` reflects what the user actually has open. Called
     /// by `RootView` from `.onChange(of: tabs.tabs.map(\.id))`.
     func setStores(_ stores: [IssueStore]) {
         folderStore.setStores(stores)
+        // Attach the broadcast hook to any newly-tracked stores. We use a
+        // dedicated `onReloadBroadcast` (separate from `onReload`) so we
+        // don't fight TabsModel for the primary callback.
+        let presentIDs = Set(stores.map(\.id))
+        for store in stores where !hookedStores.contains(store.id) {
+            store.onReloadBroadcast = { [weak self] store in
+                MainActor.assumeIsolated {
+                    self?.broadcastReload(from: store)
+                }
+            }
+            hookedStores.insert(store.id)
+        }
+        // Drop tracking entries for stores that left the tab list. The
+        // closures held by those stores are released when the store itself
+        // is deallocated, so we don't need to nil them out here.
+        hookedStores.formIntersection(presentIDs)
+    }
+
+    /// Broadcast a `reload` event for `store`'s folder. No-op if hosting
+    /// is off or the folder isn't currently shared — viewers should never
+    /// receive events for a folder they couldn't have subscribed to.
+    private func broadcastReload(from store: IssueStore) {
+        guard isEnabled, folderStore.isGlobalHostingEnabled else { return }
+        guard let folderId = store.folderId else { return }
+        guard folderStore.isShared(folderId: folderId) else { return }
+        server.broadcast(.reload(folderId: folderId), toFolderId: folderId)
+    }
+
+    /// Persisted per-folder share flip with WS fanout (#0101). The view
+    /// layer calls this instead of `folderStore.setShared` directly so
+    /// the unshare-side `unsubscribed` event lands on every subscriber.
+    func setFolderShared(folderId: String, _ isShared: Bool) {
+        let was = folderStore.isShared(folderId: folderId)
+        folderStore.setShared(folderId: folderId, isShared)
+        if was && !isShared {
+            server.unshareFolder(folderId: folderId, reason: "host_unshared")
+        }
     }
 
     // MARK: - Network path monitor
