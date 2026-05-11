@@ -79,6 +79,14 @@ final class IssueStore: Identifiable {
     /// `issues` untouched and shouldn't flip the indicator.
     var onReload: ((IssueStore) -> Void)?
 
+    /// Fires alongside `onReload` for successful, locally-sourced reloads
+    /// only. Used by `RemoteHostController` to push reload events down the
+    /// WebSocket fanout (#0101). Kept separate from `onReload` so the
+    /// TabsModel hook (which already owns `onReload`) doesn't have to
+    /// multi-cast, and so a remote-sourced reload (#0094) can't loop back
+    /// through the broadcast bus.
+    var onReloadBroadcast: ((IssueStore) -> Void)?
+
     /// The folder URL the source reads from. Local-source surrogate for tab
     /// identity in `TabsModel`'s persistence keys and security-scoped bookmark
     /// path. Future remote sources will replace this with a richer identifier.
@@ -166,6 +174,12 @@ final class IssueStore: Identifiable {
         // running.
         if src.loadError == nil && !src.folderInvalidated {
             onReload?(self)
+            // Only broadcast for local sources — a remote-sourced reload
+            // (#0094) is itself driven by a host broadcast, and rebroadcasting
+            // would form a viewer ↔ host loop in host-and-viewer instances.
+            if src.isLocallySourced {
+                onReloadBroadcast?(self)
+            }
         }
     }
 

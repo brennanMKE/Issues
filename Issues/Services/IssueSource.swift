@@ -79,3 +79,12 @@ protocol IssueSource: AnyObject {
     /// walk + parser + lint pass; the remote impl will fetch over HTTP.
     func reload()
 }
+
+extension IssueSource {
+    /// `true` when this source reads directly from disk (LocalFolderIssueSource).
+    /// `false` for sources that mirror another host (RemoteAccess.md Phase 3).
+    /// Used by `RemoteServer` fanout (#0101) to avoid rebroadcasting a reload
+    /// that was itself driven by a remote viewer — that would form a loop in
+    /// a host-and-viewer setup.
+    var isLocallySourced: Bool { true }
+}
