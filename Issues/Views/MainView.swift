@@ -165,6 +165,10 @@ struct MainView: View {
         AppCommandsController.shared.showCommandPalette = {
             showingCommandPalette = true
         }
+        AppCommandsController.shared.printSelectedIssue = {
+            guard let issue = store.selectedIssue else { return }
+            IssuePrintRunner.print(issue: issue)
+        }
     }
 
     /// Window-chrome subtitle: a `"\(filtered) of \(total)"` count when a

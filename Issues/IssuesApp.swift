@@ -102,6 +102,17 @@ struct IssuesApp: App {
                     commands.triggerShowCommandPalette()
                 }
                 .keyboardShortcut(commands.shortcuts.keyboardShortcut(for: .commandPalette))
+
+                Divider()
+
+                // Print / Save as PDF for the currently-selected issue
+                // (#0063). Disabled when nothing is selected — the user
+                // explicitly picks a row first.
+                Button("Print\u{2026}") {
+                    commands.printSelectedIssue?()
+                }
+                .keyboardShortcut("p", modifiers: .command)
+                .disabled(commands.activeStore?.selectedIssue == nil)
             }
 
             // View-mode shortcuts use Cmd+Opt+1..4 so they don't collide with

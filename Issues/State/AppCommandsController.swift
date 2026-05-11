@@ -65,6 +65,11 @@ final class AppCommandsController {
     /// in which case the menu item no-ops.
     var showCommandPalette: (() -> Void)?
 
+    /// Invoked when File → Print… (Cmd+P) fires for the currently-selected
+    /// issue (#0063). `nil` when no scene is mounted; menu item should
+    /// also be disabled unless `activeStore?.selectedIssue != nil`.
+    var printSelectedIssue: (() -> Void)?
+
     /// Routing intent deposited by the notification tap handler. Drained as
     /// soon as the tabs model is wired up — either immediately (warm app) or
     /// after `TabsModel.restore()` completes during a cold launch (#0026).
