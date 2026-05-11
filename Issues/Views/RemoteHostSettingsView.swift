@@ -61,6 +61,12 @@ struct RemoteHostSettingsView: View {
             Section("Access tokens") {
                 AccessTokenListView()
             }
+
+            if controller.isEnabled {
+                Section("Connected viewers") {
+                    ConnectedViewersListView(controller: controller)
+                }
+            }
         }
         .formStyle(.grouped)
         .padding(20)

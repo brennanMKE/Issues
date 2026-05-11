@@ -35,6 +35,13 @@ final class RemoteHostController {
     /// `isEnabled` is false.
     private(set) var listeningPort: UInt16?
 
+    /// Peers currently holding a connection to the server (#0092). Reads
+    /// through to the server's observable list so SwiftUI views update
+    /// as connections open / close.
+    var connectedPeers: [PeerInfo] {
+        server.connectedPeers
+    }
+
     /// Available IPs, refreshed when the network path changes.
     private(set) var interfaces: [NetworkInterfaceLister.InterfaceAddress] = []
 

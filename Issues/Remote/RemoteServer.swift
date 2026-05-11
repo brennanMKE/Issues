@@ -390,12 +390,17 @@ enum AuthMiddleware {
 private nonisolated let logger = Logger(subsystem: Logging.subsystem, category: "RemoteServer")
 
 @MainActor
+@Observable
 final class RemoteServer {
 
     private let store: MultiFolderStore
     private var routes: RouteTable
     private var listener: NWListener?
     private var connections: [ObjectIdentifier: NWConnection] = [:]
+    /// Peers currently holding a connection, keyed by `ObjectIdentifier`
+    /// of the `NWConnection`. Mirrored to the observable `connectedPeers`
+    /// array so SwiftUI views (#0092) re-render when the set changes.
+    private var peerInfo: [ObjectIdentifier: PeerInfo] = [:]
     private(set) var connectedPeers: [PeerInfo] = []
     private(set) var listeningPort: UInt16?
 
@@ -455,6 +460,7 @@ final class RemoteServer {
             connection.cancel()
         }
         connections.removeAll()
+        peerInfo.removeAll()
         connectedPeers.removeAll()
     }
 
@@ -483,7 +489,8 @@ final class RemoteServer {
         connections[key] = connection
         let remote = Self.describe(endpoint: connection.endpoint)
         let peer = PeerInfo(remoteAddress: remote, tokenName: nil, connectedAt: Date())
-        connectedPeers.append(peer)
+        peerInfo[key] = peer
+        connectedPeers = Array(peerInfo.values)
         logger.debug("accept peer=\(remote, privacy: .public)")
 
         connection.stateUpdateHandler = { [weak self] state in
@@ -506,13 +513,8 @@ final class RemoteServer {
         if let conn = connections.removeValue(forKey: key) {
             conn.cancel()
         }
-        connectedPeers.removeAll { _ in
-            // We don't have a stable per-peer key yet — drop the oldest
-            // matching entry by remote address in connectedAt order in a
-            // future patch. For now, leaving entries until stop() is OK
-            // for the placeholder UI in #0092.
-            false
-        }
+        peerInfo.removeValue(forKey: key)
+        connectedPeers = Array(peerInfo.values)
     }
 
     private func handleRequest(on connection: NWConnection, key: ObjectIdentifier, remote: String) async {
@@ -536,6 +538,13 @@ final class RemoteServer {
         if let failure = AuthMiddleware.failureResponse(for: outcome) {
             await send(failure, on: connection)
             return
+        }
+        // Thread the token's user-chosen name into the peer record so
+        // the connected-viewers list (#0092) shows it.
+        if case .ok(let record) = outcome, var info = peerInfo[key] {
+            info.tokenName = record.name
+            peerInfo[key] = info
+            connectedPeers = Array(peerInfo.values)
         }
 
         guard let (route, captures) = routes.match(method: request.method, path: request.path) else {
