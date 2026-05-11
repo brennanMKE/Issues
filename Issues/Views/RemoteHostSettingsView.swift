@@ -57,6 +57,10 @@ struct RemoteHostSettingsView: View {
                 TextField("Display name", text: $controller.displayName, prompt: Text(controller.folderStore.hostDisplayName))
                     .textFieldStyle(.roundedBorder)
             }
+
+            Section("Access tokens") {
+                AccessTokenListView()
+            }
         }
         .formStyle(.grouped)
         .padding(20)
