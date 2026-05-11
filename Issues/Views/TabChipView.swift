@@ -31,9 +31,11 @@ struct TabChipView: View {
                 }
             }
 
-            Image(systemName: "folder.fill")
-                .font(.system(size: 10))
-                .foregroundStyle(isActive ? Color.appAccent : Color.appMuted)
+            folderGlyph
+
+            if isRemoteTab {
+                remoteIndicator
+            }
 
             Text(store.displayName)
                 .font(.system(size: 12, weight: isActive ? .semibold : .regular))
@@ -83,6 +85,24 @@ struct TabChipView: View {
             Button("Reveal in Finder") { onRevealInFinder() }
             Button("Reload") { onReload() }
         }
+    }
+
+    private var folderGlyph: some View {
+        Image(systemName: "folder.fill")
+            .font(.system(size: 10))
+            .foregroundStyle(isActive ? Color.appAccent : Color.appMuted)
+    }
+
+    private var remoteIndicator: some View {
+        Image(systemName: "antenna.radiowaves.left.and.right")
+            .font(.system(size: 9))
+            .foregroundStyle(isActive ? Color.appAccent : Color.appMuted)
+            .help("Remote folder")
+            .accessibilityLabel("Remote folder")
+    }
+
+    private var isRemoteTab: Bool {
+        store.folderURL.scheme == RemoteHostIssueSource.urlScheme
     }
 
     private var helpText: String {

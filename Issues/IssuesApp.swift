@@ -89,6 +89,15 @@ struct IssuesApp: App {
 
                 Divider()
 
+                // Open the remote-folder picker (#0091/#0096/#0097). No
+                // keyboard shortcut today — discoverability via menu is
+                // sufficient for the v1 surface.
+                Button("Connect to Remote Host\u{2026}") {
+                    commands.connectToRemoteHost()
+                }
+
+                Divider()
+
                 Button("Reload") {
                     commands.reloadActive()
                 }
@@ -202,6 +211,15 @@ struct IssuesApp: App {
             FolderPickerSceneView()
         }
         .defaultSize(width: 480, height: 520)
+        .windowResizability(.contentMinSize)
+
+        // Remote-folder picker (#0091/#0096/#0097). Single-instance like
+        // the local folder picker so mashing the menu doesn't spawn
+        // duplicates. The picker view owns its own multi-phase state.
+        Window("Connect to Remote Host", id: "remotePicker") {
+            RemoteFolderPickerView()
+        }
+        .defaultSize(width: 560, height: 540)
         .windowResizability(.contentMinSize)
 
         // Native Settings scene (#0024). SwiftUI auto-wires the

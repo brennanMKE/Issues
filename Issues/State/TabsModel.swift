@@ -24,6 +24,21 @@ final class TabsModel {
     /// so the open-tab list stays untouched. See `TabPersistedState` for the
     /// persisted shape.
     private static let perTabStateDefaultsKey = "perTabState"
+    /// JSON-encoded `[RemoteTabPersistence]` for tabs whose source is a
+    /// `RemoteHostIssueSource` (#0099). Sibling to `openTabs` so the
+    /// existing bookmark-only path stays unchanged; the token is *not*
+    /// persisted here — it lives in `ViewerTokenStore` keyed by host id.
+    private static let openRemoteTabsKey = "openRemoteTabs"
+
+    /// On-disk shape for a single restored remote tab. Tokens are looked
+    /// up via `ViewerTokenStore` keyed by `"host:port"` on restore — same
+    /// key the picker writes after the user pastes one.
+    fileprivate struct RemoteTabPersistence: Codable, Hashable {
+        let host: String
+        let port: UInt16
+        let folderId: String
+        let displayName: String?
+    }
     /// Debounce window for `saveTabStateIfChanged` writes. Filter clicks
     /// often arrive in quick bursts (e.g. shift-clicking through pills);
     /// 500 ms collapses those into a single write.
@@ -120,6 +135,43 @@ final class TabsModel {
         tabs.append(store)
         activeTabID = store.id
         logger.notice("opened tab repo=\(store.repoName, privacy: .public) count=\(self.tabs.count, privacy: .public)")
+        persist()
+        return store
+    }
+
+    /// Opens a tab backed by a remote host (#0099). The token is held by
+    /// the constructed `RemoteHostIssueSource`; persistence stores only
+    /// `(host, port, folderId)` and looks the token up via `ViewerTokenStore`
+    /// on restore. If a tab for the same `(host, folderId)` already exists,
+    /// activates it instead of opening a second.
+    @discardableResult
+    func openRemoteTab(host: String, port: UInt16, token: String, folderId: String, displayName: String? = nil) -> IssueStore {
+        if let existing = tabs.first(where: { store in
+            guard let endpoint = store.remoteEndpoint,
+                  endpoint.host == host, endpoint.port == port,
+                  store.folderId == folderId else { return false }
+            return true
+        }) {
+            activeTabID = existing.id
+            persist()
+            return existing
+        }
+        let source = RemoteHostIssueSource(
+            host: host,
+            port: port,
+            token: token,
+            folderId: folderId,
+            displayName: displayName
+        )
+        let store = IssueStore(source: source)
+        attachReloadHook(to: store)
+        store.start()
+        lastSeenSnapshot[store.id] = store.snapshot
+        hasUnseenChanges[store.id] = false
+        lastWrittenSnapshot[store.id] = store.persistedState()
+        tabs.append(store)
+        activeTabID = store.id
+        logger.notice("opened remote tab host=\(host, privacy: .public):\(port, privacy: .public) folder=\(folderId, privacy: .public) count=\(self.tabs.count, privacy: .public)")
         persist()
         return store
     }
@@ -316,7 +368,19 @@ final class TabsModel {
 
     private func persist() {
         var blobs: [Data] = []
+        var remotes: [RemoteTabPersistence] = []
         for store in tabs {
+            // Remote tabs go in a sibling list — their identity is the
+            // `(host, folderId)` tuple, not a security-scoped bookmark.
+            if let endpoint = store.remoteEndpoint, let folderId = store.folderId {
+                remotes.append(RemoteTabPersistence(
+                    host: endpoint.host,
+                    port: endpoint.port,
+                    folderId: folderId,
+                    displayName: store.displayName
+                ))
+                continue
+            }
             // Prefer the bytes captured at openTab/restore time so the same
             // bookmark blob round-trips through UserDefaults — that keeps
             // `IssueStore.folderId` stable across launches (#0082).
@@ -342,16 +406,32 @@ final class TabsModel {
         } catch {
             logger.error("persist: encode failed: \(error.localizedDescription, privacy: .public)")
         }
+        if remotes.isEmpty {
+            UserDefaults.standard.removeObject(forKey: Self.openRemoteTabsKey)
+        } else {
+            do {
+                let encoded = try JSONEncoder().encode(remotes)
+                UserDefaults.standard.set(encoded, forKey: Self.openRemoteTabsKey)
+            } catch {
+                logger.error("persist remote tabs: encode failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
     }
 
     private func restore() {
-        guard let data = UserDefaults.standard.data(forKey: Self.defaultsKey) else { return }
+        let localData = UserDefaults.standard.data(forKey: Self.defaultsKey)
+        let remoteData = UserDefaults.standard.data(forKey: Self.openRemoteTabsKey)
+        guard localData != nil || remoteData != nil else { return }
         let blobs: [Data]
-        do {
-            blobs = try JSONDecoder().decode([Data].self, from: data)
-        } catch {
-            logger.warning("restore: decode failed: \(error.localizedDescription, privacy: .public)")
-            return
+        if let localData {
+            do {
+                blobs = try JSONDecoder().decode([Data].self, from: localData)
+            } catch {
+                logger.warning("restore: decode failed: \(error.localizedDescription, privacy: .public)")
+                return
+            }
+        } else {
+            blobs = []
         }
         var restored: [IssueStore] = []
         for blob in blobs {
@@ -396,14 +476,51 @@ final class TabsModel {
                 continue
             }
         }
+        // Remote-tab restore: re-attach any `(host, port, folderId)` triples
+        // we persisted last session, looking up the bearer token via the
+        // Keychain. Entries without a matching token are silently dropped
+        // (the user revoked it, or this is a borrowed Mac without the
+        // shared Keychain access group).
+        var restoredRemoteCount = 0
+        var totalRemoteCount = 0
+        if let remoteData {
+            do {
+                let saved = try JSONDecoder().decode([RemoteTabPersistence].self, from: remoteData)
+                totalRemoteCount = saved.count
+                for entry in saved {
+                    let hostId = "\(entry.host):\(entry.port)"
+                    guard let token = try? ViewerTokenStore.token(forHost: hostId), !token.isEmpty else {
+                        logger.warning("restore: dropping remote tab without token host=\(hostId, privacy: .public)")
+                        continue
+                    }
+                    let source = RemoteHostIssueSource(
+                        host: entry.host,
+                        port: entry.port,
+                        token: token,
+                        folderId: entry.folderId,
+                        displayName: entry.displayName
+                    )
+                    let store = IssueStore(source: source)
+                    attachReloadHook(to: store)
+                    store.start()
+                    lastSeenSnapshot[store.id] = store.snapshot
+                    hasUnseenChanges[store.id] = false
+                    lastWrittenSnapshot[store.id] = store.persistedState()
+                    restored.append(store)
+                    restoredRemoteCount += 1
+                }
+            } catch {
+                logger.warning("restore remote tabs: decode failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
         tabs = restored
         activeTabID = restored.first?.id
         if !restored.isEmpty {
-            logger.notice("restored \(restored.count, privacy: .public) tabs")
+            logger.notice("restored \(restored.count, privacy: .public) tabs (local=\(restored.count - restoredRemoteCount, privacy: .public) remote=\(restoredRemoteCount, privacy: .public))")
         }
         // Re-persist so a partial restore (some bookmarks dropped) prunes the
         // saved list rather than carrying broken entries forward.
-        if restored.count != blobs.count {
+        if restored.count != blobs.count + totalRemoteCount {
             persist()
         }
         // Prune per-tab state for any folders we no longer track. Restoring

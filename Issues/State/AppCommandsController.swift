@@ -49,6 +49,13 @@ final class AppCommandsController {
     /// `focusSearch`.
     var openFolderPicker: (() -> Void)?
 
+    /// Invoked when **File → Connect to Remote Host…** fires (#0091/#0096/
+    /// #0097). Set by `RootView.onAppear` to call
+    /// `openWindow(id: "remotePicker")`. Same indirection as
+    /// `openFolderPicker` — the controller can't read
+    /// `@Environment(\.openWindow)` directly.
+    var openRemoteFolderPicker: (() -> Void)?
+
     /// Invoked with the currently selected issue when the user hits Enter or
     /// triggers an "open markdown" menu shortcut. Set by `MainView` so we can
     /// flip its `markdownSheetIssue` state. `nil` when no scene is mounted.
@@ -129,6 +136,13 @@ final class AppCommandsController {
         // through to `NSOpenPanel` for "Add folder…", but it surfaces
         // remembered folders first.
         openFolderPicker?()
+    }
+
+    /// File → Connect to Remote Host… entry point (#0091/#0097). Opens
+    /// the picker window if one isn't already up; the window is
+    /// single-instance so duplicate clicks just bring it forward.
+    func connectToRemoteHost() {
+        openRemoteFolderPicker?()
     }
 
     func closeActiveTab() {

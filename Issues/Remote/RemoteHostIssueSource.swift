@@ -36,6 +36,12 @@ enum RemoteIssueSourceEvent: Sendable, Equatable {
 @MainActor
 final class RemoteHostIssueSource: IssueSource {
 
+    /// URL scheme used for the synthetic `folderURL` exposed to the rest of
+    /// the app (#0094). Views detect a remote tab by checking
+    /// `store.folderURL.scheme == RemoteHostIssueSource.urlScheme` instead
+    /// of casting through the source existential.
+    static let urlScheme = "issues-remote"
+
     // MARK: - IssueSource conformance (observable state)
 
     var folderURL: URL { syntheticFolderURL }
@@ -89,13 +95,24 @@ final class RemoteHostIssueSource: IssueSource {
 
     // MARK: - Init
 
-    init(host: String, port: UInt16, token: String, folderId: String, client: RemoteClientProtocol? = nil) {
+    init(
+        host: String,
+        port: UInt16,
+        token: String,
+        folderId: String,
+        displayName: String? = nil,
+        client: RemoteClientProtocol? = nil
+    ) {
         self.host = host
         self.port = port
         self.folderId = folderId
-        self.displayName = "\(host):\(port)"
+        // Seed `displayName` from the caller (the picker already fetched the
+        // wire `FolderInfo.name` before deciding to open a tab) so the chip
+        // shows the right label before the first reload finishes. Falls back
+        // to `host:port` until the source's own reload lands a value.
+        self.displayName = displayName?.isEmpty == false ? displayName! : "\(host):\(port)"
         self.bookmarkData = Data("remote:\(host):\(port)|\(folderId)".utf8)
-        self.syntheticFolderURL = URL(string: "issues-remote://\(host):\(port)/\(folderId)")
+        self.syntheticFolderURL = URL(string: "\(Self.urlScheme)://\(host):\(port)/\(folderId)")
             ?? URL(fileURLWithPath: "/tmp/issues-remote-\(folderId)")
         if let client {
             self.client = client
