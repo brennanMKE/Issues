@@ -70,6 +70,11 @@ final class AppCommandsController {
     /// also be disabled unless `activeStore?.selectedIssue != nil`.
     var printSelectedIssue: (() -> Void)?
 
+    /// Invoked when File → Generate Report… (Cmd+Shift+R) fires for the
+    /// active tab (#0064). `nil` when no scene is mounted; menu item is
+    /// disabled when `activeStore == nil`.
+    var generateReport: (() -> Void)?
+
     /// Routing intent deposited by the notification tap handler. Drained as
     /// soon as the tabs model is wired up — either immediately (warm app) or
     /// after `TabsModel.restore()` completes during a cold launch (#0026).

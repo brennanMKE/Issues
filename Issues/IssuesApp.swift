@@ -113,6 +113,16 @@ struct IssuesApp: App {
                 }
                 .keyboardShortcut("p", modifiers: .command)
                 .disabled(commands.activeStore?.selectedIssue == nil)
+
+                Divider()
+
+                // Generate Report (#0064). Disabled when no tab is
+                // active. Writes into `<watched-folder>/reports/`.
+                Button("Generate Report\u{2026}") {
+                    commands.generateReport?()
+                }
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+                .disabled(commands.activeStore == nil)
             }
 
             // View-mode shortcuts use Cmd+Opt+1..4 so they don't collide with

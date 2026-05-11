@@ -1,4 +1,6 @@
 import SwiftUI
+import AppKit
+import os.log
 
 struct MainView: View {
     @Bindable var store: IssueStore
@@ -168,6 +170,15 @@ struct MainView: View {
         AppCommandsController.shared.printSelectedIssue = {
             guard let issue = store.selectedIssue else { return }
             IssuePrintRunner.print(issue: issue)
+        }
+        AppCommandsController.shared.generateReport = {
+            do {
+                let url = try ReportGenerator.generate(for: store)
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            } catch {
+                Logger(subsystem: Logging.subsystem, category: "ReportGenerator")
+                    .warning("report generation failed: \(error.localizedDescription, privacy: .public)")
+            }
         }
     }
 
