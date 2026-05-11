@@ -6,7 +6,7 @@ import os.log
 nonisolated private let sourceLogger = Logger(subsystem: Logging.subsystem, category: "RemoteHostIssueSource")
 
 /// Lifecycle events the source publishes through `eventStream` (#0094).
-/// `RemoteEvent.reloaded` is informational — the actual issues array has
+/// `RemoteIssueSourceEvent.reloaded` is informational — the actual issues array has
 /// already been updated; SwiftUI views observe `IssueStore` for the
 /// payload. The other cases are state transitions the viewer UI needs to
 /// react to:
@@ -18,7 +18,7 @@ nonisolated private let sourceLogger = Logger(subsystem: Logging.subsystem, cate
 /// - `.disconnected` — transport-level failure; reconnect logic (#0103)
 ///   re-creates the source.
 /// - `.issueChanged(id:)` — single-row update after a lazy body fetch.
-enum RemoteEvent: Sendable, Equatable {
+enum RemoteIssueSourceEvent: Sendable, Equatable {
     case reloaded
     case issueChanged(id: String)
     case disconnected
@@ -84,8 +84,8 @@ final class RemoteHostIssueSource: IssueSource {
 
     /// AsyncStream of lifecycle events. The viewer UI consumes this to
     /// drive the disconnected / expired-token surfaces (#0104).
-    let eventStream: AsyncStream<RemoteEvent>
-    private let eventContinuation: AsyncStream<RemoteEvent>.Continuation
+    let eventStream: AsyncStream<RemoteIssueSourceEvent>
+    private let eventContinuation: AsyncStream<RemoteIssueSourceEvent>.Continuation
 
     // MARK: - Init
 
@@ -102,8 +102,8 @@ final class RemoteHostIssueSource: IssueSource {
         } else {
             self.client = URLSessionRemoteClient(host: host, port: port, token: token)
         }
-        var continuation: AsyncStream<RemoteEvent>.Continuation!
-        self.eventStream = AsyncStream<RemoteEvent> { c in continuation = c }
+        var continuation: AsyncStream<RemoteIssueSourceEvent>.Continuation!
+        self.eventStream = AsyncStream<RemoteIssueSourceEvent> { c in continuation = c }
         self.eventContinuation = continuation
     }
 

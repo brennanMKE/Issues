@@ -121,7 +121,7 @@ struct RemoteHostIssueSourceTests {
         let stub = StubClient(folder: Self.folderInfo(), issues: [])
         stub.folderError = .unauthorized
         let source = RemoteHostIssueSource(host: "10.0.0.1", port: 5000, token: "iat_bad", folderId: "f1", client: stub)
-        var collected: [RemoteEvent] = []
+        var collected: [RemoteIssueSourceEvent] = []
         let listener = Task {
             for await event in source.eventStream {
                 collected.append(event)
@@ -139,7 +139,7 @@ struct RemoteHostIssueSourceTests {
         let stub = StubClient(folder: Self.folderInfo(), issues: [])
         stub.folderError = .folderNotFound
         let source = RemoteHostIssueSource(host: "10.0.0.1", port: 5000, token: "iat_x", folderId: "f1", client: stub)
-        var collected: [RemoteEvent] = []
+        var collected: [RemoteIssueSourceEvent] = []
         let listener = Task {
             for await event in source.eventStream {
                 collected.append(event)
@@ -156,7 +156,7 @@ struct RemoteHostIssueSourceTests {
         let stub = StubClient(folder: Self.folderInfo(), issues: [])
         stub.folderError = .transport("network down")
         let source = RemoteHostIssueSource(host: "10.0.0.1", port: 5000, token: "iat_x", folderId: "f1", client: stub)
-        var collected: [RemoteEvent] = []
+        var collected: [RemoteIssueSourceEvent] = []
         let listener = Task {
             for await event in source.eventStream {
                 collected.append(event)
