@@ -4,6 +4,7 @@ struct RootView: View {
     @Environment(\.openWindow) private var openWindow
     @State private var bookmarks = FolderBookmarkService()
     @State private var tabs = TabsModel()
+    @State private var hostController = RemoteHostController()
 
     var body: some View {
         Group {
@@ -23,11 +24,20 @@ struct RootView: View {
             }
         }
         .frame(minWidth: 900, minHeight: 600)
+        // Keep the host's MultiFolderStore in sync with the tab list so
+        // /v1/folders reflects what the user actually has open (#0083).
+        .onChange(of: tabs.tabs.map(\.id)) { _, _ in
+            hostController.setStores(tabs.tabs)
+        }
         .onAppear {
+            // Seed the host controller with the initial tab list at mount.
+            hostController.setStores(tabs.tabs)
+
             // Register with the menu-bar command bridge. `MainView` updates
             // `activeStore` and `openMarkdown` when it mounts.
             AppCommandsController.shared.tabs = tabs
             AppCommandsController.shared.bookmarks = bookmarks
+            AppCommandsController.shared.hostController = hostController
             // Hand the controller a closure it can call to open the picker
             // scene. Same indirection pattern as `focusSearch` — the
             // controller can't read `@Environment(\.openWindow)` itself,

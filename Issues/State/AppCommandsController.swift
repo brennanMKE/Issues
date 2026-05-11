@@ -36,6 +36,12 @@ final class AppCommandsController {
     /// folders and present the open panel. Set by `RootView` on appear.
     var bookmarks: FolderBookmarkService?
 
+    /// Remote-hosting glue (#0083). Set by `RootView` on appear so the
+    /// Settings scene can bind to the same instance the main window holds.
+    #if os(macOS)
+    var hostController: RemoteHostController?
+    #endif
+
     /// Invoked when "New Tab" / `+` / Cmd+T fires (#0029). Set by
     /// `RootView.onAppear` to call `openWindow(id: "folderPicker")`. The
     /// controller can't read `@Environment(\.openWindow)` itself — only a

@@ -17,11 +17,42 @@ struct SettingsView: View {
                 .tabItem {
                     Label("Shortcuts", systemImage: "keyboard")
                 }
+
+            #if os(macOS)
+            RemoteAccessSettingsTab()
+                .tabItem {
+                    Label("Remote Access", systemImage: "antenna.radiowaves.left.and.right")
+                }
+            #endif
         }
         .frame(minWidth: 520, minHeight: 420)
         .scenePadding()
     }
 }
+
+#if os(macOS)
+/// Bridge between the Settings scene and the `RemoteHostController` owned by
+/// `RootView`. The controller lives on the main window's view tree, so this
+/// tab reads it back through `AppCommandsController.shared` (the same
+/// indirection pattern the menu commands use). Until the main window mounts
+/// for the first time, the tab shows a small placeholder.
+private struct RemoteAccessSettingsTab: View {
+    @State private var commands = AppCommandsController.shared
+
+    var body: some View {
+        Group {
+            if let controller = commands.hostController {
+                RemoteHostSettingsView(controller: controller)
+            } else {
+                Text("Open the main window to access remote hosting settings.")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(20)
+            }
+        }
+    }
+}
+#endif
 
 #if DEBUG
 #Preview("Light & Dark") {

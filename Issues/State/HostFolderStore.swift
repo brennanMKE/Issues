@@ -33,6 +33,11 @@ final class HostFolderStore: MultiFolderStore {
     /// the user's prior selection.
     var isGlobalHostingEnabled: Bool = false
 
+    /// User-chosen display name override (#0083). When set, takes precedence
+    /// over `Host.current().localizedName` so the value the user typed in
+    /// settings is what `/v1/host` returns.
+    var displayNameOverride: String?
+
     /// Default for newly-encountered folder ids when global hosting is
     /// enabled. `false` keeps a freshly-opened folder unpublished until the
     /// user confirms in settings (matches the issue spec's "fresh folder
@@ -44,6 +49,7 @@ final class HostFolderStore: MultiFolderStore {
     // MARK: - MultiFolderStore
 
     var hostDisplayName: String {
+        if let override = displayNameOverride, !override.isEmpty { return override }
         let host = Host.current()
         if let localized = host.localizedName, !localized.isEmpty {
             return localized
