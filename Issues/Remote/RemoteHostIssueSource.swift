@@ -1,0 +1,288 @@
+import Foundation
+import os.log
+
+#if os(macOS) || os(iOS)
+
+nonisolated private let sourceLogger = Logger(subsystem: Logging.subsystem, category: "RemoteHostIssueSource")
+
+/// Lifecycle events the source publishes through `eventStream` (#0094).
+/// `RemoteEvent.reloaded` is informational — the actual issues array has
+/// already been updated; SwiftUI views observe `IssueStore` for the
+/// payload. The other cases are state transitions the viewer UI needs to
+/// react to:
+///
+/// - `.tokenInvalid` — host returned 401; surface the expired/revoked
+///   token UI (#0104) and stop the source.
+/// - `.folderUnavailable` — host returned 404 on the folder path; the
+///   picker should fall back to find-by-name (#0098).
+/// - `.disconnected` — transport-level failure; reconnect logic (#0103)
+///   re-creates the source.
+/// - `.issueChanged(id:)` — single-row update after a lazy body fetch.
+enum RemoteEvent: Sendable, Equatable {
+    case reloaded
+    case issueChanged(id: String)
+    case disconnected
+    case tokenInvalid
+    case folderUnavailable
+}
+
+/// `IssueSource` (from #0077) backed by a remote Issues.app host. Talks
+/// HTTP today; the WebSocket subscription path is stubbed out behind a
+/// `// TODO(#0102)` marker — for now `reload()` is the only refresh.
+///
+/// To `IssueStore` and the views a remote folder looks identical to a
+/// local one: same `[Issue]` array, same `onUpdate` callback, same
+/// lifecycle methods. That's the whole point of the #0077 protocol.
+@MainActor
+final class RemoteHostIssueSource: IssueSource {
+
+    // MARK: - IssueSource conformance (observable state)
+
+    var folderURL: URL { syntheticFolderURL }
+
+    /// User-visible label. Populated from `FolderInfo.name` after the
+    /// first `start()` / `reload()`; falls back to the host:port until
+    /// then so a slow first response doesn't render blank.
+    private(set) var displayName: String
+
+    private(set) var projectMetadata: ProjectMetadata?
+
+    /// Remote sources don't have a security-scoped bookmark — they
+    /// publish a stable id directly. The `IssueStore.folderId` getter
+    /// hashes whatever bytes are here; we feed it the canonical
+    /// `<hostId>|<folderId>` so a future "remote tab id" (#0099) can
+    /// share the same identifier.
+    let bookmarkData: Data?
+
+    /// Diagnostic label — used in log lines and the (eventual) remote
+    /// tab subtitle. `<displayName>@<host>` so multi-host streams stay
+    /// readable.
+    var repoName: String { displayName }
+
+    private(set) var issues: [Issue] = []
+    private(set) var lintFindings: [LintFinding] = []
+    private(set) var loadError: String?
+    private(set) var folderInvalidated: Bool = false
+    var onUpdate: ((any IssueSource) -> Void)?
+
+    // MARK: - Connection identity
+
+    let host: String
+    let port: UInt16
+    let folderId: String
+    private let syntheticFolderURL: URL
+
+    // MARK: - Internals
+
+    private let client: RemoteClientProtocol
+    private var bodyCache: [String: String] = [:]
+    /// `(id → wire modifiedAt)` from the last metadata fetch. Used to
+    /// invalidate `bodyCache` entries on reload — if the wire mtime moved
+    /// we drop the cached body so the next selection re-fetches.
+    private var lastSeenMtime: [String: Date] = [:]
+    private var inFlightReloadTask: Task<Void, Never>?
+
+    /// AsyncStream of lifecycle events. The viewer UI consumes this to
+    /// drive the disconnected / expired-token surfaces (#0104).
+    let eventStream: AsyncStream<RemoteEvent>
+    private let eventContinuation: AsyncStream<RemoteEvent>.Continuation
+
+    // MARK: - Init
+
+    init(host: String, port: UInt16, token: String, folderId: String, client: RemoteClientProtocol? = nil) {
+        self.host = host
+        self.port = port
+        self.folderId = folderId
+        self.displayName = "\(host):\(port)"
+        self.bookmarkData = Data("remote:\(host):\(port)|\(folderId)".utf8)
+        self.syntheticFolderURL = URL(string: "issues-remote://\(host):\(port)/\(folderId)")
+            ?? URL(fileURLWithPath: "/tmp/issues-remote-\(folderId)")
+        if let client {
+            self.client = client
+        } else {
+            self.client = URLSessionRemoteClient(host: host, port: port, token: token)
+        }
+        var continuation: AsyncStream<RemoteEvent>.Continuation!
+        self.eventStream = AsyncStream<RemoteEvent> { c in continuation = c }
+        self.eventContinuation = continuation
+    }
+
+    deinit {
+        eventContinuation.finish()
+    }
+
+    // MARK: - Lifecycle
+
+    func start() {
+        sourceLogger.notice("[\(self.repoName, privacy: .public)] start host=\(self.host, privacy: .public):\(self.port, privacy: .public) folder=\(self.folderId, privacy: .public)")
+        reload()
+        // TODO(#0102): once #0100's WS endpoint lands and #0102 wires the
+        // viewer-side socket, open `/v1/events` here and `subscribe` for
+        // `folderId`. For now polling via `reload()` is the only refresh.
+    }
+
+    func stop() {
+        sourceLogger.notice("[\(self.repoName, privacy: .public)] stop")
+        inFlightReloadTask?.cancel()
+        inFlightReloadTask = nil
+    }
+
+    func reload() {
+        inFlightReloadTask?.cancel()
+        inFlightReloadTask = Task { [weak self] in
+            await self?.performReload()
+        }
+    }
+
+    private func performReload() async {
+        do {
+            let info = try await client.fetchFolder(id: folderId)
+            let metas = try await client.fetchIssues(folderId: folderId)
+            try Task.checkCancellation()
+
+            displayName = info.name
+            projectMetadata = ProjectMetadata(name: info.name, url: info.url)
+
+            // Map wire metadata to local Issue values. Body is empty
+            // until `fetchBody(for:)` is called; the swimlane preview
+            // shows "—" until then. Lint findings are not transmitted
+            // (lint runs only on the host); leave the array empty.
+            let newIssues = metas.map { meta in
+                Issue(
+                    id: meta.id,
+                    title: meta.title,
+                    status: IssueStatus(raw: meta.status),
+                    statusRaw: meta.status,
+                    module: meta.modules.joined(separator: " / "),
+                    platform: meta.platform,
+                    firstSeen: meta.firstSeen,
+                    firstSeenRaw: meta.firstSeen.map(Self.shortDate) ?? "",
+                    closed: meta.closedAt,
+                    closedRaw: meta.closedAt.map(Self.shortDate) ?? "",
+                    description: bodyCache[meta.id] ?? "",
+                    fileURL: syntheticFolderURL.appendingPathComponent("\(meta.id).md"),
+                    modifiedAt: meta.modifiedAt,
+                    hasAttachments: meta.hasAttachments
+                )
+            }
+            // Invalidate body cache entries whose mtime moved.
+            for meta in metas {
+                if let previous = lastSeenMtime[meta.id], previous != meta.modifiedAt {
+                    bodyCache.removeValue(forKey: meta.id)
+                }
+                lastSeenMtime[meta.id] = meta.modifiedAt
+            }
+            // Drop bodies for issues that disappeared.
+            let liveIds = Set(metas.map(\.id))
+            bodyCache = bodyCache.filter { liveIds.contains($0.key) }
+
+            issues = newIssues
+            loadError = nil
+            folderInvalidated = false
+            onUpdate?(self)
+            eventContinuation.yield(.reloaded)
+        } catch is CancellationError {
+            // Caller-driven cancellation. No state change; the next
+            // reload() will repopulate.
+        } catch RemoteClientError.unauthorized {
+            sourceLogger.warning("[\(self.repoName, privacy: .public)] unauthorized — token invalid")
+            loadError = "Token rejected by host."
+            onUpdate?(self)
+            eventContinuation.yield(.tokenInvalid)
+            inFlightReloadTask = nil
+        } catch RemoteClientError.folderNotFound {
+            sourceLogger.warning("[\(self.repoName, privacy: .public)] folder unavailable on host")
+            loadError = "Folder no longer available on host."
+            folderInvalidated = true
+            onUpdate?(self)
+            eventContinuation.yield(.folderUnavailable)
+            inFlightReloadTask = nil
+        } catch let error as RemoteClientError {
+            sourceLogger.warning("[\(self.repoName, privacy: .public)] remote error \(String(describing: error), privacy: .public)")
+            loadError = "Couldn't reach host."
+            onUpdate?(self)
+            eventContinuation.yield(.disconnected)
+        } catch {
+            sourceLogger.warning("[\(self.repoName, privacy: .public)] unexpected error \(error.localizedDescription, privacy: .public)")
+            loadError = error.localizedDescription
+            onUpdate?(self)
+            eventContinuation.yield(.disconnected)
+        }
+    }
+
+    // MARK: - Body fetching (spec §"Body fetching")
+
+    /// Returns the cached body for `id` if present, otherwise fetches it
+    /// via `/v1/folders/{folderId}/issues/{id}`, stuffs the result into
+    /// the in-memory `Issue.description`, fires `onUpdate`, and yields
+    /// `.issueChanged(id)`. Subsequent calls for the same id are a
+    /// cache hit (no network).
+    func fetchBody(for id: String) async throws -> String {
+        if let cached = bodyCache[id] {
+            return cached
+        }
+        let detail: IssueDetail
+        do {
+            detail = try await client.fetchIssueDetail(folderId: folderId, id: id)
+        } catch RemoteClientError.unauthorized {
+            loadError = "Token rejected by host."
+            onUpdate?(self)
+            eventContinuation.yield(.tokenInvalid)
+            throw RemoteClientError.unauthorized
+        } catch RemoteClientError.notFound {
+            // The issue vanished between the metadata fetch and this
+            // body fetch. Drop the row and surface the change.
+            issues.removeAll { $0.id == id }
+            bodyCache.removeValue(forKey: id)
+            lastSeenMtime.removeValue(forKey: id)
+            onUpdate?(self)
+            eventContinuation.yield(.issueChanged(id: id))
+            throw RemoteClientError.notFound
+        } catch let error as RemoteClientError {
+            loadError = "Couldn't fetch issue body."
+            onUpdate?(self)
+            eventContinuation.yield(.disconnected)
+            throw error
+        }
+        bodyCache[id] = detail.body
+        if let idx = issues.firstIndex(where: { $0.id == id }) {
+            let prev = issues[idx]
+            issues[idx] = Issue(
+                id: prev.id,
+                title: prev.title,
+                status: prev.status,
+                statusRaw: prev.statusRaw,
+                module: prev.module,
+                platform: prev.platform,
+                firstSeen: prev.firstSeen,
+                firstSeenRaw: prev.firstSeenRaw,
+                closed: prev.closed,
+                closedRaw: prev.closedRaw,
+                description: detail.body,
+                fileURL: prev.fileURL,
+                modifiedAt: prev.modifiedAt,
+                hasAttachments: prev.hasAttachments
+            )
+            onUpdate?(self)
+            eventContinuation.yield(.issueChanged(id: id))
+        }
+        return detail.body
+    }
+
+    /// `true` when the body for `id` is already cached. Used by the
+    /// viewer UI to render an instant detail panel vs. a placeholder.
+    func hasCachedBody(for id: String) -> Bool {
+        bodyCache[id] != nil
+    }
+
+    // MARK: - Helpers
+
+    private static func shortDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter.string(from: date)
+    }
+}
+
+#endif
