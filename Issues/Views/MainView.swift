@@ -123,6 +123,17 @@ struct MainView: View {
         .sheet(isPresented: $showingCommandPalette) {
             CommandPaletteView(store: store, tabs: tabs)
         }
+        .confirmationDialog(
+            revealDialogTitle,
+            isPresented: revealDialogPresented,
+            titleVisibility: .visible,
+            presenting: store.pendingReveal
+        ) { issue in
+            Button("Reveal Issue") { store.revealIssue(issue) }
+            Button("Cancel", role: .cancel) { store.cancelReveal() }
+        } message: { issue in
+            Text(revealDialogMessage(for: issue))
+        }
         .onAppear { registerCommandHandlers() }
         .onChange(of: store.id) { _, _ in registerCommandHandlers() }
         // Per-tab persistence (#0009): forward every user-driven UI change
@@ -168,6 +179,44 @@ struct MainView: View {
             return total == 1 ? "1 issue" : "\(total) issues"
         }
         return "\(filtered) of \(total)"
+    }
+
+    // MARK: - Notification reveal dialog (#0070)
+
+    private var revealDialogPresented: Binding<Bool> {
+        Binding(
+            get: { store.pendingReveal != nil },
+            set: { isPresented in
+                if !isPresented { store.cancelReveal() }
+            }
+        )
+    }
+
+    private var revealDialogTitle: String {
+        guard let issue = store.pendingReveal else { return "" }
+        return "Reveal #\(issue.id) — \(issue.title)?"
+    }
+
+    private func revealDialogMessage(for issue: Issue) -> String {
+        var lines: [String] = []
+        lines.append("Status: \(issue.status.displayName) · Module: \(issue.module.isEmpty ? "—" : issue.module) · Platform: \(issue.platform.isEmpty ? "—" : issue.platform)")
+        let firstParagraph = issue.description
+            .split(separator: "\n\n", maxSplits: 1)
+            .first
+            .map(String.init) ?? ""
+        let trimmed = firstParagraph.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            lines.append("")
+            // Cap the snippet so the dialog stays compact.
+            if trimmed.count > 300 {
+                lines.append(String(trimmed.prefix(300)) + "…")
+            } else {
+                lines.append(trimmed)
+            }
+        }
+        lines.append("")
+        lines.append("Revealing switches this tab to List and clears the filters that hide this issue.")
+        return lines.joined(separator: "\n")
     }
 
     /// Clamps the persisted `detailPanelWidth` against `[minDetailPanelWidth,

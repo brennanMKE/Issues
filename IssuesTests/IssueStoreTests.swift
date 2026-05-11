@@ -46,6 +46,82 @@ struct IssueStoreTests {
 
     // MARK: - apply: round-trip
 
+    // MARK: - Notification reveal (#0070)
+
+    @Test func requestRevealSelectsImmediatelyWhenVisible() {
+        let issues = [Self.makeIssue(id: "0001", status: .open)]
+        let store = Self.makeStore(issues: issues)
+        store.requestReveal(id: "0001")
+        #expect(store.selectedIssueID == "0001")
+        #expect(store.pendingReveal == nil)
+    }
+
+    @Test func requestRevealQueuesWhenHiddenByStatusFilter() {
+        let issues = [
+            Self.makeIssue(id: "0001", status: .open),
+            Self.makeIssue(id: "0002", status: .resolved)
+        ]
+        let store = Self.makeStore(issues: issues)
+        store.statusFilters = [.open]
+        store.requestReveal(id: "0002")
+        #expect(store.selectedIssueID == nil)
+        #expect(store.pendingReveal?.id == "0002")
+    }
+
+    @Test func requestRevealQueuesWhenHiddenBySearchQuery() {
+        let issues = [Self.makeIssue(id: "0001")]
+        let store = Self.makeStore(issues: issues)
+        store.searchQuery = "no-match-no-match"
+        store.requestReveal(id: "0001")
+        #expect(store.pendingReveal?.id == "0001")
+    }
+
+    @Test func revealIssueFlipsToListAndClearsBlockingFilter() {
+        let issues = [
+            Self.makeIssue(id: "0001", status: .open),
+            Self.makeIssue(id: "0002", status: .resolved, module: "State")
+        ]
+        let store = Self.makeStore(issues: issues)
+        store.viewMode = .swimlane
+        store.statusFilters = [.open]
+        store.moduleFilter = "Services"  // doesn't include the issue's module
+        store.searchQuery = "totally unrelated text"
+
+        let target = issues[1]
+        store.revealIssue(target)
+
+        #expect(store.viewMode == .list)
+        #expect(store.statusFilters.isEmpty)
+        #expect(store.moduleFilter == nil)
+        #expect(store.searchQuery == "")
+        #expect(store.selectedIssueID == "0002")
+        #expect(store.pendingReveal == nil)
+    }
+
+    @Test func revealIssueKeepsNonBlockingFilters() {
+        let issues = [Self.makeIssue(id: "0001", status: .open, module: "State", platform: "macOS")]
+        let store = Self.makeStore(issues: issues)
+        store.platformFilter = "macOS"  // matches the issue — should NOT clear
+        store.statusFilters = [.resolved] // blocks — should clear
+        store.revealIssue(issues[0])
+        #expect(store.platformFilter == "macOS")
+        #expect(store.statusFilters.isEmpty)
+    }
+
+    @Test func cancelRevealLeavesEverythingAlone() {
+        let issues = [Self.makeIssue(id: "0001", status: .resolved)]
+        let store = Self.makeStore(issues: issues)
+        store.statusFilters = [.open]
+        store.requestReveal(id: "0001")
+        let priorMode = store.viewMode
+        let priorFilters = store.statusFilters
+        store.cancelReveal()
+        #expect(store.pendingReveal == nil)
+        #expect(store.viewMode == priorMode)
+        #expect(store.statusFilters == priorFilters)
+        #expect(store.selectedIssueID == nil)
+    }
+
     @Test func applyRoundTripPreservesEveryField() {
         let issues = [
             Self.makeIssue(id: "0001", status: .open, module: "State", platform: "macOS"),

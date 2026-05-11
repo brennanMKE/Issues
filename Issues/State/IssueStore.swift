@@ -67,6 +67,12 @@ final class IssueStore: Identifiable {
     var sortColumn: SortColumn = .id
     var sortAscending: Bool = true
 
+    /// Issue queued for a confirmed reveal (#0070). Set by `requestReveal`
+    /// when the target row would otherwise be hidden by the current
+    /// filters / search / view mode; `MainView` surfaces a confirmation
+    /// dialog and calls `revealIssue` on confirm or clears on cancel.
+    var pendingReveal: Issue?
+
     /// Fires after every successful reload (issues populated, no error). Used
     /// by `TabsModel` to drive the per-tab "unseen changes" indicator. Not
     /// fired on read failures or folder-invalidation ticks — those leave
@@ -261,6 +267,75 @@ final class IssueStore: Identifiable {
             counts[issue.status, default: 0] += 1
         }
         return counts
+    }
+
+    // MARK: - Notification-driven reveal (#0070)
+
+    /// Returns true when the issue with `id` would appear in the active
+    /// view given the current filters / search / view-mode. Used by the
+    /// notification-tap path to decide between a silent selection and the
+    /// "Reveal Issue?" confirmation dialog.
+    ///
+    /// Visibility = the issue is in `filteredIssues` AND the active view
+    /// mode would render it. All four view modes today (swimlane,
+    /// timeline, list, recent) draw from the same `filteredIssues` set —
+    /// the test simplifies to "is the issue in `filteredIssues`?".
+    func issueIsCurrentlyVisible(id: String) -> Bool {
+        filteredIssues.contains(where: { $0.id == id })
+    }
+
+    /// Notification-tap entry point. If the target row is currently
+    /// visible, select it immediately (today's behavior). Otherwise
+    /// queue it for a user-confirmed reveal — `MainView` shows the
+    /// confirmation dialog.
+    func requestReveal(id: String) {
+        guard let target = issues.first(where: { $0.id == id }) else { return }
+        if issueIsCurrentlyVisible(id: id) {
+            selectedIssueID = id
+        } else {
+            pendingReveal = target
+        }
+    }
+
+    /// User-confirmed reveal: flip to `.list`, clear only the filters and
+    /// search query that would hide the target, and select it. Doesn't
+    /// touch filters that aren't blocking the row so the user's prior
+    /// selections survive as much as possible (#0070's
+    /// minimum-clearing principle).
+    func revealIssue(_ issue: Issue) {
+        viewMode = .list
+        if let s = moduleFilter, !issue.modules.contains(s) {
+            moduleFilter = nil
+        }
+        if let p = platformFilter, issue.platform != p && issue.platform != "All" {
+            platformFilter = nil
+        }
+        if !statusFilters.isEmpty && !statusFilters.contains(issue.status) {
+            statusFilters = []
+        }
+        switch attachmentFilter {
+        case .all: break
+        case .withAttachments where !issue.hasAttachments:
+            attachmentFilter = .all
+        case .withoutAttachments where issue.hasAttachments:
+            attachmentFilter = .all
+        default: break
+        }
+        let trimmed = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            let q = trimmed.lowercased()
+            let matches = issue.id.lowercased().contains(q)
+                || issue.title.lowercased().contains(q)
+                || issue.description.lowercased().contains(q)
+            if !matches { searchQuery = "" }
+        }
+        selectedIssueID = issue.id
+        pendingReveal = nil
+    }
+
+    /// Cancels a queued reveal without changing any filters or selection.
+    func cancelReveal() {
+        pendingReveal = nil
     }
 
     func toggleSelection(_ id: String) {

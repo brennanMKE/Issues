@@ -103,7 +103,10 @@ final class AppCommandsController {
         tabs.setActive(id: link.tabID)
         if let issueID = link.issueID,
            let store = tabs.tabs.first(where: { $0.id == link.tabID }) {
-            store.selectedIssueID = issueID
+            // Route through `requestReveal` so filters that would hide
+            // the row surface the confirmation dialog (#0070) instead of
+            // silently selecting an invisible issue.
+            store.requestReveal(id: issueID)
         }
         pendingDeepLink = nil
     }
