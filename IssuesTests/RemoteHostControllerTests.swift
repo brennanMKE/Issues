@@ -19,6 +19,7 @@ struct RemoteHostControllerTests {
     private static func clearDefaults() {
         UserDefaults.standard.removeObject(forKey: "RemoteServer.enabled")
         UserDefaults.standard.removeObject(forKey: "RemoteServer.displayName")
+        UserDefaults.standard.removeObject(forKey: "RemoteServer.allowedNetworks")
     }
 
     @Test func defaultsToDisabledOnFirstLaunch() {
@@ -74,6 +75,33 @@ struct RemoteHostControllerTests {
         let s2 = IssueStore(folderURL: URL(fileURLWithPath: "/tmp/b"), bookmarkData: Data("b".utf8))
         controller.setStores([s1, s2])
         #expect(store.stores.count == 2)
+    }
+
+    // MARK: - Pause / re-enable (#0105)
+
+    @Test func isPausedReflectsIntentDivergence() {
+        Self.clearDefaults()
+        defer { Self.clearDefaults() }
+        let controller = RemoteHostController()
+        #expect(controller.isPaused == false)
+    }
+
+    @Test func userIntentPersistsAcrossInstances() {
+        Self.clearDefaults()
+        defer { Self.clearDefaults() }
+        UserDefaults.standard.set(true, forKey: "RemoteServer.enabled")
+        let controller = RemoteHostController()
+        #expect(controller.isUserEnabled == true)
+    }
+
+    @Test func togglingOffClearsUserIntent() {
+        Self.clearDefaults()
+        defer { Self.clearDefaults() }
+        UserDefaults.standard.set(true, forKey: "RemoteServer.enabled")
+        let controller = RemoteHostController()
+        controller.setEnabled(false)
+        #expect(controller.isUserEnabled == false)
+        #expect(UserDefaults.standard.bool(forKey: "RemoteServer.enabled") == false)
     }
 }
 

@@ -13,11 +13,26 @@ struct RemoteHostSettingsView: View {
 
     var body: some View {
         Form {
+            if controller.isPaused {
+                Section {
+                    pausedBanner
+                }
+            }
+
             Section("Remote Access") {
                 Toggle("Enable hosting", isOn: Binding(
-                    get: { controller.isEnabled },
+                    get: { controller.isUserEnabled },
                     set: { controller.setEnabled($0) }
                 ))
+                if controller.isPaused {
+                    Text("Paused — current network isn't allowlisted.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else if controller.isEnabled {
+                    Text("Running.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 if let error = controller.lastStartError {
                     Text(error)
                         .font(.caption)
@@ -80,6 +95,25 @@ struct RemoteHostSettingsView: View {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(value, forType: .string)
+    }
+
+    private var pausedBanner: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "pause.circle.fill")
+                .foregroundStyle(.orange)
+                .imageScale(.large)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Hosting paused — your network changed")
+                    .font(.callout.bold())
+                Text("Joined a new network. Re-enable to publish issues here.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button("Re-enable") {
+                controller.reEnableOnCurrentNetwork()
+            }
+        }
     }
 }
 

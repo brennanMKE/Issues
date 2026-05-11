@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import CryptoKit
 import os.log
 
 #if os(macOS)
@@ -23,13 +24,27 @@ final class RemoteHostController {
 
     private static let enabledKey = "RemoteServer.enabled"
     private static let displayNameKey = "RemoteServer.displayName"
+    private static let allowedNetworksKey = "RemoteServer.allowedNetworks"
 
     // MARK: - State (observed by SwiftUI)
 
-    /// `true` when the listener is running. Read-only to views; flip via
-    /// `setEnabled(_:)` so the side effects (start / stop / persist) stay
-    /// inside the controller.
+    /// `true` when the listener is running and accepting connections. This
+    /// reflects the *running* state — the user's *intent* lives in
+    /// `isUserEnabled`. The two diverge while we're paused on a network
+    /// change (#0105).
     private(set) var isEnabled: Bool = false
+
+    /// The user's last on/off intent (persisted). Stays true while the
+    /// host is paused on a network change so re-enabling preserves the
+    /// previous choice without the user having to remember it.
+    private(set) var isUserEnabled: Bool = false
+
+    /// `true` when the user wants hosting on but the current network isn't
+    /// allowlisted, so the listener is stopped pending a one-click
+    /// re-enable (#0105).
+    var isPaused: Bool {
+        isUserEnabled && !isEnabled
+    }
 
     /// Currently-bound port. Nil before `start()` completes or while
     /// `isEnabled` is false.
@@ -61,6 +76,13 @@ final class RemoteHostController {
     let folderStore: HostFolderStore
     private let server: RemoteServer
     private var pathMonitor: NWPathMonitor?
+    /// Hash of the most recently observed network path (#0105). nil until
+    /// the first NWPathMonitor update lands.
+    private var currentNetworkHash: String?
+    /// Allowlisted network hashes (persisted). Joining a hash here exempts
+    /// it from the pause-on-network-change behavior; joining a new hash
+    /// the first time the user toggles on adds the current network.
+    private var allowedNetworks: Set<String> = []
 
     init(folderStore: HostFolderStore? = nil) {
         let store = folderStore ?? HostFolderStore()
@@ -72,9 +94,16 @@ final class RemoteHostController {
         self.displayName = (persisted?.isEmpty == false ? persisted! : store.hostDisplayName)
         store.displayNameOverride = persisted?.isEmpty == false ? persisted : nil
         self.interfaces = NetworkInterfaceLister.current()
+        self.allowedNetworks = Set(UserDefaults.standard.stringArray(forKey: Self.allowedNetworksKey) ?? [])
 
-        // Auto-start if the user left hosting on last session.
-        if UserDefaults.standard.bool(forKey: Self.enabledKey) {
+        // Restore the user's persisted intent.
+        self.isUserEnabled = UserDefaults.standard.bool(forKey: Self.enabledKey)
+
+        // Auto-start if the user left hosting on last session. The network
+        // allowlist gate kicks in once `NWPathMonitor` produces its first
+        // path update — for the brief window before that we honor the
+        // user's intent unconditionally.
+        if isUserEnabled {
             do {
                 try start()
             } catch {
@@ -87,25 +116,40 @@ final class RemoteHostController {
 
     // MARK: - Lifecycle
 
-    /// Flip the user-facing toggle. Persists the new state. On a `true`
-    /// transition starts the server; on a `false` transition stops it.
-    /// Errors during start surface via `lastStartError` and the controller
-    /// flips back to `false` so the UI stays consistent.
+    /// Flip the user-facing toggle. Persists the user's intent. On a `true`
+    /// transition starts the server and allowlists the current network so
+    /// future joins to the same path don't pause. On a `false` transition
+    /// stops the server and forgets the intent (but keeps the allowlist).
     func setEnabled(_ desired: Bool) {
-        if desired == isEnabled { return }
+        if desired == isUserEnabled && desired == isEnabled { return }
         if desired {
+            isUserEnabled = true
+            UserDefaults.standard.set(true, forKey: Self.enabledKey)
+            allowlistCurrentNetwork()
             do {
                 try start()
-                UserDefaults.standard.set(true, forKey: Self.enabledKey)
             } catch {
                 lastStartError = error.localizedDescription
                 logger.error("start failed: \(error.localizedDescription, privacy: .public)")
                 isEnabled = false
-                UserDefaults.standard.set(false, forKey: Self.enabledKey)
             }
         } else {
-            stop()
+            isUserEnabled = false
             UserDefaults.standard.set(false, forKey: Self.enabledKey)
+            stop()
+        }
+    }
+
+    /// "Re-enable" action from the paused banner: allowlist the current
+    /// network and start the server. Different from `setEnabled(true)`
+    /// only in that it never toggles the intent (which was already true).
+    func reEnableOnCurrentNetwork() {
+        allowlistCurrentNetwork()
+        do {
+            try start()
+        } catch {
+            lastStartError = error.localizedDescription
+            logger.error("re-enable failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -130,6 +174,18 @@ final class RemoteHostController {
         logger.notice("RemoteHostController stopped")
     }
 
+    /// Pause behavior: stop the listener but keep `isUserEnabled` so the
+    /// banner appears and "re-enable" can land in one click. Called when
+    /// `NWPathMonitor` reports a new network that isn't in the allowlist.
+    private func pauseForNetworkChange() {
+        guard isEnabled else { return }
+        server.stop()
+        folderStore.isGlobalHostingEnabled = false
+        isEnabled = false
+        listeningPort = nil
+        logger.notice("RemoteHostController paused on network change")
+    }
+
     // MARK: - Tab integration
 
     /// Forward the current tab list into the underlying `HostFolderStore`
@@ -143,10 +199,12 @@ final class RemoteHostController {
 
     private func startPathMonitor() {
         let monitor = NWPathMonitor()
-        monitor.pathUpdateHandler = { [weak self] _ in
+        monitor.pathUpdateHandler = { [weak self] path in
             guard let self else { return }
+            let hash = Self.hash(path: path)
             Task { @MainActor in
                 self.refreshInterfaces()
+                self.handlePath(hash: hash)
             }
         }
         monitor.start(queue: .global(qos: .utility))
@@ -161,6 +219,46 @@ final class RemoteHostController {
         if isEnabled {
             listeningPort = server.listeningPort
         }
+    }
+
+    private func handlePath(hash: String) {
+        let previous = currentNetworkHash
+        currentNetworkHash = hash
+        // First path update of the session: if we auto-started, ensure
+        // the network we just joined is on the allowlist so it stays
+        // allowed across launches.
+        if previous == nil {
+            if isEnabled {
+                allowlistCurrentNetwork()
+            }
+            return
+        }
+        guard previous != hash else { return }
+        // Network changed. Pause if the user wants hosting but the new
+        // network isn't allowlisted.
+        if isUserEnabled, !allowedNetworks.contains(hash) {
+            pauseForNetworkChange()
+        }
+    }
+
+    private func allowlistCurrentNetwork() {
+        guard let hash = currentNetworkHash else { return }
+        guard !allowedNetworks.contains(hash) else { return }
+        allowedNetworks.insert(hash)
+        UserDefaults.standard.set(Array(allowedNetworks), forKey: Self.allowedNetworksKey)
+        logger.debug("allowlisted network hash=\(hash, privacy: .public)")
+    }
+
+    /// Hash a `NWPath`'s identifying surface (gateway endpoints + interface
+    /// types) so two visits to the same network produce the same string.
+    /// We can't read SSIDs without `CoreLocation` permission, and the
+    /// gateway-set hash is "good enough" for the pause-on-move behavior.
+    nonisolated private static func hash(path: NWPath) -> String {
+        let gateways = path.gateways.map { "\($0)" }.sorted().joined(separator: ",")
+        let types = path.availableInterfaces.map { "\($0.type)" }.sorted().joined(separator: ",")
+        let raw = "\(types)|\(gateways)"
+        let digest = SHA256.hash(data: Data(raw.utf8))
+        return digest.prefix(8).map { String(format: "%02x", $0) }.joined()
     }
 }
 
