@@ -35,6 +35,19 @@ struct TabChipView: View {
                 .font(.system(size: 10))
                 .foregroundStyle(isActive ? Color.appAccent : Color.appMuted)
 
+            // Remote tab indicator (#0099). Drawn just to the right of the
+            // folder glyph so the eye reads `folder · remote · title`.
+            // Detection follows the picker's contract: any store whose
+            // source produces an `issues-remote://` URL is remote. Held to
+            // 9 pt so it's subtle next to the title.
+            if store.folderURL.scheme == RemoteHostIssueSource.urlScheme {
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .font(.system(size: 9))
+                    .foregroundStyle(isActive ? Color.appAccent : Color.appMuted)
+                    .help("Remote folder")
+                    .accessibilityLabel("Remote folder")
+            }
+
             Text(store.displayName)
                 .font(.system(size: 12, weight: isActive ? .semibold : .regular))
                 .foregroundStyle(Color.appText)

@@ -110,10 +110,31 @@ final class IssueStore: Identifiable {
 
     /// Wire-stable identifier for the watched folder, derived from the
     /// security-scoped bookmark bytes via `FolderBookmarkService.folderId`
-    /// (#0082). Nil when the source has no bookmark (preview / tests /
-    /// future remote sources that publish their own id).
+    /// (#0082). Nil when the source has no bookmark (preview / tests).
+    /// Remote sources (#0094) publish their own folder id directly — we
+    /// pull it out via `remoteFolderId` so it matches what the host
+    /// announced over the wire.
     var folderId: String? {
-        source.bookmarkData.map(FolderBookmarkService.folderId(for:))
+        if let data = source.bookmarkData {
+            return FolderBookmarkService.folderId(for: data)
+        }
+        if let remote = source as? RemoteHostIssueSource {
+            return remote.folderId
+        }
+        return nil
+    }
+
+    /// `true` when this store is backed by a remote host (#0099). Used by
+    /// the tab chip to draw a small remote indicator next to the title.
+    var isRemote: Bool {
+        source is RemoteHostIssueSource
+    }
+
+    /// `(host, port)` if this store is backed by a remote source — for
+    /// `TabsModel`'s persistence path and the tab tooltip in #0099.
+    var remoteEndpoint: (host: String, port: UInt16)? {
+        guard let remote = source as? RemoteHostIssueSource else { return nil }
+        return (remote.host, remote.port)
     }
 
     /// Convenience init: wraps the URL in a `LocalFolderIssueSource`. Existing
