@@ -103,7 +103,7 @@ struct RemoteHandlersTests {
         #expect(infos.count == 2)
         #expect(infos[0].id == "aaaaaaaaaaaaaaaa")
         #expect(infos[0].name == "Issues.app")
-        #expect(infos[0].repository == URL(string: "https://github.com/brennanMKE/Issues"))
+        #expect(infos[0].url == URL(string: "https://github.com/brennanMKE/Issues"))
         #expect(infos[0].issueCount == 2)
         #expect(infos[0].parentPath == "/Users/x/Code/Issues")
     }

@@ -194,7 +194,7 @@ enum RemoteHandlers {
         FolderInfo(
             id: folder.id,
             name: folder.displayName,
-            repository: folder.projectMetadata?.url,
+            url: folder.projectMetadata?.url,
             description: nil,
             parentPath: folder.folderURL.deletingLastPathComponent().path,
             issueCount: folder.issues.count,

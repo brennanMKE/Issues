@@ -72,7 +72,12 @@ public struct FolderInfo: Codable, Equatable {
     public let id: String
     /// Human label: `project.json` `name` if present, else parent folder name.
     public let name: String
-    public let repository: URL?
+    /// Optional repository URL — comes straight from `project.json`'s
+    /// `url` field. JSON key matches the source so a viewer that already
+    /// understands `project.json` doesn't need a rename.
+    public let url: URL?
+    /// Optional description — reserved for a planned `project.json`
+    /// extension; today's host always sends `null`.
     public let description: String?
     /// The path of the folder containing the issues folder, e.g.
     /// `/Users/x/Code/MyRepo`. Used for picker disambiguation when two
@@ -84,7 +89,7 @@ public struct FolderInfo: Codable, Equatable {
     public init(
         id: String,
         name: String,
-        repository: URL?,
+        url: URL?,
         description: String?,
         parentPath: String,
         issueCount: Int,
@@ -92,7 +97,7 @@ public struct FolderInfo: Codable, Equatable {
     ) {
         self.id = id
         self.name = name
-        self.repository = repository
+        self.url = url
         self.description = description
         self.parentPath = parentPath
         self.issueCount = issueCount
