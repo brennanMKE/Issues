@@ -50,6 +50,20 @@ struct IssuesApp: App {
         }
         .defaultSize(width: 1200, height: 800)
         .commands {
+            // Sparkle "Check for Updates…" lives next to the standard
+            // "About Issues" item under the Issues app menu (#0118). The
+            // `after: .appInfo` placement keeps Apple's About item intact
+            // and slips ours in just below. Disabled until SUFeedURL is
+            // populated in Info.plist (see scripts/SPARKLE.md), so a Debug
+            // build without the appcast wired up shows a greyed-out item
+            // rather than one that fails on click.
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates\u{2026}") {
+                    UpdaterController.shared.checkForUpdates()
+                }
+                .disabled(!UpdaterController.shared.isConfigured)
+            }
+
             // Suppress `File → New Window` (#0074). With single-window
             // `Window` scenes there's no second main window to spawn, and
             // hiding the menu item avoids a no-op entry in File.
