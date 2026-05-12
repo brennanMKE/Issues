@@ -1,0 +1,247 @@
+:root {
+    --brand: #7064d8;
+    --brand-hover: #5d52bd;
+    --brand-dark: #8b7dec;
+    --text: #1a1a1a;
+    --text-muted: #555;
+    --bg: #ffffff;
+    --bg-alt: #f6f5fb;
+    --border: #e3e0f0;
+    --code-bg: #f3f1fa;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(112, 100, 216, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --brand: #8b7dec;
+        --brand-hover: #a497f0;
+        --text: #e8e8e8;
+        --text-muted: #aaa;
+        --bg: #121117;
+        --bg-alt: #1c1a25;
+        --border: #2a2735;
+        --code-bg: #1c1a25;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(139, 125, 236, 0.1);
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--text);
+    background: var(--bg);
+    margin: 0;
+    padding: 0;
+}
+
+main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+}
+
+header.hero {
+    text-align: center;
+    padding: 24px 0 8px;
+}
+
+header.hero img.icon {
+    width: 128px;
+    height: 128px;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+h1 {
+    font-size: 44px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 16px 0 8px;
+}
+
+p.tagline {
+    color: var(--text-muted);
+    font-size: 18px;
+    margin: 0 auto 32px;
+    max-width: 520px;
+}
+
+h2 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 48px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--brand);
+    display: inline-block;
+}
+
+h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 24px 0 8px;
+}
+
+p {
+    margin: 0 0 16px;
+}
+
+a {
+    color: var(--brand);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+ul {
+    padding-left: 24px;
+    margin: 0 0 16px;
+}
+
+li {
+    margin: 4px 0;
+}
+
+code {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.9em;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.download {
+    text-align: center;
+    margin: 32px 0;
+}
+
+.download a.button {
+    display: inline-block;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 12px 28px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    transition: background 120ms ease;
+}
+
+.download a.button:hover {
+    background: var(--brand-hover);
+    text-decoration: none;
+}
+
+.download .meta {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.screenshot {
+    margin: 24px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+
+.screenshot img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.changelog ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.changelog li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.changelog li:last-child {
+    border-bottom: none;
+}
+
+.changelog .version {
+    font-weight: 600;
+}
+
+.changelog .date {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-left: 8px;
+}
+
+footer {
+    border-top: 1px solid var(--border);
+    margin-top: 64px;
+    padding-top: 24px;
+    color: var(--text-muted);
+    font-size: 14px;
+    text-align: center;
+}
+
+footer a {
+    color: var(--text-muted);
+}
+
+/* Release-notes page (releases/x.y.z.html) */
+.release-header {
+    text-align: left;
+    padding: 0;
+    margin-bottom: 32px;
+}
+
+.release-header h1 {
+    font-size: 32px;
+    margin: 0 0 4px;
+}
+
+.release-header .date {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 48px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+/* 404 */
+.not-found {
+    text-align: center;
+    padding-top: 48px;
+}
+
+.not-found img.icon {
+    width: 96px;
+    height: 96px;
+    opacity: 0.6;
+}
+
+.not-found h1 {
+    font-size: 32px;
+    margin: 16px 0 8px;
+}
+
+.not-found p {
+    color: var(--text-muted);
+}
