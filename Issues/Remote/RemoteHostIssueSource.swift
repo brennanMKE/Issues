@@ -81,12 +81,18 @@ final class RemoteHostIssueSource: IssueSource {
     // MARK: - Internals
 
     private let client: RemoteClientProtocol
+    private let token: String
     private var bodyCache: [String: String] = [:]
     /// `(id → wire modifiedAt)` from the last metadata fetch. Used to
     /// invalidate `bodyCache` entries on reload — if the wire mtime moved
     /// we drop the cached body so the next selection re-fetches.
     private var lastSeenMtime: [String: Date] = [:]
     private var inFlightReloadTask: Task<Void, Never>?
+    /// WS transport (#0102). Created on `start()` after the initial reload;
+    /// the source consumes events from `websocket.events` and translates
+    /// to `RemoteIssueSourceEvent` for the viewer UI.
+    private var websocket: RemoteWebSocket?
+    private var websocketListener: Task<Void, Never>?
 
     /// AsyncStream of lifecycle events. The viewer UI consumes this to
     /// drive the disconnected / expired-token surfaces (#0104).
@@ -105,6 +111,7 @@ final class RemoteHostIssueSource: IssueSource {
     ) {
         self.host = host
         self.port = port
+        self.token = token
         self.folderId = folderId
         // Seed `displayName` from the caller (the picker already fetched the
         // wire `FolderInfo.name` before deciding to open a tab) so the chip
@@ -133,15 +140,86 @@ final class RemoteHostIssueSource: IssueSource {
     func start() {
         sourceLogger.notice("[\(self.repoName, privacy: .public)] start host=\(self.host, privacy: .public):\(self.port, privacy: .public) folder=\(self.folderId, privacy: .public)")
         reload()
-        // TODO(#0102): once #0100's WS endpoint lands and #0102 wires the
-        // viewer-side socket, open `/v1/events` here and `subscribe` for
-        // `folderId`. For now polling via `reload()` is the only refresh.
+        startWebSocketIfNeeded()
     }
 
     func stop() {
         sourceLogger.notice("[\(self.repoName, privacy: .public)] stop")
         inFlightReloadTask?.cancel()
         inFlightReloadTask = nil
+        websocketListener?.cancel()
+        websocketListener = nil
+        websocket?.stop()
+        websocket = nil
+    }
+
+    /// Opens the WS once per source lifetime. Re-entrant: a second call
+    /// while a socket is already running is a no-op.
+    private func startWebSocketIfNeeded() {
+        guard websocket == nil else { return }
+        let ws = RemoteWebSocket(host: host, port: port, token: token, folderId: folderId)
+        websocket = ws
+        ws.start()
+        websocketListener = Task { [weak self, weak ws] in
+            guard let stream = ws?.events else { return }
+            for await event in stream {
+                guard let self else { break }
+                await MainActor.run {
+                    self.handleWebSocketEvent(event)
+                }
+            }
+        }
+    }
+
+    private func handleWebSocketEvent(_ event: RemoteWebSocketEvent) {
+        switch event {
+        case .event(let wire):
+            switch wire.type {
+            case .reload:
+                if wire.folderId == folderId {
+                    reload()
+                }
+            case .update:
+                if let id = wire.id, wire.folderId == folderId {
+                    // Drop the cached body so the next selection re-fetches.
+                    bodyCache.removeValue(forKey: id)
+                    lastSeenMtime.removeValue(forKey: id)
+                    // Re-pull the full metadata list to pick up status /
+                    // mtime changes; the next view tick re-renders.
+                    reload()
+                    eventContinuation.yield(.issueChanged(id: id))
+                }
+            case .delete:
+                if let id = wire.id, wire.folderId == folderId {
+                    bodyCache.removeValue(forKey: id)
+                    lastSeenMtime.removeValue(forKey: id)
+                    issues.removeAll { $0.id == id }
+                    onUpdate?(self)
+                    eventContinuation.yield(.issueChanged(id: id))
+                }
+            case .unsubscribed:
+                if wire.folderId == folderId {
+                    folderInvalidated = true
+                    onUpdate?(self)
+                    eventContinuation.yield(.folderUnavailable)
+                }
+            case .hello, .pong:
+                break
+            }
+        case .disconnected:
+            loadError = "Connection to host lost — reconnecting…"
+            onUpdate?(self)
+            eventContinuation.yield(.disconnected)
+        case .tokenInvalid:
+            loadError = "Token rejected by host."
+            onUpdate?(self)
+            eventContinuation.yield(.tokenInvalid)
+            // Don't keep retrying — stop the socket entirely.
+            websocketListener?.cancel()
+            websocketListener = nil
+            websocket?.stop()
+            websocket = nil
+        }
     }
 
     func reload() {

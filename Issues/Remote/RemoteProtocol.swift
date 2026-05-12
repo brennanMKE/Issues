@@ -253,4 +253,14 @@ public struct RemoteCommand: Codable, Equatable {
         self.type = type
         self.folderIds = folderIds
     }
+
+    public static func subscribe(folderIds: [String]) -> RemoteCommand {
+        RemoteCommand(type: .subscribe, folderIds: folderIds)
+    }
+
+    public static func unsubscribe(folderIds: [String]) -> RemoteCommand {
+        RemoteCommand(type: .unsubscribe, folderIds: folderIds)
+    }
+
+    public static let ping = RemoteCommand(type: .ping)
 }
