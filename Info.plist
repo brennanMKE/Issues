@@ -11,8 +11,10 @@
     The TLS migration tracked in #0111 will re-enable ATS (via cert
     pinning in #0114), so this exception is the v1 → v2 bridge.
 
-    `NSBonjourServices` will land here when #0093's multicast entitlement
-    comes through.
+    The original v2 plan was to add `NSBonjourServices` here for the
+    Bonjour discovery cluster, but that's been wontfix'd by #0124 — the
+    Mac mini is the canonical host and viewers connect by direct
+    address. The Bonjour-related keys never land.
 
     Keys whose values come from `INFOPLIST_KEY_*` / project build
     settings use `$(BUILD_SETTING)` substitutions so we don't drift
@@ -49,8 +51,8 @@
         requirements; the delegate's URLCredential(trust:) bypasses
         ATS's chain-validation check cleanly.
 
-        Info.plist itself stays — it's still where NSBonjourServices
-        will land when #0093's multicast entitlement unblocks.
+        Info.plist itself stays — it carries the URL scheme below
+        (#0119) and is where any future explicit-plist additions land.
     -->
     <key>NSHumanReadableCopyright</key>
     <string></string>

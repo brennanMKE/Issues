@@ -9,9 +9,10 @@ nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: 
 /// (#0091 / #0096 / #0097). The phases share one window so the user
 /// stays in flow:
 ///
-/// 1. **Pick host** — manual `host:port` entry plus a "Recent" list and a
-///    placeholder slot for Bonjour-discovered hosts (#0089, blocked on
-///    multicast entitlement, surfaces empty state today).
+/// 1. **Pick host** — manual `host:port` entry plus a "Recent" list for
+///    one-click reconnects. The earlier "Discovered hosts" Bonjour
+///    placeholder was removed in #0125 (Mac-mini-as-canonical-host pivot,
+///    #0124); direct addressing is the only path now.
 /// 2. **Paste token** — single-line field; validated by a second
 ///    `GET /v1/host` call. On 200 the token is written to `ViewerTokenStore`.
 /// 3. **Pick folders** — list of `FolderInfo` with checkboxes + select-all
@@ -105,11 +106,6 @@ final class RemoteFolderPickerModel {
     /// Currently-remembered hosts. Refreshed on `onAppear` and after a
     /// successful connect.
     var recents: [RemoteHostIdentity] = []
-
-    /// Discovered hosts placeholder. Stays empty in this iteration —
-    /// #0089 will populate it via Bonjour once the multicast entitlement
-    /// (#0093) is approved.
-    var discovered: [RemoteHostIdentity] = []
 
     var phase: Phase = .host
 
@@ -380,22 +376,12 @@ private struct RemotePickerHostPhase: View {
                 .foregroundStyle(Color.appText)
                 .padding(.top, 16)
 
-            // Discovered hosts placeholder. The empty state is the only
-            // path today; the section is left in place so #0089 can plug
-            // in once the multicast entitlement (#0093) is approved.
-            section(title: "Discovered hosts") {
-                if model.discovered.isEmpty {
-                    Text("No hosts discovered")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.appMuted)
-                        .padding(.vertical, 6)
-                } else {
-                    ForEach(model.discovered) { identity in
-                        RecentHostRow(identity: identity) {
-                            Task { await model.connectToRecent(identity) }
-                        }
-                    }
-                }
+            section(title: "Connect to a host") {
+                manualEntryFields
+                Text("Tip: if you're using Tailscale, the MagicDNS name (e.g. `mac-mini`) works from any network.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.appMuted)
+                    .padding(.top, 4)
             }
 
             section(title: "Recent") {
@@ -416,10 +402,6 @@ private struct RemotePickerHostPhase: View {
                         }
                     }
                 }
-            }
-
-            section(title: "Or enter manually") {
-                manualEntryFields
             }
 
             if let error = model.inlineError {
