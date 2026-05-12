@@ -53,6 +53,22 @@ final class RecorderView: NSView {
         return ok
     }
 
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        // AppKit dispatches modifier-bearing keystrokes (⌘N, ⌘⇧→, etc.) as
+        // *key equivalents* before they reach `keyDown:`. Those equivalents
+        // also walk the main menu, where the app's `.commands { ...
+        // .keyboardShortcut(...) }` entries match and fire the action — so a
+        // user trying to record a shortcut would just trigger the existing
+        // command instead (#0116). While focused and recording, swallow the
+        // event by funneling it through the same translation as `keyDown`
+        // and returning `true` so the menu never sees it.
+        guard isRecording, window?.firstResponder === self else {
+            return super.performKeyEquivalent(with: event)
+        }
+        keyDown(with: event)
+        return true
+    }
+
     override func keyDown(with event: NSEvent) {
         guard isRecording else {
             super.keyDown(with: event)
