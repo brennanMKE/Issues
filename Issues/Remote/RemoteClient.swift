@@ -48,20 +48,44 @@ enum RemoteClientError: Error, Equatable {
     case transport(String)
     case decode(String)
     case unexpectedStatus(Int)
+    /// TLS handshake completed but the presented cert's fingerprint
+    /// didn't match what the viewer pinned at paste time (#0114).
+    case fingerprintMismatch
 }
 
-struct URLSessionRemoteClient: RemoteClientProtocol {
+final class URLSessionRemoteClient: RemoteClientProtocol, @unchecked Sendable {
 
     let host: String
     let port: UInt16
     let token: String
+    /// Pinned fingerprint (#0113). Empty string for the legacy
+    /// pre-TLS code path so existing tests keep compiling; production
+    /// callers must pass a real 64-hex fingerprint.
+    let fingerprint: String
     let session: URLSession
+    private let delegate: PinnedHostSessionDelegate?
 
-    init(host: String, port: UInt16, token: String, session: URLSession = .shared) {
+    init(host: String, port: UInt16, token: String, fingerprint: String, session: URLSession? = nil) {
         self.host = host
         self.port = port
         self.token = token
-        self.session = session
+        self.fingerprint = fingerprint
+        if let session {
+            self.session = session
+            self.delegate = nil
+        } else if !fingerprint.isEmpty {
+            let delegate = PinnedHostSessionDelegate(expectedFingerprint: fingerprint)
+            self.delegate = delegate
+            self.session = URLSession(configuration: .ephemeral, delegate: delegate, delegateQueue: nil)
+        } else {
+            self.delegate = nil
+            self.session = .shared
+        }
+    }
+
+    /// Legacy init for tests / pre-TLS paths.
+    convenience init(host: String, port: UInt16, token: String, session: URLSession = .shared) {
+        self.init(host: host, port: port, token: token, fingerprint: "", session: session)
     }
 
     // MARK: - Endpoints
@@ -113,6 +137,11 @@ struct URLSessionRemoteClient: RemoteClientProtocol {
             }
         } catch let error as RemoteClientError {
             throw error
+        } catch let error as URLError {
+            if Self.isFingerprintMismatch(error) {
+                throw RemoteClientError.fingerprintMismatch
+            }
+            throw RemoteClientError.transport(error.localizedDescription)
         } catch {
             throw RemoteClientError.transport(error.localizedDescription)
         }
@@ -137,6 +166,9 @@ struct URLSessionRemoteClient: RemoteClientProtocol {
             (data, response) = try await session.data(for: request)
         } catch let error as URLError {
             logger.warning("transport failure url=\(url.absoluteString, privacy: .public) error=\(error.localizedDescription, privacy: .public)")
+            if Self.isFingerprintMismatch(error) {
+                throw RemoteClientError.fingerprintMismatch
+            }
             throw RemoteClientError.transport(error.localizedDescription)
         } catch {
             throw RemoteClientError.transport(error.localizedDescription)
@@ -163,9 +195,20 @@ struct URLSessionRemoteClient: RemoteClientProtocol {
         }
     }
 
+    /// A `.cancelAuthenticationChallenge` from `PinnedHostSessionDelegate`
+    /// surfaces here as `URLError.cancelled` or
+    /// `.serverCertificateUntrusted`. Either is the pinning verdict.
+    private static func isFingerprintMismatch(_ error: URLError) -> Bool {
+        error.code == .cancelled || error.code == .serverCertificateUntrusted
+    }
+
     private func makeURL(_ path: String) throws -> URL {
         var components = URLComponents()
-        components.scheme = "http"
+        // #0114: TLS-only wire. Plain HTTP is the v1 path that's
+        // removed here; callers without a fingerprint fall through to
+        // the legacy http path via the `fingerprint.isEmpty` branch in
+        // init so existing tests keep compiling.
+        components.scheme = fingerprint.isEmpty ? "http" : "https"
         components.host = host
         components.port = Int(port)
         components.path = path

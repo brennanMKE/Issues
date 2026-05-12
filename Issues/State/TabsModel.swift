@@ -145,7 +145,7 @@ final class TabsModel {
     /// on restore. If a tab for the same `(host, folderId)` already exists,
     /// activates it instead of opening a second.
     @discardableResult
-    func openRemoteTab(host: String, port: UInt16, token: String, folderId: String, displayName: String? = nil) -> IssueStore {
+    func openRemoteTab(host: String, port: UInt16, token: String, folderId: String, fingerprint: String = "", displayName: String? = nil) -> IssueStore {
         if let existing = tabs.first(where: { store in
             guard let endpoint = store.remoteEndpoint,
                   endpoint.host == host, endpoint.port == port,
@@ -161,6 +161,7 @@ final class TabsModel {
             port: port,
             token: token,
             folderId: folderId,
+            fingerprint: fingerprint,
             displayName: displayName
         )
         let store = IssueStore(source: source)
@@ -489,15 +490,17 @@ final class TabsModel {
                 totalRemoteCount = saved.count
                 for entry in saved {
                     let hostId = "\(entry.host):\(entry.port)"
-                    guard let token = try? ViewerTokenStore.token(forHost: hostId), !token.isEmpty else {
+                    guard let storeEntry = try? ViewerTokenStore.entry(forHost: hostId),
+                          !storeEntry.token.isEmpty else {
                         logger.warning("restore: dropping remote tab without token host=\(hostId, privacy: .public)")
                         continue
                     }
                     let source = RemoteHostIssueSource(
                         host: entry.host,
                         port: entry.port,
-                        token: token,
+                        token: storeEntry.token,
                         folderId: entry.folderId,
+                        fingerprint: storeEntry.fingerprint,
                         displayName: entry.displayName
                     )
                     let store = IssueStore(source: source)

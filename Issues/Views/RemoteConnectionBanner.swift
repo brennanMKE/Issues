@@ -94,6 +94,11 @@ struct RemoteConnectionBanner: View {
                 Image(systemName: "questionmark.folder.fill")
                     .foregroundStyle(.orange)
             )
+        case .fingerprintMismatch:
+            return AnyView(
+                Image(systemName: "exclamationmark.shield.fill")
+                    .foregroundStyle(.yellow)
+            )
         }
     }
 
@@ -104,6 +109,7 @@ struct RemoteConnectionBanner: View {
         case .disconnected: return "Disconnected from \(store.displayName)"
         case .tokenInvalid: return "Access token was revoked or expired"
         case .folderUnavailable: return "Folder no longer shared by host"
+        case .fingerprintMismatch: return "The host's identity has changed"
         }
     }
 
@@ -114,6 +120,8 @@ struct RemoteConnectionBanner: View {
         case .disconnected(let reason): return "Showing the last-known content. (\(reason))"
         case .tokenInvalid: return "Generate a new token in Issues.app on the host, then paste it."
         case .folderUnavailable: return "Choose another folder on the host, or close this tab."
+        case .fingerprintMismatch:
+            return "The certificate fingerprint doesn't match the one stored when you connected. The host may have rotated its certificate, or someone may be impersonating it."
         }
     }
 
@@ -122,7 +130,7 @@ struct RemoteConnectionBanner: View {
         case .connected: return nil
         case .reconnecting, .disconnected:
             return ("Reload now", { store.reload() })
-        case .tokenInvalid:
+        case .tokenInvalid, .fingerprintMismatch:
             return ("Paste new token", { AppCommandsController.shared.openRemoteFolderPicker?() })
         case .folderUnavailable:
             return ("Manage subscriptions", { AppCommandsController.shared.openManageSubscriptions?() })
@@ -136,6 +144,8 @@ struct RemoteConnectionBanner: View {
             Color.red.opacity(0.08)
         case .folderUnavailable, .disconnected:
             Color.orange.opacity(0.08)
+        case .fingerprintMismatch:
+            Color.yellow.opacity(0.08)
         default:
             Color.appBackgroundCard.opacity(0.6)
         }
@@ -147,6 +157,7 @@ struct RemoteConnectionBanner: View {
         case .reconnecting: return "reconnecting"
         case .disconnected: return "disconnected"
         case .tokenInvalid: return "tokenInvalid"
+        case .fingerprintMismatch: return "fingerprintMismatch"
         case .folderUnavailable: return "folderUnavailable"
         }
     }

@@ -63,6 +63,7 @@ struct RemoteFolderPickerView: View {
                 port: context.port,
                 token: context.token,
                 folderId: folder.id,
+                fingerprint: context.fingerprint,
                 displayName: folder.name
             )
         }
@@ -138,6 +139,11 @@ final class RemoteFolderPickerModel {
         let host: String
         let port: UInt16
         let token: String
+        /// Pinned cert fingerprint from the combined token (#0114).
+        /// Empty for pre-#0113 hosts hitting Phase B with a bare token
+        /// (those are now rejected at parse time, so production
+        /// shouldn't reach this with an empty fingerprint).
+        let fingerprint: String
         let hostInfo: HostInfo?
         let folders: [FolderInfo]
     }
@@ -246,26 +252,27 @@ final class RemoteFolderPickerModel {
         isBusy = true
         defer { isBusy = false }
         let hostId = identity.id
-        let cachedToken: String?
+        let cachedEntry: ViewerTokenStore.Entry?
         do {
-            cachedToken = try ViewerTokenStore.token(forHost: hostId)
+            cachedEntry = try ViewerTokenStore.entry(forHost: hostId)
         } catch {
-            cachedToken = nil
+            cachedEntry = nil
             logger.warning("recent: token lookup failed for \(hostId, privacy: .public): \(error.localizedDescription, privacy: .public)")
         }
         hostText = identity.host
         portText = String(identity.port)
-        if let token = cachedToken, !token.isEmpty {
+        if let entry = cachedEntry, !entry.token.isEmpty {
             // Try the folder fetch directly; if 401, drop into token paste
             // with a note. Otherwise advance to folder phase.
             do {
-                let info = try? await client.fetchHost(host: identity.host, port: identity.port, token: token)
-                let folders = try await client.fetchFolders(host: identity.host, port: identity.port, token: token)
+                let info = try? await client.fetchHost(host: identity.host, port: identity.port, token: entry.token)
+                let folders = try await client.fetchFolders(host: identity.host, port: identity.port, token: entry.token)
                 recordHostUsage(host: identity.host, port: identity.port, displayName: info?.displayName ?? identity.displayName)
                 phase = .folders(FoldersContext(
                     host: identity.host,
                     port: identity.port,
-                    token: token,
+                    token: entry.token,
+                    fingerprint: entry.fingerprint,
                     hostInfo: info,
                     folders: folders
                 ))
@@ -328,6 +335,7 @@ final class RemoteFolderPickerModel {
                 host: host,
                 port: port,
                 token: token,
+                fingerprint: fingerprint,
                 hostInfo: info,
                 folders: folders
             ))

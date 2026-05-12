@@ -43,7 +43,12 @@ final class RemoteWebSocket {
     let port: UInt16
     let token: String
     let folderId: String
+    /// Pinned fingerprint (#0114). Empty for the legacy pre-TLS path
+    /// (so existing tests / call sites without a fingerprint keep
+    /// compiling); production callers must pass a real 64-hex value.
+    let fingerprint: String
     private let urlSession: URLSession
+    private let pinDelegate: PinnedHostSessionDelegate?
     private let pingInterval: TimeInterval
     private let pongTimeout: TimeInterval
     private let backoffSchedule: [TimeInterval]
@@ -63,7 +68,8 @@ final class RemoteWebSocket {
         port: UInt16,
         token: String,
         folderId: String,
-        urlSession: URLSession = .shared,
+        fingerprint: String = "",
+        urlSession: URLSession? = nil,
         pingInterval: TimeInterval = 25,
         pongTimeout: TimeInterval = 10,
         backoffSchedule: [TimeInterval] = [1, 2, 4, 8, 16],
@@ -74,7 +80,18 @@ final class RemoteWebSocket {
         self.port = port
         self.token = token
         self.folderId = folderId
-        self.urlSession = urlSession
+        self.fingerprint = fingerprint
+        if let urlSession {
+            self.urlSession = urlSession
+            self.pinDelegate = nil
+        } else if !fingerprint.isEmpty {
+            let delegate = PinnedHostSessionDelegate(expectedFingerprint: fingerprint)
+            self.pinDelegate = delegate
+            self.urlSession = URLSession(configuration: .ephemeral, delegate: delegate, delegateQueue: nil)
+        } else {
+            self.pinDelegate = nil
+            self.urlSession = .shared
+        }
         self.pingInterval = pingInterval
         self.pongTimeout = pongTimeout
         self.backoffSchedule = backoffSchedule
@@ -113,7 +130,11 @@ final class RemoteWebSocket {
 
     private func openConnection() {
         guard !isStopped else { return }
-        guard let url = Self.url(host: host, port: port) else {
+        // #0114: TLS-only wire when a fingerprint is pinned. The empty-
+        // fingerprint path stays on `ws://` for legacy tests / pre-TLS
+        // call sites.
+        let scheme = fingerprint.isEmpty ? "ws" : "wss"
+        guard let url = Self.url(host: host, port: port, scheme: scheme) else {
             wsLogger.warning("ws open: invalid url for \(self.host, privacy: .public):\(self.port, privacy: .public)")
             scheduleReconnect()
             return
@@ -198,14 +219,25 @@ final class RemoteWebSocket {
 
     private func handleTransportFailure(error: Error) {
         wsLogger.warning("ws transport failure: \(error.localizedDescription, privacy: .public)")
-        // URLSessionWebSocketTask doesn't always surface close codes; we
-        // probe for the tokenRevoked sentinel via the `closeCode` attribute
-        // before tearing down.
         let closeCode = task?.closeCode ?? .invalid
         task = nil
         pingTimer?.cancel()
         pingTimer = nil
         pongDeadline = nil
+        // Cert-pin failure surfaces as URLError.cancelled or
+        // .serverCertificateUntrusted from the URLSession delegate
+        // (#0114). Don't retry — pin failure is recoverable only via
+        // re-paste, the same as token revocation.
+        if let urlError = error as? URLError,
+           !fingerprint.isEmpty,
+           (urlError.code == .cancelled || urlError.code == .serverCertificateUntrusted) {
+            wsLogger.notice("ws closed on cert-pin failure — surfacing fingerprintMismatch")
+            eventContinuation.yield(.fingerprintMismatch)
+            return
+        }
+        // URLSessionWebSocketTask doesn't always surface close codes; we
+        // probe for the tokenRevoked sentinel via the `closeCode` attribute
+        // before tearing down.
         if closeCode.rawValue == 4001 {
             wsLogger.notice("ws closed with token-revoked (4001) — surfacing tokenInvalid")
             eventContinuation.yield(.tokenInvalid)
@@ -285,8 +317,10 @@ final class RemoteWebSocket {
 
     // MARK: - URL
 
-    /// Builds the ws:// URL. IPv6 literals are bracketed automatically.
-    static func url(host: String, port: UInt16) -> URL? {
+    /// Builds the ws:// or wss:// URL. IPv6 literals are bracketed
+    /// automatically. The scheme defaults to `wss` for v2 (#0114); the
+    /// `scheme:` parameter is exposed for legacy callers / tests.
+    static func url(host: String, port: UInt16, scheme: String = "wss") -> URL? {
         let trimmed = host.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return nil }
         let bracketed: String
@@ -295,7 +329,7 @@ final class RemoteWebSocket {
         } else {
             bracketed = trimmed
         }
-        return URL(string: "ws://\(bracketed):\(port)/v1/events")
+        return URL(string: "\(scheme)://\(bracketed):\(port)/v1/events")
     }
 }
 
@@ -307,6 +341,10 @@ enum RemoteWebSocketEvent: Sendable {
     case event(RemoteEvent)
     case disconnected
     case tokenInvalid
+    /// TLS handshake completed but the presented cert's fingerprint
+    /// didn't match what the viewer pinned. Source surfaces this up
+    /// the chain to `.fingerprintMismatch` and the UI banner (#0115).
+    case fingerprintMismatch
 }
 
 #endif

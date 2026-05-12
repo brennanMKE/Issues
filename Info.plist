@@ -41,16 +41,17 @@
     <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>LSMinimumSystemVersion</key>
     <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <!--
-            #0110: Plain HTTP is the v1 wire for remote access; the
-            bearer-token model is the auth boundary. Removed in #0114
-            once cert pinning lands.
-        -->
-        <key>NSAllowsArbitraryLoads</key>
-        <true/>
-    </dict>
+    <!--
+        #0114 removed the NSAppTransportSecurity dict that #0110 added.
+        Cert pinning via PinnedHostSessionDelegate makes the broad
+        exception unnecessary — https:// + ECDHE on a self-signed
+        P-256 cert satisfies ATS's protocol + forward-secrecy
+        requirements; the delegate's URLCredential(trust:) bypasses
+        ATS's chain-validation check cleanly.
+
+        Info.plist itself stays — it's still where NSBonjourServices
+        will land when #0093's multicast entitlement unblocks.
+    -->
     <key>NSHumanReadableCopyright</key>
     <string></string>
 </dict>

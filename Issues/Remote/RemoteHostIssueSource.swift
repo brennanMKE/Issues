@@ -15,6 +15,11 @@ enum RemoteConnectionState: Equatable, Sendable {
     case disconnected(reason: String)
     case tokenInvalid
     case folderUnavailable
+    /// TLS pin failed — the host's cert fingerprint doesn't match what
+    /// the viewer stored at paste time. Either rotation (#0115) or
+    /// active interference. UI surfaces the "host identity changed"
+    /// banner; user re-pastes a new combined token to recover.
+    case fingerprintMismatch
 }
 
 /// Lifecycle events the source publishes through `eventStream` (#0094).
@@ -36,6 +41,10 @@ enum RemoteIssueSourceEvent: Sendable, Equatable {
     case disconnected
     case tokenInvalid
     case folderUnavailable
+    /// TLS handshake completed but the cert fingerprint didn't match
+    /// the pinned value (#0114). Surface to viewer UI for the
+    /// re-paste prompt (#0115).
+    case fingerprintMismatch
 }
 
 /// `IssueSource` (from #0077) backed by a remote Issues.app host. Talks
@@ -121,11 +130,17 @@ final class RemoteHostIssueSource: IssueSource {
 
     // MARK: - Init
 
+    /// Pinned cert fingerprint (#0114). Threaded into the per-source
+    /// `RemoteClient` and `RemoteWebSocket` so each new instance gets
+    /// its own pinning delegate. Empty in tests / pre-TLS code paths.
+    let fingerprint: String
+
     init(
         host: String,
         port: UInt16,
         token: String,
         folderId: String,
+        fingerprint: String = "",
         displayName: String? = nil,
         client: RemoteClientProtocol? = nil
     ) {
@@ -133,6 +148,7 @@ final class RemoteHostIssueSource: IssueSource {
         self.port = port
         self.token = token
         self.folderId = folderId
+        self.fingerprint = fingerprint
         // Seed `displayName` from the caller (the picker already fetched the
         // wire `FolderInfo.name` before deciding to open a tab) so the chip
         // shows the right label before the first reload finishes. Falls back
@@ -145,7 +161,7 @@ final class RemoteHostIssueSource: IssueSource {
         if let client {
             self.client = client
         } else {
-            self.client = URLSessionRemoteClient(host: host, port: port, token: token)
+            self.client = URLSessionRemoteClient(host: host, port: port, token: token, fingerprint: fingerprint)
         }
         var continuation: AsyncStream<RemoteIssueSourceEvent>.Continuation!
         self.eventStream = AsyncStream<RemoteIssueSourceEvent> { c in continuation = c }
@@ -178,7 +194,7 @@ final class RemoteHostIssueSource: IssueSource {
     /// while a socket is already running is a no-op.
     private func startWebSocketIfNeeded() {
         guard websocket == nil else { return }
-        let ws = RemoteWebSocket(host: host, port: port, token: token, folderId: folderId)
+        let ws = RemoteWebSocket(host: host, port: port, token: token, folderId: folderId, fingerprint: fingerprint)
         websocket = ws
         ws.start()
         websocketListener = Task { [weak self, weak ws] in
@@ -242,6 +258,17 @@ final class RemoteHostIssueSource: IssueSource {
             onUpdate?(self)
             eventContinuation.yield(.tokenInvalid)
             // Don't keep retrying — stop the socket entirely.
+            websocketListener?.cancel()
+            websocketListener = nil
+            websocket?.stop()
+            websocket = nil
+        case .fingerprintMismatch:
+            loadError = "Host identity changed — paste a new token."
+            connectionState = .fingerprintMismatch
+            onUpdate?(self)
+            eventContinuation.yield(.fingerprintMismatch)
+            // Tear down the socket — pin failure is recoverable only
+            // via re-paste, the same as token revocation.
             websocketListener?.cancel()
             websocketListener = nil
             websocket?.stop()
@@ -327,6 +354,13 @@ final class RemoteHostIssueSource: IssueSource {
             connectionState = .folderUnavailable
             onUpdate?(self)
             eventContinuation.yield(.folderUnavailable)
+            inFlightReloadTask = nil
+        } catch RemoteClientError.fingerprintMismatch {
+            sourceLogger.warning("[\(self.repoName, privacy: .public)] fingerprint mismatch")
+            loadError = "Host identity changed — paste a new token."
+            connectionState = .fingerprintMismatch
+            onUpdate?(self)
+            eventContinuation.yield(.fingerprintMismatch)
             inFlightReloadTask = nil
         } catch let error as RemoteClientError {
             sourceLogger.warning("[\(self.repoName, privacy: .public)] remote error \(String(describing: error), privacy: .public)")

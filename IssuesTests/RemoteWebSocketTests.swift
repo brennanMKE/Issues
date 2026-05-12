@@ -33,22 +33,27 @@ struct RemoteWebSocketTests {
 
     @Test func urlBuildsForIPv4() {
         let url = try? #require(RemoteWebSocket.url(host: "192.168.1.42", port: 51823))
-        #expect(url?.absoluteString == "ws://192.168.1.42:51823/v1/events")
+        #expect(url?.absoluteString == "wss://192.168.1.42:51823/v1/events")
     }
 
     @Test func urlBuildsForHostname() {
         let url = RemoteWebSocket.url(host: "my-mac.local", port: 9000)
-        #expect(url?.absoluteString == "ws://my-mac.local:9000/v1/events")
+        #expect(url?.absoluteString == "wss://my-mac.local:9000/v1/events")
     }
 
     @Test func urlBracketsIPv6Literal() {
         let url = RemoteWebSocket.url(host: "fe80::abcd", port: 5000)
-        #expect(url?.absoluteString == "ws://[fe80::abcd]:5000/v1/events")
+        #expect(url?.absoluteString == "wss://[fe80::abcd]:5000/v1/events")
     }
 
     @Test func urlReturnsNilForEmptyHost() {
         #expect(RemoteWebSocket.url(host: "", port: 1) == nil)
         #expect(RemoteWebSocket.url(host: "   ", port: 1) == nil)
+    }
+
+    @Test func urlAcceptsExplicitWsSchemeForLegacy() {
+        let url = RemoteWebSocket.url(host: "10.0.0.1", port: 5000, scheme: "ws")
+        #expect(url?.absoluteString == "ws://10.0.0.1:5000/v1/events")
     }
 
     // MARK: - Backoff schedule
