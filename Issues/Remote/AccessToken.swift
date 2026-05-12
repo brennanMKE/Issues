@@ -192,15 +192,36 @@ enum AccessToken {
     /// Updates `lastUsedAt` / `lastUsedFrom` on the matching record.
     /// Throws `.notFound` if no record matches the hash.
     ///
-    /// `nonisolated` so callers (e.g. `RemoteServer`'s `Task.detached`
-    /// bookkeeping path) can run this off the MainActor without an actor
-    /// hop. The body only touches Keychain + JSON via the nonisolated
-    /// `load` / `save` helpers.
+    /// `nonisolated` so callers can run this off the MainActor without an
+    /// actor hop. The body only touches Keychain + JSON via the
+    /// nonisolated `load` / `save` helpers.
     nonisolated static func touch(
         hash: Data,
         from peer: String?,
         service: String = defaultService
     ) throws {
+        var db = try load(service: service)
+        guard let idx = db.records.firstIndex(where: { $0.hash == hash }) else {
+            throw AccessTokenError.notFound
+        }
+        db.records[idx].lastUsedAt = Date()
+        db.records[idx].lastUsedFrom = peer
+        try save(db, service: service)
+    }
+
+    /// Async overload of `touch` (#0122). `@concurrent` forces execution
+    /// onto the concurrent executor regardless of the caller's actor,
+    /// replacing the older `Task.detached { try AccessToken.touch(...) }`
+    /// idiom at request-handling call sites in `RemoteServer`. The body
+    /// matches the synchronous overload; we inline rather than call
+    /// through because overload resolution prefers this async version
+    /// from within an async context, which would recurse.
+    @concurrent
+    nonisolated static func touch(
+        hash: Data,
+        from peer: String?,
+        service: String = defaultService
+    ) async throws {
         var db = try load(service: service)
         guard let idx = db.records.firstIndex(where: { $0.hash == hash }) else {
             throw AccessTokenError.notFound

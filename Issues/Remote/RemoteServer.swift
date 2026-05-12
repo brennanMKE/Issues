@@ -638,11 +638,14 @@ final class RemoteServer {
             await send(response, on: connection)
 
             // Touch the token off the response path so the read isn't
-            // blocked on a Keychain write.
+            // blocked on a Keychain write. `AccessToken.touch` is
+            // `@concurrent`, so the outer `Task` is just fire-and-forget
+            // scheduling — the function declaration enforces the off-
+            // actor hop.
             if case .ok(let record) = outcome {
-                Task.detached {
+                Task {
                     do {
-                        try AccessToken.touch(hash: record.hash, from: remote)
+                        try await AccessToken.touch(hash: record.hash, from: remote)
                     } catch {
                         logger.warning("token touch failed: \(error.localizedDescription, privacy: .public)")
                     }
@@ -689,11 +692,12 @@ final class RemoteServer {
         session.send(.hello(displayName: store.hostDisplayName))
         session.start()
 
-        // Touch the token off the response path.
+        // Touch the token off the response path. `@concurrent` on the
+        // async overload forces execution off MainActor — see #0122.
         if case .ok(let record) = outcome {
-            Task.detached {
+            Task {
                 do {
-                    try AccessToken.touch(hash: record.hash, from: remote)
+                    try await AccessToken.touch(hash: record.hash, from: remote)
                 } catch {
                     logger.warning("token touch failed: \(error.localizedDescription, privacy: .public)")
                 }

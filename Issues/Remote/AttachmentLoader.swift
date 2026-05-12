@@ -94,13 +94,17 @@ actor AttachmentLoader {
         if let remote = source as? RemoteHostIssueSource {
             return try await remote.fetchAttachmentData(issueId: issueId, name: name)
         }
-        // Local source: load synchronously off disk on a background actor.
+        // Local source: read off the actor's executor so the actor's
+        // mailbox isn't blocked on disk I/O.
         let url = source.folderURL
             .appendingPathComponent(issueId, isDirectory: true)
             .appendingPathComponent(name, isDirectory: false)
-        return try await Task.detached(priority: .utility) {
-            try Data(contentsOf: url, options: [.mappedIfSafe])
-        }.value
+        return try await Self.readData(at: url)
+    }
+
+    @concurrent
+    nonisolated private static func readData(at url: URL) async throws -> Data {
+        try Data(contentsOf: url, options: [.mappedIfSafe])
     }
 
     private func store(_ key: CacheKey, data: Data) {
