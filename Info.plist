@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Explicit Info.plist for the Issues target (#0110).
+
+    Migrated off `GENERATE_INFOPLIST_FILE` so we can declare the
+    `NSAppTransportSecurity` dictionary needed for the v1 remote-access
+    plain-HTTP path. ATS is intentionally disabled app-wide because the
+    remote-access design uses plain HTTP on local networks (LAN /
+    Tailscale); the bearer-token model is the auth boundary, not TLS.
+
+    The TLS migration tracked in #0111 will re-enable ATS (via cert
+    pinning in #0114), so this exception is the v1 → v2 bridge.
+
+    `NSBonjourServices` will land here when #0093's multicast entitlement
+    comes through.
+
+    Keys whose values come from `INFOPLIST_KEY_*` / project build
+    settings use `$(BUILD_SETTING)` substitutions so we don't drift
+    from the build config. Xcode's `builtin-infoPlistUtility` still
+    merges remaining `INFOPLIST_KEY_*` settings into this file at
+    build time.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>$(DEVELOPMENT_LANGUAGE)</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <!--
+            #0110: Plain HTTP is the v1 wire for remote access; the
+            bearer-token model is the auth boundary. Removed in #0114
+            once cert pinning lands.
+        -->
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+    <key>NSHumanReadableCopyright</key>
+    <string></string>
+</dict>
+</plist>
