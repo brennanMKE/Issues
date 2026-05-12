@@ -394,6 +394,10 @@ private nonisolated let logger = Logger(subsystem: Logging.subsystem, category: 
 final class RemoteServer {
 
     private let store: MultiFolderStore
+    /// TLS identity (#0112). When non-nil, `start()` configures the listener
+    /// with `NWProtocolTLS.Options` bound to this identity. When nil,
+    /// `start()` throws — v2 is TLS or nothing.
+    private let identity: RemoteServerIdentity?
     private var routes: RouteTable
     private var listener: NWListener?
     private var connections: [ObjectIdentifier: NWConnection] = [:]
@@ -421,10 +425,24 @@ final class RemoteServer {
     /// Persistence key for the chosen port — `0` means "let the OS pick".
     private static let portDefaultsKey = "RemoteServer.port"
 
-    init(store: MultiFolderStore) {
+    init(store: MultiFolderStore, identity: RemoteServerIdentity? = nil) {
         self.store = store
+        self.identity = identity
         self.routes = RouteTable()
         installDefaultRoutes()
+    }
+
+    /// Thrown from `start()` when the host hasn't supplied a TLS identity
+    /// (#0112). Hosting is TLS-only in v2.
+    enum StartError: Error, CustomStringConvertible {
+        case missingIdentity
+
+        var description: String {
+            switch self {
+            case .missingIdentity:
+                return "RemoteServer requires a TLS identity. Construct with init(store:identity:)."
+            }
+        }
     }
 
     // MARK: Routes
@@ -440,11 +458,27 @@ final class RemoteServer {
 
     func start() throws {
         guard listener == nil else { return }
+        guard let identity else {
+            throw StartError.missingIdentity
+        }
 
         let savedPort = UInt16(UserDefaults.standard.integer(forKey: Self.portDefaultsKey))
         let port = NWEndpoint.Port(rawValue: savedPort) ?? .any
 
-        let parameters = NWParameters.tcp
+        // TLS (#0112). The viewer authenticates the host by pinning the
+        // cert's SHA-256 fingerprint (#0114), so no client-cert verification
+        // is configured server-side.
+        let tlsOptions = NWProtocolTLS.Options()
+        let secProtocol = tlsOptions.securityProtocolOptions
+        let secIdentity = sec_identity_create(identity.secIdentity)
+        if let secIdentity {
+            sec_protocol_options_set_local_identity(secProtocol, secIdentity)
+        } else {
+            logger.error("sec_identity_create returned nil — TLS will fail")
+        }
+        sec_protocol_options_set_min_tls_protocol_version(secProtocol, .TLSv12)
+
+        let parameters = NWParameters(tls: tlsOptions, tcp: .init())
         parameters.allowLocalEndpointReuse = true
         // Listen on all interfaces — auth + the user's network shape is
         // what makes this safe. Interface pinning is deferred to v2.
@@ -462,7 +496,7 @@ final class RemoteServer {
             Task { @MainActor in self.accept(connection: connection) }
         }
         listener.start(queue: .global(qos: .userInitiated))
-        logger.notice("RemoteServer.start requested port=\(savedPort, privacy: .public)")
+        logger.notice("RemoteServer.start requested port=\(savedPort, privacy: .public) tls=true fingerprint=\(identity.fingerprintHex, privacy: .public)")
     }
 
     func stop() {

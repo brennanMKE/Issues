@@ -75,6 +75,16 @@ final class RemoteHostController {
 
     let folderStore: HostFolderStore
     private let server: RemoteServer
+    /// TLS identity backing `RemoteServer`'s listener. Loaded from Keychain
+    /// on first launch after #0112, generated if absent. Surfaced for the
+    /// host settings UI via `currentFingerprint` (#0113 / #0115 bind).
+    private let identity: RemoteServerIdentity?
+    /// Lowercase 64-char SHA-256 hex of the host's TLS leaf cert, or empty
+    /// if identity setup failed (the latter is non-fatal here — the user
+    /// sees the surfaced `lastStartError` when they try to enable hosting).
+    var currentFingerprint: String {
+        identity?.fingerprintHex ?? ""
+    }
     private var pathMonitor: NWPathMonitor?
     /// Hash of the most recently observed network path (#0105). nil until
     /// the first NWPathMonitor update lands.
@@ -87,7 +97,22 @@ final class RemoteHostController {
     init(folderStore: HostFolderStore? = nil) {
         let store = folderStore ?? HostFolderStore()
         self.folderStore = store
-        self.server = RemoteServer(store: store)
+        // Load or generate the TLS identity (#0112). Failure to mint here
+        // is logged but doesn't crash — the user-visible failure path is
+        // `setEnabled(true)`, which surfaces `lastStartError`.
+        let loaded: RemoteServerIdentity?
+        do {
+            if let existing = try RemoteServerIdentity.load() {
+                loaded = existing
+            } else {
+                loaded = try RemoteServerIdentity.generate()
+            }
+        } catch {
+            logger.error("identity load/generate failed: \(error.localizedDescription, privacy: .public)")
+            loaded = nil
+        }
+        self.identity = loaded
+        self.server = RemoteServer(store: store, identity: loaded)
 
         // Load persisted display name; fall back to system computer name.
         let persisted = UserDefaults.standard.string(forKey: Self.displayNameKey)
