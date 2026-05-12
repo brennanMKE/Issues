@@ -120,12 +120,21 @@ final class RecorderView: NSView {
         }
         path.stroke()
 
-        // Label text.
+        // Label text. While recording, keep the current binding visible (in
+        // muted gray) so the user can see what they're about to overwrite —
+        // the accent-colored focus ring is the load-bearing "recording"
+        // indicator. The "Press a shortcut…" placeholder is reserved for the
+        // never-bound / empty case (#0117).
         let label: String
         let color: NSColor
         if isRecording {
-            label = "Press a shortcut\u{2026}"
-            color = NSColor.secondaryLabelColor
+            if binding.key.isEmpty {
+                label = "Press a shortcut\u{2026}"
+                color = NSColor.secondaryLabelColor
+            } else {
+                label = binding.displayString
+                color = NSColor.secondaryLabelColor
+            }
         } else if binding.key.isEmpty {
             label = "Click to record"
             color = NSColor.tertiaryLabelColor
