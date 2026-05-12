@@ -48,7 +48,7 @@ struct ServerCertificateSection: View {
             }
         }
         .confirmationDialog(
-            "Rotate certificate?",
+            "Confirm certificate rotation",
             isPresented: $showingRotateConfirm,
             titleVisibility: .visible
         ) {

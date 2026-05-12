@@ -160,7 +160,7 @@ struct ManageSubscriptionsSheet: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Button("Close tab") {
+            Button("Close Tab") {
                 tabs.closeTab(id: store.id)
             }
             .controlSize(.small)

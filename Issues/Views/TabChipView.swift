@@ -55,7 +55,7 @@ struct TabChipView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .help("Close tab")
+                    .help("Close Tab")
                 } else {
                     Color.clear.frame(width: 14, height: 14)
                 }

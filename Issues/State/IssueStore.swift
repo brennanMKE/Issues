@@ -9,10 +9,10 @@ final class IssueStore: Identifiable {
 
         var displayName: String {
             switch self {
-            case .swimlane: return "Swimlanes"
-            case .timeline: return "Timeline"
-            case .list: return "List"
-            case .recent: return "Recent"
+            case .swimlane: return String(localized: "Swimlanes")
+            case .timeline: return String(localized: "Timeline")
+            case .list: return String(localized: "List")
+            case .recent: return String(localized: "Recent")
             }
         }
     }
@@ -31,9 +31,9 @@ final class IssueStore: Identifiable {
 
         var displayName: String {
             switch self {
-            case .all: return "All Attachments"
-            case .withAttachments: return "With attachments"
-            case .withoutAttachments: return "Without attachments"
+            case .all: return String(localized: "All Attachments")
+            case .withAttachments: return String(localized: "With attachments")
+            case .withoutAttachments: return String(localized: "Without attachments")
             }
         }
     }

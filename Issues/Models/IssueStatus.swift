@@ -21,11 +21,11 @@ enum IssueStatus: String, CaseIterable, Hashable, Codable, Sendable {
 
     var displayName: String {
         switch self {
-        case .open: return "Open"
-        case .inProgress: return "In Progress"
-        case .resolved: return "Resolved"
-        case .closed: return "Closed"
-        case .wontfix: return "Won't Fix"
+        case .open: return String(localized: "Open")
+        case .inProgress: return String(localized: "In Progress")
+        case .resolved: return String(localized: "Resolved")
+        case .closed: return String(localized: "Closed")
+        case .wontfix: return String(localized: "Won't Fix")
         }
     }
 
