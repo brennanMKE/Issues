@@ -1,4 +1,7 @@
 import SwiftUI
+import os.log
+
+private let rootLogger = Logger(subsystem: Logging.subsystem, category: "RootView")
 
 struct RootView: View {
     @Environment(\.openWindow) private var openWindow
@@ -63,6 +66,45 @@ struct RootView: View {
             // during a cold launch (#0026). The tabs are now wired up and
             // `TabsModel.init()` already finished its synchronous restore.
             AppCommandsController.shared.consumePendingDeepLinkIfPossible()
+        }
+        // `issues://open?path=<absolute-path>` from the standalone `issues`
+        // CLI (#0119). LaunchServices delivers the URL whether the app was
+        // already running or was launched by this dispatch.
+        .onOpenURL { url in
+            handleIncomingURL(url)
+        }
+    }
+
+    /// Routes a single inbound `issues://` URL. Accepted shapes:
+    /// `issues:///open?path=<absolute-path>` to open or activate a folder;
+    /// `issues:///` (or any other path) to just bring the app forward.
+    private func handleIncomingURL(_ url: URL) {
+        guard url.scheme == "issues" else {
+            rootLogger.warning("onOpenURL: ignoring non-issues scheme \(url.scheme ?? "<none>", privacy: .public)")
+            return
+        }
+        guard let comps = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            rootLogger.warning("onOpenURL: malformed url=\(url.absoluteString, privacy: .public)")
+            return
+        }
+        // `/open` is the only verb in v1. No-op for everything else — the
+        // app just comes forward via LaunchServices.
+        guard comps.path == "/open" else {
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        guard let path = comps.queryItems?.first(where: { $0.name == "path" })?.value, !path.isEmpty else {
+            rootLogger.warning("onOpenURL: missing path query")
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        let outcome = tabs.openOrActivate(folderPath: path, bookmarks: bookmarks)
+        if outcome == .needsGrant {
+            // Brand-new path — the sandbox needs an explicit grant. Open the
+            // folder picker scene so the user can pick (or confirm) the
+            // folder. Pre-targeting the panel at the requested path is a
+            // follow-up; v1 surfaces the picker untargeted.
+            openWindow(id: "folderPicker")
         }
     }
 }

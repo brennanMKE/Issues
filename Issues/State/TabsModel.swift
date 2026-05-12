@@ -215,6 +215,58 @@ final class TabsModel {
         activeTabID = id
     }
 
+    /// Route entry point for the `issues://` URL scheme (#0119). Three
+    /// branches:
+    ///
+    /// 1. **Already-open**: any tab whose `folderURL` standardizes to the
+    ///    same path becomes active. No new tab, no permission prompt.
+    /// 2. **Remembered**: `FolderBookmarkService.remembered` has a matching
+    ///    entry — resolve its bookmark and open it as a new tab. The
+    ///    sandbox already trusts the bookmark; no prompt.
+    /// 3. **Brand-new**: caller's responsibility. Returns `.needsGrant` so
+    ///    the URL handler can route through the folder-picker scene to
+    ///    collect the user's grant via `NSOpenPanel`.
+    ///
+    /// All comparisons go through `standardizedFileURL.path` so trailing
+    /// slashes / `..` / `~` don't cause false misses.
+    @discardableResult
+    func openOrActivate(folderPath: String, bookmarks: FolderBookmarkService) -> OpenOrActivateOutcome {
+        let target = URL(fileURLWithPath: (folderPath as NSString).expandingTildeInPath)
+            .standardizedFileURL
+        let targetPath = target.path
+
+        if let existing = tabs.first(where: { $0.folderURL.standardizedFileURL.path == targetPath }) {
+            activeTabID = existing.id
+            NSApp.activate(ignoringOtherApps: true)
+            logger.notice("openOrActivate: activated existing tab path=\(targetPath, privacy: .public)")
+            return .activatedExisting
+        }
+
+        if let remembered = bookmarks.remembered.first(where: {
+            URL(fileURLWithPath: $0.displayPath).standardizedFileURL.path == targetPath
+        }) {
+            do {
+                let url = try bookmarks.resolve(remembered)
+                openTab(url: url)
+                NSApp.activate(ignoringOtherApps: true)
+                logger.notice("openOrActivate: opened remembered path=\(targetPath, privacy: .public)")
+                return .openedFromBookmark
+            } catch {
+                logger.warning("openOrActivate: resolve failed path=\(targetPath, privacy: .public) err=\(error.localizedDescription, privacy: .public)")
+                return .needsGrant
+            }
+        }
+
+        logger.notice("openOrActivate: new path=\(targetPath, privacy: .public) — needs grant")
+        return .needsGrant
+    }
+
+    enum OpenOrActivateOutcome {
+        case activatedExisting
+        case openedFromBookmark
+        case needsGrant
+    }
+
     // MARK: - Unseen-change tracking
 
     /// Wires `IssueStore.onReload` so each post-reload tick funnels into

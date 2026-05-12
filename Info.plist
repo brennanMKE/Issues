@@ -54,5 +54,25 @@
     -->
     <key>NSHumanReadableCopyright</key>
     <string></string>
+    <!--
+        Custom URL scheme `issues://` (#0119). Used by the standalone
+        `issues` CLI to ask the running app (or relaunch it) to open or
+        activate a folder by path. SwiftUI's `onOpenURL` on `RootView`
+        receives the event; `TabsModel.openOrActivate(folderPath:)`
+        handles the three branches (already-open, remembered, new).
+    -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>issues</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+        </dict>
+    </array>
 </dict>
 </plist>
