@@ -408,6 +408,13 @@ final class RemoteHostIssueSource: IssueSource {
         bodyCache[id] != nil
     }
 
+    /// Streaming attachment fetch entry point used by `AttachmentLoader`
+    /// (#0106). Routes through the same `RemoteClient` the source's
+    /// metadata calls use so the bearer token + session are shared.
+    func fetchAttachmentData(issueId: String, name: String) async throws -> Data {
+        try await client.fetchAttachmentData(folderId: folderId, issueId: issueId, name: name)
+    }
+
     // MARK: - Find-by-name rebind (#0103)
 
     /// Spec §"Timeouts and fallback": if `/v1/folders/{folderId}` returns

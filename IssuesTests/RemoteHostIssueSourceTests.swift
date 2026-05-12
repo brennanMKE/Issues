@@ -47,6 +47,9 @@ struct RemoteHostIssueSourceTests {
             guard let detail = details[id] else { throw RemoteClientError.notFound }
             return detail
         }
+        func fetchAttachmentData(folderId: String, issueId: String, name: String) async throws -> Data {
+            throw RemoteClientError.notFound
+        }
     }
 
     // MARK: - Fixtures

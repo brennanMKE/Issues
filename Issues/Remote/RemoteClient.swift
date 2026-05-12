@@ -21,6 +21,12 @@ protocol RemoteClientProtocol: Sendable {
     func fetchFolders() async throws -> [FolderInfo]
     func fetchIssues(folderId: String) async throws -> [IssueMetadata]
     func fetchIssueDetail(folderId: String, id: String) async throws -> IssueDetail
+
+    /// Streams the bytes of an attachment via `URLSession.bytes(for:)`.
+    /// Returns the raw bytes; callers decide whether to decode (`NSImage`,
+    /// movie, etc.). Throws `RemoteClientError.notFound` for a missing
+    /// attachment, `.unauthorized` for an expired token, etc.
+    func fetchAttachmentData(folderId: String, issueId: String, name: String) async throws -> Data
 }
 
 /// Errors surfaced by `RemoteClientProtocol` implementations. Maps onto
@@ -78,6 +84,38 @@ struct URLSessionRemoteClient: RemoteClientProtocol {
     func fetchIssueDetail(folderId: String, id: String) async throws -> IssueDetail {
         let url = try makeURL("/v1/folders/\(folderId)/issues/\(id)")
         return try await get(url, kind: .issue)
+    }
+
+    func fetchAttachmentData(folderId: String, issueId: String, name: String) async throws -> Data {
+        let encoded = name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name
+        let url = try makeURL("/v1/folders/\(folderId)/issues/\(issueId)/attachments/\(encoded)")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        do {
+            let (asyncBytes, response) = try await session.bytes(for: request)
+            guard let http = response as? HTTPURLResponse else {
+                throw RemoteClientError.transport("no HTTPURLResponse")
+            }
+            switch http.statusCode {
+            case 200:
+                var data = Data()
+                if let expected = Int(http.value(forHTTPHeaderField: "Content-Length") ?? "") {
+                    data.reserveCapacity(expected)
+                }
+                for try await byte in asyncBytes {
+                    data.append(byte)
+                }
+                return data
+            case 401: throw RemoteClientError.unauthorized
+            case 404: throw RemoteClientError.notFound
+            default:  throw RemoteClientError.unexpectedStatus(http.statusCode)
+            }
+        } catch let error as RemoteClientError {
+            throw error
+        } catch {
+            throw RemoteClientError.transport(error.localizedDescription)
+        }
     }
 
     // MARK: - Plumbing
