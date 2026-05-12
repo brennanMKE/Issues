@@ -1,4 +1,6 @@
 import Foundation
+import SwiftUI
+import AppKit
 import os.log
 
 nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: "ReportGenerator")
@@ -38,9 +40,24 @@ enum ReportGenerator {
 
         let baseName = "report-\(Self.filenameDate(now))"
         let outURL = Self.nextAvailableURL(in: reportsDir, base: baseName, ext: "md")
-        let body = Self.buildBody(store: store, folder: folder, now: now)
+        // Render the status donut PNG first so the markdown can reference
+        // it inline. The donut name is derived from the markdown
+        // filename's stem so a same-day re-run pairs `-2` etc.
+        let donutURL = outURL.deletingPathExtension().appendingPathExtension("png")
+        let donutName = donutURL.lastPathComponent
+        let didRenderDonut = (try? Self.writeStatusDonutPNG(
+            counts: store.statusCounts,
+            to: donutURL,
+            expectedDirectory: reportsDir
+        )) != nil && store.issues.count > 0
+        let body = Self.buildBody(
+            store: store,
+            folder: folder,
+            now: now,
+            donutImage: didRenderDonut ? donutName : nil
+        )
         try Self.writeReport(body, to: outURL, expectedDirectory: reportsDir)
-        logger.notice("report written path=\(outURL.path, privacy: .public) issues=\(store.issues.count, privacy: .public)")
+        logger.notice("report written path=\(outURL.path, privacy: .public) issues=\(store.issues.count, privacy: .public) donut=\(didRenderDonut, privacy: .public)")
         return outURL
     }
 
@@ -48,7 +65,7 @@ enum ReportGenerator {
 
     /// Pure renderer — exposed `internal` so unit tests can drive it with a
     /// fixed `Date` and reproducible store contents.
-    static func buildBody(store: IssueStore, folder: URL, now: Date) -> String {
+    static func buildBody(store: IssueStore, folder: URL, now: Date, donutImage: String? = nil) -> String {
         var lines: [String] = []
         let title = store.displayName.isEmpty ? store.folderURL.lastPathComponent : store.displayName
         lines.append("# \(title) — Status report")
@@ -56,6 +73,10 @@ enum ReportGenerator {
         lines.append("_Generated: \(Self.fullTimestamp(now))_")
         lines.append("_Folder: \(folder.path)_")
         lines.append("")
+        if let donutImage {
+            lines.append("![Status snapshot](\(donutImage))")
+            lines.append("")
+        }
 
         let counts = store.statusCounts
         let total = store.issues.count
@@ -117,6 +138,42 @@ enum ReportGenerator {
     }
 
     // MARK: - Helpers
+
+    /// Renders the status donut (#0065) and writes a PNG next to the
+    /// markdown. Returns nothing on success; throws if the renderer can't
+    /// produce a bitmap or the file write fails. Same write-scope guard
+    /// as the markdown writer.
+    @discardableResult
+    static func writeStatusDonutPNG(counts: [IssueStatus: Int], to url: URL, expectedDirectory: URL) throws -> URL {
+        // Empty / all-zero counts → no PNG (the report already covers
+        // the empty case in prose).
+        let total = counts.values.reduce(0, +)
+        guard total > 0 else { throw ReportGeneratorError.ioError("no issues to render") }
+
+        let renderer = ImageRenderer(content: StatusDonutView(counts: counts))
+        renderer.scale = 2
+        guard let nsImage = renderer.nsImage else {
+            throw ReportGeneratorError.ioError("ImageRenderer returned nil")
+        }
+        guard let tiff = nsImage.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiff),
+              let png = bitmap.representation(using: .png, properties: [:]) else {
+            throw ReportGeneratorError.ioError("png encode failed")
+        }
+
+        let resolvedTarget = url.deletingLastPathComponent().standardizedFileURL.resolvingSymlinksInPath().path
+        let resolvedExpected = expectedDirectory.standardizedFileURL.resolvingSymlinksInPath().path
+        guard resolvedTarget == resolvedExpected else {
+            assertionFailure("ReportGenerator tried to write PNG outside reports/: \(url.path)")
+            throw ReportGeneratorError.writeScopeViolation
+        }
+        do {
+            try png.write(to: url)
+        } catch {
+            throw ReportGeneratorError.ioError("png write: \(error.localizedDescription)")
+        }
+        return url
+    }
 
     private static func writeReport(_ body: String, to url: URL, expectedDirectory: URL) throws {
         // Runtime guard — keep the write scope explicit so a regression

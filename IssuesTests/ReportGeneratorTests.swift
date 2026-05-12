@@ -127,6 +127,49 @@ struct ReportGeneratorTests {
         #expect(contents.contains("Status report"))
     }
 
+    @Test func generateWritesStatusDonutPNGAlongsideMarkdown() throws {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("issues-report-png-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+
+        let store = IssueStore(folderURL: folder)
+        store.setIssuesForPreview([
+            Self.makeIssue(id: "0001", status: .open),
+            Self.makeIssue(id: "0002", status: .resolved)
+        ])
+
+        let mdURL = try ReportGenerator.generate(for: store, now: Self.fixedNow)
+        let pngURL = mdURL.deletingPathExtension().appendingPathExtension("png")
+        #expect(FileManager.default.fileExists(atPath: pngURL.path))
+
+        let md = try String(contentsOf: mdURL, encoding: .utf8)
+        #expect(md.contains("![Status snapshot](\(pngURL.lastPathComponent))"))
+
+        // Sanity: PNG has the file signature.
+        let pngData = try Data(contentsOf: pngURL)
+        #expect(pngData.count > 100)
+        let signature: [UInt8] = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]
+        #expect(Array(pngData.prefix(8)) == signature)
+    }
+
+    @Test func generateSkipsDonutForEmptyStore() throws {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("issues-report-empty-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+
+        let store = IssueStore(folderURL: folder)
+        store.setIssuesForPreview([])
+
+        let mdURL = try ReportGenerator.generate(for: store, now: Self.fixedNow)
+        let pngURL = mdURL.deletingPathExtension().appendingPathExtension("png")
+        #expect(!FileManager.default.fileExists(atPath: pngURL.path))
+
+        let md = try String(contentsOf: mdURL, encoding: .utf8)
+        #expect(!md.contains("![Status snapshot]"))
+    }
+
     @Test func generateAppendsCounterOnFilenameCollision() throws {
         let folder = FileManager.default.temporaryDirectory
             .appendingPathComponent("issues-report-test-\(UUID().uuidString)", isDirectory: true)
