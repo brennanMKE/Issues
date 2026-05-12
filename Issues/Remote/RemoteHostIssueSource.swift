@@ -91,7 +91,11 @@ final class RemoteHostIssueSource: IssueSource {
 
     let host: String
     let port: UInt16
-    let folderId: String
+    private(set) var folderId: String
+    /// Name seeded at construction time (from the wire `FolderInfo.name`
+    /// captured when the user opened the tab). Used by the find-by-name
+    /// rebind path (#0103) when the persisted `folderId` returns 404.
+    private let nameHint: String?
     private let syntheticFolderURL: URL
 
     // MARK: - Internals
@@ -134,6 +138,7 @@ final class RemoteHostIssueSource: IssueSource {
         // shows the right label before the first reload finishes. Falls back
         // to `host:port` until the source's own reload lands a value.
         self.displayName = displayName?.isEmpty == false ? displayName! : "\(host):\(port)"
+        self.nameHint = displayName?.isEmpty == false ? displayName : nil
         self.bookmarkData = Data("remote:\(host):\(port)|\(folderId)".utf8)
         self.syntheticFolderURL = URL(string: "\(Self.urlScheme)://\(host):\(port)/\(folderId)")
             ?? URL(fileURLWithPath: "/tmp/issues-remote-\(folderId)")
@@ -310,7 +315,13 @@ final class RemoteHostIssueSource: IssueSource {
             eventContinuation.yield(.tokenInvalid)
             inFlightReloadTask = nil
         } catch RemoteClientError.folderNotFound {
-            sourceLogger.warning("[\(self.repoName, privacy: .public)] folder unavailable on host")
+            sourceLogger.warning("[\(self.repoName, privacy: .public)] folder unavailable on host — attempting find-by-name rebind")
+            if await attemptFindByNameRebind() {
+                // Rebind succeeded; retry the reload with the new folderId
+                // by yielding back into the reload pipeline.
+                reload()
+                return
+            }
             loadError = "Folder no longer available on host."
             folderInvalidated = true
             connectionState = .folderUnavailable
@@ -395,6 +406,33 @@ final class RemoteHostIssueSource: IssueSource {
     /// viewer UI to render an instant detail panel vs. a placeholder.
     func hasCachedBody(for id: String) -> Bool {
         bodyCache[id] != nil
+    }
+
+    // MARK: - Find-by-name rebind (#0103)
+
+    /// Spec §"Timeouts and fallback": if `/v1/folders/{folderId}` returns
+    /// 404 (the host renamed/re-bookmarked the folder so its id changed),
+    /// best-effort fetch the full folder list and look for a single name
+    /// match. On match, swap `folderId` and let the caller retry the
+    /// reload. On zero/multiple matches, return false and the caller
+    /// surfaces `.folderUnavailable`.
+    private func attemptFindByNameRebind() async -> Bool {
+        guard let nameHint, !nameHint.isEmpty else { return false }
+        let candidates: [FolderInfo]
+        do {
+            candidates = try await client.fetchFolders()
+        } catch {
+            sourceLogger.warning("[\(self.repoName, privacy: .public)] find-by-name fetch failed: \(error.localizedDescription, privacy: .public)")
+            return false
+        }
+        let matches = candidates.filter { $0.name == nameHint }
+        guard matches.count == 1, let match = matches.first else {
+            sourceLogger.warning("[\(self.repoName, privacy: .public)] find-by-name: \(matches.count, privacy: .public) candidates for name=\(self.nameHint ?? "?", privacy: .public)")
+            return false
+        }
+        sourceLogger.notice("[\(self.repoName, privacy: .public)] find-by-name rebind \(self.folderId, privacy: .public) → \(match.id, privacy: .public)")
+        folderId = match.id
+        return true
     }
 
     // MARK: - Helpers

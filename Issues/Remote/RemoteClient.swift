@@ -16,6 +16,9 @@ nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: 
 /// minimal: every method maps 1:1 to a documented endpoint.
 protocol RemoteClientProtocol: Sendable {
     func fetchFolder(id: String) async throws -> FolderInfo
+    /// Lists every folder the host is currently serving. Used by #0103's
+    /// find-by-name fallback when a stale `folderId` returns 404.
+    func fetchFolders() async throws -> [FolderInfo]
     func fetchIssues(folderId: String) async throws -> [IssueMetadata]
     func fetchIssueDetail(folderId: String, id: String) async throws -> IssueDetail
 }
@@ -59,6 +62,11 @@ struct URLSessionRemoteClient: RemoteClientProtocol {
 
     func fetchFolder(id: String) async throws -> FolderInfo {
         let url = try makeURL("/v1/folders/\(id)")
+        return try await get(url, kind: .folder)
+    }
+
+    func fetchFolders() async throws -> [FolderInfo] {
+        let url = try makeURL("/v1/folders")
         return try await get(url, kind: .folder)
     }
 

@@ -16,7 +16,9 @@ struct RemoteHostIssueSourceTests {
         var folder: FolderInfo
         var issues: [IssueMetadata]
         var details: [String: IssueDetail] = [:]
+        var foldersList: [FolderInfo] = []
         var folderError: RemoteClientError?
+        var foldersError: RemoteClientError?
         var issuesError: RemoteClientError?
         var detailError: RemoteClientError?
         private(set) var detailFetchCount: [String: Int] = [:]
@@ -24,11 +26,16 @@ struct RemoteHostIssueSourceTests {
         init(folder: FolderInfo, issues: [IssueMetadata]) {
             self.folder = folder
             self.issues = issues
+            self.foldersList = [folder]
         }
 
         func fetchFolder(id: String) async throws -> FolderInfo {
             if let folderError { throw folderError }
             return folder
+        }
+        func fetchFolders() async throws -> [FolderInfo] {
+            if let foldersError { throw foldersError }
+            return foldersList
         }
         func fetchIssues(folderId: String) async throws -> [IssueMetadata] {
             if let issuesError { throw issuesError }
