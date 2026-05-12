@@ -63,6 +63,43 @@ struct ViewerTokenStoreTests {
         let hosts = try ViewerTokenStore.allHosts(service: service)
         #expect(hosts == ["alpha", "beta", "gamma"])
     }
+
+    // MARK: - Token + fingerprint (#0113)
+
+    @Test func storeWithFingerprintRoundTrips() throws {
+        let service = Self.uniqueService()
+        defer { try? ViewerTokenStore.deleteAll(service: service) }
+        try ViewerTokenStore.store(
+            token: "iat_xyz",
+            fingerprint: "a3f1e0c082b41d77",
+            forHost: "mac-a",
+            service: service
+        )
+        let entry = try ViewerTokenStore.entry(forHost: "mac-a", service: service)
+        #expect(entry?.token == "iat_xyz")
+        #expect(entry?.fingerprint == "a3f1e0c082b41d77")
+    }
+
+    @Test func entryForMissingHostReturnsNil() throws {
+        let service = Self.uniqueService()
+        defer { try? ViewerTokenStore.deleteAll(service: service) }
+        let entry = try ViewerTokenStore.entry(forHost: "no-such", service: service)
+        #expect(entry == nil)
+    }
+
+    @Test func legacyBareTokenReadsAsEntryWithEmptyFingerprint() throws {
+        let service = Self.uniqueService()
+        defer { try? ViewerTokenStore.deleteAll(service: service) }
+        // Use the legacy single-arg store(). It now goes through the
+        // new path with empty fingerprint, but the on-Keychain blob
+        // is a JSON object with `fingerprint: ""`.
+        try ViewerTokenStore.store(token: "iat_legacy", forHost: "old-host", service: service)
+        let entry = try ViewerTokenStore.entry(forHost: "old-host", service: service)
+        #expect(entry?.token == "iat_legacy")
+        #expect(entry?.fingerprint == "")
+        // The legacy single-string accessor still returns the bearer.
+        #expect((try ViewerTokenStore.token(forHost: "old-host", service: service)) == "iat_legacy")
+    }
 }
 
 #endif

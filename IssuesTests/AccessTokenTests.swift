@@ -174,6 +174,64 @@ struct AccessTokenTests {
         let names = try AccessToken.list(service: service).map { $0.name }
         #expect(Set(names) == Set(["Air", "Mini"]))
     }
+
+    // MARK: - Combined token format (#0113)
+
+    @Test func parseCombinedHappyPath() throws {
+        let token = "iat_" + String(repeating: "a", count: 43)
+        let fingerprint = String(repeating: "0", count: 64)
+        let combined = "\(token).\(fingerprint)"
+        let parsed = try AccessToken.parseCombined(combined)
+        #expect(parsed.plaintext == token)
+        #expect(parsed.fingerprint == fingerprint)
+    }
+
+    @Test func parseCombinedTrimsWhitespace() throws {
+        let token = "iat_" + String(repeating: "a", count: 43)
+        let fingerprint = String(repeating: "0", count: 64)
+        let combined = "  \(token).\(fingerprint)\n"
+        let parsed = try AccessToken.parseCombined(combined)
+        #expect(parsed.plaintext == token)
+        #expect(parsed.fingerprint == fingerprint)
+    }
+
+    @Test func parseCombinedRejectsBareToken() {
+        let token = "iat_" + String(repeating: "a", count: 43)
+        do {
+            _ = try AccessToken.parseCombined(token)
+            Issue.record("expected malformed for bare token")
+        } catch let error as AccessTokenError {
+            #expect(error == .malformed)
+        } catch {
+            Issue.record("wrong error type: \(error)")
+        }
+    }
+
+    @Test func parseCombinedRejectsBadFingerprintLength() {
+        let token = "iat_" + String(repeating: "a", count: 43)
+        let shortFingerprint = String(repeating: "0", count: 63)
+        do {
+            _ = try AccessToken.parseCombined("\(token).\(shortFingerprint)")
+            Issue.record("expected malformed for short fingerprint")
+        } catch let error as AccessTokenError {
+            #expect(error == .malformed)
+        } catch {
+            Issue.record("wrong error type: \(error)")
+        }
+    }
+
+    @Test func parseCombinedRejectsNonHexFingerprint() {
+        let token = "iat_" + String(repeating: "a", count: 43)
+        let bad = String(repeating: "z", count: 64)
+        do {
+            _ = try AccessToken.parseCombined("\(token).\(bad)")
+            Issue.record("expected malformed for non-hex fingerprint")
+        } catch let error as AccessTokenError {
+            #expect(error == .malformed)
+        } catch {
+            Issue.record("wrong error type: \(error)")
+        }
+    }
 }
 
 #endif

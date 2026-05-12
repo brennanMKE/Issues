@@ -85,6 +85,21 @@ final class RemoteHostController {
     var currentFingerprint: String {
         identity?.fingerprintHex ?? ""
     }
+
+    /// Mints a new bearer token bound to the current host cert
+    /// fingerprint (#0113). The settings sheet (#0084) calls this so
+    /// the generated token is automatically paired with the identity
+    /// the listener is serving. Throws if no identity is loaded
+    /// (shouldn't happen post-#0112 unless the keychain failed at init).
+    func generateToken(name: String, expiresAt: Date?) throws -> AccessToken.Generated {
+        guard let identity else { throw RemoteHostControllerError.noIdentity }
+        return try AccessToken.generate(name: name, expiresAt: expiresAt, identity: identity)
+    }
+
+    enum RemoteHostControllerError: Error, Equatable {
+        case noIdentity
+    }
+
     private var pathMonitor: NWPathMonitor?
     /// Hash of the most recently observed network path (#0105). nil until
     /// the first NWPathMonitor update lands.

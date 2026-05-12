@@ -122,10 +122,21 @@ struct GenerateTokenSheet: View {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         let expiresAt = expiration.resolved(specificDate: specificDate)
         do {
-            let result = try AccessToken.generate(name: trimmed, expiresAt: expiresAt)
-            revealedPlaintext = result.plaintext
-            lastError = nil
-            onTokenCreated(result.record)
+            // Route through the controller so the bundled fingerprint
+            // (#0113) comes from the live host identity. Falls back to
+            // the bare-token path if no controller is registered
+            // (preview-time / pre-host-enable).
+            if let controller = AppCommandsController.shared.hostController {
+                let generated = try controller.generateToken(name: trimmed, expiresAt: expiresAt)
+                revealedPlaintext = generated.combined
+                lastError = nil
+                onTokenCreated(generated.record)
+            } else {
+                let result = try AccessToken.generate(name: trimmed, expiresAt: expiresAt)
+                revealedPlaintext = result.plaintext
+                lastError = nil
+                onTokenCreated(result.record)
+            }
         } catch {
             lastError = error.localizedDescription
             sheetLogger.warning("token generate failed: \(error.localizedDescription, privacy: .public)")

@@ -58,9 +58,57 @@ enum AccessToken {
 
     // MARK: - Public API
 
-    /// Mints a new token. The plaintext is the only place the raw value is
-    /// ever returned — record only the hash on the host side, then surface
-    /// the plaintext to the user once for copy-out.
+    /// Result of `generate(name:expiresAt:identity:)` — the canonical
+    /// token-creation entry point post-#0113. The user sees `combined`;
+    /// internal callers (tests, settings UI) can read the parts.
+    struct Generated: Equatable {
+        /// `iat_<43>.<64-hex>` — what the user copies. ~108 characters.
+        let combined: String
+        /// Just the bearer plaintext (`iat_…`), 47 chars.
+        let plaintext: String
+        /// Just the host cert fingerprint (64-hex), at the moment of mint.
+        let fingerprint: String
+        /// Token-database record (host stores only the hash + metadata).
+        let record: TokenRecord
+    }
+
+    /// Mints a new token bound to the given host identity (#0113). The
+    /// plaintext is the only place the raw bearer is ever returned;
+    /// the fingerprint comes from the live identity and isn't recorded
+    /// per-token (it's a host property, not a token property).
+    static func generate(
+        name: String,
+        expiresAt: Date?,
+        identity: RemoteServerIdentity,
+        service: String = defaultService
+    ) throws -> Generated {
+        let raw = try randomBytes(32)
+        let plaintext = plaintextPrefix + raw.base64URLEncodedString()
+        let hash = sha256(of: plaintext)
+        let record = TokenRecord(
+            hash: hash,
+            name: name,
+            createdAt: Date(),
+            expiresAt: expiresAt,
+            lastUsedAt: nil,
+            lastUsedFrom: nil
+        )
+        var db = try load(service: service)
+        db.records.append(record)
+        try save(db, service: service)
+        return Generated(
+            combined: "\(plaintext).\(identity.fingerprintHex)",
+            plaintext: plaintext,
+            fingerprint: identity.fingerprintHex,
+            record: record
+        )
+    }
+
+    /// Legacy overload for callers that don't have an identity yet
+    /// (test code paths from #0078). Returns the bare plaintext +
+    /// record; production token-creation must go through the
+    /// identity-aware overload above so the user-facing token carries
+    /// the fingerprint.
     static func generate(
         name: String,
         expiresAt: Date?,
@@ -81,6 +129,26 @@ enum AccessToken {
         db.records.append(record)
         try save(db, service: service)
         return (plaintext, record)
+    }
+
+    /// Parses a combined `iat_<43>.<64-hex>` token. Returns the two
+    /// halves on success; throws `.malformed` for any deviation
+    /// (missing `.`, wrong-length plaintext, wrong-length / non-hex
+    /// fingerprint). Used by the viewer paste step (#0096/#0114).
+    static func parseCombined(_ raw: String) throws -> (plaintext: String, fingerprint: String) {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let parts = trimmed.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false).map(String.init)
+        guard parts.count == 2 else { throw AccessTokenError.malformed }
+        let plaintext = parts[0]
+        let fingerprint = parts[1]
+        guard plaintext.hasPrefix(plaintextPrefix), plaintext.count == plaintextLength else {
+            throw AccessTokenError.malformed
+        }
+        guard fingerprint.count == 64,
+              fingerprint.allSatisfy({ ($0.isNumber) || ("a"..."f").contains($0) }) else {
+            throw AccessTokenError.malformed
+        }
+        return (plaintext, fingerprint)
     }
 
     /// Removes the record matching `hash`. No-op (no error) if the hash

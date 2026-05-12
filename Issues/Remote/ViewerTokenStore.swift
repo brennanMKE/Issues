@@ -24,17 +24,71 @@ enum ViewerTokenStore {
         case malformed
     }
 
+    /// Token + fingerprint stored per host (#0113). The viewer pins the
+    /// fingerprint at paste time and matches it against the host's TLS
+    /// cert at connect time (#0114). JSON-encoded as a Keychain blob.
+    struct Entry: Codable, Equatable {
+        let token: String
+        let fingerprint: String
+    }
+
     // MARK: - Public API
 
+    /// Stores the bearer alongside the cert fingerprint (#0113). Existing
+    /// callers that only pass a token go through the legacy overload
+    /// below and end up with `fingerprint = ""`.
+    static func store(token: String, fingerprint: String, forHost hostId: String, service: String = defaultService) throws {
+        let entry = Entry(token: token, fingerprint: fingerprint)
+        let data: Data
+        do {
+            data = try JSONEncoder().encode(entry)
+        } catch {
+            throw ViewerTokenError.malformed
+        }
+        try writeBlob(data, forHost: hostId, service: service)
+    }
+
+    /// Legacy overload (pre-#0113) — store just the bearer. Used by
+    /// tests that don't care about the fingerprint and by the
+    /// transitional code path while the TLS migration is in flight.
+    /// On read, an entry written this way decodes with an empty
+    /// fingerprint string.
     static func store(token: String, forHost hostId: String, service: String = defaultService) throws {
-        let data = Data(token.utf8)
+        try store(token: token, fingerprint: "", forHost: hostId, service: service)
+    }
+
+    /// Reads the `(token, fingerprint)` pair for `hostId`. Returns nil
+    /// when no entry exists. Legacy bare-token blobs (raw UTF-8 from a
+    /// pre-#0113 build) decode with an empty fingerprint string so the
+    /// caller can prompt the user to re-paste.
+    static func entry(forHost hostId: String, service: String = defaultService) throws -> Entry? {
+        guard let data = try readBlob(forHost: hostId, service: service) else { return nil }
+        if let decoded = try? JSONDecoder().decode(Entry.self, from: data) {
+            return decoded
+        }
+        // Legacy fallback: the blob is just the bearer UTF-8 string.
+        if let legacy = String(data: data, encoding: .utf8), legacy.hasPrefix("iat_") {
+            return Entry(token: legacy, fingerprint: "")
+        }
+        throw ViewerTokenError.malformed
+    }
+
+    /// Legacy convenience that returns just the bearer string. Pre-#0113
+    /// callers (TabsModel.restore, etc.) keep working; new callers
+    /// should use `entry(forHost:)` so the fingerprint is available
+    /// for the TLS pinning step in #0114.
+    static func token(forHost hostId: String, service: String = defaultService) throws -> String? {
+        try entry(forHost: hostId, service: service)?.token
+    }
+
+    // MARK: - Private blob plumbing
+
+    private static func writeBlob(_ data: Data, forHost hostId: String, service: String) throws {
         let baseQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: hostId
         ]
-        // Update first, then add. Mirrors the pattern from AccessToken so
-        // updates don't create duplicate items.
         let updateStatus = SecItemUpdate(
             baseQuery as CFDictionary,
             [kSecValueData as String: data] as CFDictionary
@@ -52,7 +106,7 @@ enum ViewerTokenStore {
         }
     }
 
-    static func token(forHost hostId: String, service: String = defaultService) throws -> String? {
+    private static func readBlob(forHost hostId: String, service: String) throws -> Data? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -66,10 +120,7 @@ enum ViewerTokenStore {
         guard status == errSecSuccess else {
             throw ViewerTokenError.keychain(status)
         }
-        guard let data = item as? Data, let token = String(data: data, encoding: .utf8) else {
-            throw ViewerTokenError.malformed
-        }
-        return token
+        return item as? Data
     }
 
     static func remove(forHost hostId: String, service: String = defaultService) throws {

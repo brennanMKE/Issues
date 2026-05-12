@@ -164,7 +164,8 @@ final class RemoteFolderPickerModel {
 
     /// Token field passes the cheap shape check from #0096: starts with
     /// `iat_` and is long enough to look like a real token. Validation
-    /// against the host happens in `validateToken`.
+    /// against the host happens in `validateToken`. Combined v2 form
+    /// (#0113) is `iat_<43>.<64-hex>` — both halves separated by `.`.
     nonisolated static func tokenFieldValid(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.hasPrefix("iat_") && trimmed.count >= 5
@@ -287,11 +288,27 @@ final class RemoteFolderPickerModel {
     /// `GET /v1/host` with it, then immediately listing folders. Stores
     /// the token in the Keychain on success.
     func validateTokenAndListFolders(host: String, port: UInt16) async {
-        let token = tokenText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !token.isEmpty else {
+        let raw = tokenText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
             inlineError = "Paste a token from the host."
             return
         }
+        // Parse the combined `iat_<43>.<64-hex>` form (#0113). Bare
+        // pre-#0113 tokens land in `.malformed` and the user gets a
+        // clear regen prompt.
+        let parsed: (plaintext: String, fingerprint: String)
+        do {
+            parsed = try AccessToken.parseCombined(raw)
+        } catch {
+            if raw.hasPrefix("iat_") && !raw.contains(".") {
+                inlineError = "This token is from an older host. Ask the host to regenerate it after upgrading."
+            } else {
+                inlineError = "This doesn't look like a token."
+            }
+            return
+        }
+        let token = parsed.plaintext
+        let fingerprint = parsed.fingerprint
         inlineError = nil
         isBusy = true
         defer { isBusy = false }
@@ -300,7 +317,7 @@ final class RemoteFolderPickerModel {
             let folders = try await client.fetchFolders(host: host, port: port, token: token)
             let hostId = "\(host):\(port)"
             do {
-                try ViewerTokenStore.store(token: token, forHost: hostId)
+                try ViewerTokenStore.store(token: token, fingerprint: fingerprint, forHost: hostId)
             } catch {
                 logger.error("token store failed: \(error.localizedDescription, privacy: .public)")
                 // Non-fatal — keep going with the in-memory token. The user
