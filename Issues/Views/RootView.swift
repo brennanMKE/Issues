@@ -48,6 +48,9 @@ struct RootView: View {
             AppCommandsController.shared.openRemoteFolderPicker = {
                 openWindow(id: "remotePicker")
             }
+            AppCommandsController.shared.openManageSubscriptions = {
+                openWindow(id: "manageSubscriptions")
+            }
             // First-launch auto-open: if no remembered folders restored any
             // tabs, surface the picker so the user has a path forward
             // beyond an empty main window. This fires only on initial

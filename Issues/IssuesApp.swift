@@ -96,6 +96,13 @@ struct IssuesApp: App {
                     commands.connectToRemoteHost()
                 }
 
+                // Manage open remote subscriptions (#0098). Close tabs,
+                // forget hosts. The "Add folders" path falls through to
+                // the picker above.
+                Button("Manage Remote Subscriptions\u{2026}") {
+                    commands.openManageSubscriptions?()
+                }
+
                 Divider()
 
                 Button("Reload") {
@@ -220,6 +227,15 @@ struct IssuesApp: App {
             RemoteFolderPickerView()
         }
         .defaultSize(width: 560, height: 540)
+        .windowResizability(.contentMinSize)
+
+        // Manage Remote Subscriptions sheet (#0098). Single-instance like
+        // the picker; the sheet reads through TabsModel via the singleton
+        // AppCommandsController.
+        Window("Manage Remote Subscriptions", id: "manageSubscriptions") {
+            ManageSubscriptionsSheetHost()
+        }
+        .defaultSize(width: 540, height: 440)
         .windowResizability(.contentMinSize)
 
         // Native Settings scene (#0024). SwiftUI auto-wires the

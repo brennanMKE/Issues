@@ -56,6 +56,10 @@ final class AppCommandsController {
     /// `@Environment(\.openWindow)` directly.
     var openRemoteFolderPicker: (() -> Void)?
 
+    /// Invoked when **File → Manage Remote Subscriptions…** fires (#0098).
+    /// Same indirection as `openRemoteFolderPicker`.
+    var openManageSubscriptions: (() -> Void)?
+
     /// Invoked with the currently selected issue when the user hits Enter or
     /// triggers an "open markdown" menu shortcut. Set by `MainView` so we can
     /// flip its `markdownSheetIssue` state. `nil` when no scene is mounted.

@@ -125,9 +125,7 @@ struct RemoteConnectionBanner: View {
         case .tokenInvalid:
             return ("Paste new token", { AppCommandsController.shared.openRemoteFolderPicker?() })
         case .folderUnavailable:
-            // #0098 (manage subscriptions) is the proper home; until it
-            // lands, route the user back to the picker.
-            return ("Manage subscriptions", { AppCommandsController.shared.openRemoteFolderPicker?() })
+            return ("Manage subscriptions", { AppCommandsController.shared.openManageSubscriptions?() })
         }
     }
 
