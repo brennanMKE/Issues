@@ -29,6 +29,7 @@ struct MainView: View {
     var body: some View {
         VStack(spacing: 0) {
             TabBarView(tabs: tabs, bookmarks: bookmarks)
+            RemoteConnectionBanner(store: store)
             StatsBarView(
                 store: store,
                 total: store.issues.count,

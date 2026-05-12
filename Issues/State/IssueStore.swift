@@ -145,6 +145,12 @@ final class IssueStore: Identifiable {
         return (remote.host, remote.port)
     }
 
+    /// Current remote connection state (#0104). Nil for local sources;
+    /// the disconnect/expired banner only renders for remote tabs.
+    var remoteConnectionState: RemoteConnectionState? {
+        (source as? RemoteHostIssueSource)?.connectionState
+    }
+
     /// Convenience init: wraps the URL in a `LocalFolderIssueSource`. Existing
     /// call sites (`TabsModel.openTab(url:)`, restore) keep using this form.
     convenience init(folderURL: URL, bookmarkData: Data? = nil) {

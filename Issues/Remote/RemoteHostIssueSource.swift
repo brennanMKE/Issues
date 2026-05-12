@@ -5,6 +5,18 @@ import os.log
 
 nonisolated private let sourceLogger = Logger(subsystem: Logging.subsystem, category: "RemoteHostIssueSource")
 
+/// Connection state for the remote source, used by the disconnect/expired
+/// UI (#0104). Transitions are driven by `handleWebSocketEvent` and the
+/// HTTP reload path; views bind to `IssueStore.remoteConnectionState` and
+/// render the matching banner.
+enum RemoteConnectionState: Equatable, Sendable {
+    case connected
+    case reconnecting(since: Date)
+    case disconnected(reason: String)
+    case tokenInvalid
+    case folderUnavailable
+}
+
 /// Lifecycle events the source publishes through `eventStream` (#0094).
 /// `RemoteIssueSourceEvent.reloaded` is informational — the actual issues array has
 /// already been updated; SwiftUI views observe `IssueStore` for the
@@ -69,6 +81,10 @@ final class RemoteHostIssueSource: IssueSource {
     private(set) var lintFindings: [LintFinding] = []
     private(set) var loadError: String?
     private(set) var folderInvalidated: Bool = false
+    /// Current connection state (#0104). Mutated as events arrive on the
+    /// WS stream and as HTTP reloads succeed/fail. Views observe this
+    /// through `IssueStore.remoteConnectionState` for the banner.
+    private(set) var connectionState: RemoteConnectionState = .connected
     var onUpdate: ((any IssueSource) -> Void)?
 
     // MARK: - Connection identity
@@ -200,18 +216,24 @@ final class RemoteHostIssueSource: IssueSource {
             case .unsubscribed:
                 if wire.folderId == folderId {
                     folderInvalidated = true
+                    connectionState = .folderUnavailable
                     onUpdate?(self)
                     eventContinuation.yield(.folderUnavailable)
                 }
-            case .hello, .pong:
+            case .hello:
+                connectionState = .connected
+                onUpdate?(self)
+            case .pong:
                 break
             }
         case .disconnected:
             loadError = "Connection to host lost — reconnecting…"
+            connectionState = .reconnecting(since: Date())
             onUpdate?(self)
             eventContinuation.yield(.disconnected)
         case .tokenInvalid:
             loadError = "Token rejected by host."
+            connectionState = .tokenInvalid
             onUpdate?(self)
             eventContinuation.yield(.tokenInvalid)
             // Don't keep retrying — stop the socket entirely.
@@ -274,6 +296,7 @@ final class RemoteHostIssueSource: IssueSource {
             issues = newIssues
             loadError = nil
             folderInvalidated = false
+            connectionState = .connected
             onUpdate?(self)
             eventContinuation.yield(.reloaded)
         } catch is CancellationError {
@@ -282,6 +305,7 @@ final class RemoteHostIssueSource: IssueSource {
         } catch RemoteClientError.unauthorized {
             sourceLogger.warning("[\(self.repoName, privacy: .public)] unauthorized — token invalid")
             loadError = "Token rejected by host."
+            connectionState = .tokenInvalid
             onUpdate?(self)
             eventContinuation.yield(.tokenInvalid)
             inFlightReloadTask = nil
@@ -289,17 +313,20 @@ final class RemoteHostIssueSource: IssueSource {
             sourceLogger.warning("[\(self.repoName, privacy: .public)] folder unavailable on host")
             loadError = "Folder no longer available on host."
             folderInvalidated = true
+            connectionState = .folderUnavailable
             onUpdate?(self)
             eventContinuation.yield(.folderUnavailable)
             inFlightReloadTask = nil
         } catch let error as RemoteClientError {
             sourceLogger.warning("[\(self.repoName, privacy: .public)] remote error \(String(describing: error), privacy: .public)")
             loadError = "Couldn't reach host."
+            connectionState = .disconnected(reason: String(describing: error))
             onUpdate?(self)
             eventContinuation.yield(.disconnected)
         } catch {
             sourceLogger.warning("[\(self.repoName, privacy: .public)] unexpected error \(error.localizedDescription, privacy: .public)")
             loadError = error.localizedDescription
+            connectionState = .disconnected(reason: error.localizedDescription)
             onUpdate?(self)
             eventContinuation.yield(.disconnected)
         }
