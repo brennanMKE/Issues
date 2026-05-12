@@ -73,6 +73,8 @@ struct RemoteHostSettingsView: View {
                     .textFieldStyle(.roundedBorder)
             }
 
+            ServerCertificateSection(controller: controller)
+
             Section("Access tokens") {
                 AccessTokenListView()
             }

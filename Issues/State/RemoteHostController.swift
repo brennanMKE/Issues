@@ -74,11 +74,12 @@ final class RemoteHostController {
     }
 
     let folderStore: HostFolderStore
-    private let server: RemoteServer
+    private var server: RemoteServer
+    private let identityLabel: String = RemoteServerIdentity.defaultLabel
     /// TLS identity backing `RemoteServer`'s listener. Loaded from Keychain
     /// on first launch after #0112, generated if absent. Surfaced for the
     /// host settings UI via `currentFingerprint` (#0113 / #0115 bind).
-    private let identity: RemoteServerIdentity?
+    private(set) var identity: RemoteServerIdentity?
     /// Lowercase 64-char SHA-256 hex of the host's TLS leaf cert, or empty
     /// if identity setup failed (the latter is non-fatal here — the user
     /// sees the surfaced `lastStartError` when they try to enable hosting).
@@ -94,6 +95,34 @@ final class RemoteHostController {
     func generateToken(name: String, expiresAt: Date?) throws -> AccessToken.Generated {
         guard let identity else { throw RemoteHostControllerError.noIdentity }
         return try AccessToken.generate(name: name, expiresAt: expiresAt, identity: identity)
+    }
+
+    /// Rotates the host's TLS cert (#0115). Generates a fresh
+    /// `RemoteServerIdentity`, replaces the Keychain entry, rebuilds
+    /// the listener with the new identity, and (if hosting was on)
+    /// restarts it. Existing access-token records survive — the bearers
+    /// are still valid as auth credentials; what changed is the cert
+    /// the host serves. Combined tokens issued against the old cert
+    /// (#0113) carry a stale fingerprint and will fail viewer pinning,
+    /// so the user has to re-issue tokens after rotation.
+    @discardableResult
+    func rotateCertificate() throws -> RemoteServerIdentity {
+        let wasEnabled = isEnabled
+        if isEnabled {
+            server.stop()
+        }
+        let newIdentity = try RemoteServerIdentity.generate(label: identityLabel)
+        identity = newIdentity
+        // Rebuild the server with the new identity; the old one's
+        // sec_protocol_options_set_local_identity reference is stale.
+        let store = folderStore
+        server = RemoteServer(store: store, identity: newIdentity)
+        if wasEnabled {
+            try server.start()
+            folderStore.isGlobalHostingEnabled = true
+            isEnabled = true
+        }
+        return newIdentity
     }
 
     enum RemoteHostControllerError: Error, Equatable {
