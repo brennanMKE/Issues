@@ -319,9 +319,14 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
             // `onAppear` will drain after `TabsModel.restore()` finishes.
             AppCommandsController.shared.consumePendingDeepLinkIfPossible()
             logger.debug("DID_RECEIVE consume attempt complete")
-
-            completionHandler()
         }
+
+        // Tell UN we're done. Apple's contract is "execute completionHandler
+        // as soon as possible after processing"; calling it outside the
+        // MainActor Task avoids the Swift 6 sending-data-race error (the
+        // closure isn't `@Sendable`, so MainActor can't capture it) without
+        // changing observable behavior — the routing work above still runs.
+        completionHandler()
     }
 
     /// Allow notifications to display as banners even while the app is

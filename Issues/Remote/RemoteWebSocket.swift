@@ -304,8 +304,7 @@ final class RemoteWebSocket {
             try? await Task.sleep(nanoseconds: UInt64(self?.pongTimeout ?? 10 * 1_000_000_000))
             await MainActor.run {
                 guard let self else { return }
-                if let pongDeadline, pongDeadline <= Date() {
-                    _ = pongDeadline
+                if let pongDeadline = self.pongDeadline, pongDeadline <= Date() {
                     wsLogger.notice("ws pong timeout — forcing reconnect")
                     self.task?.cancel(with: .abnormalClosure, reason: nil)
                     self.handleTransportFailure(error: URLError(.timedOut))

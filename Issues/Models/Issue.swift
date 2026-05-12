@@ -1,6 +1,6 @@
 import Foundation
 
-struct Issue: Identifiable, Equatable, Hashable, Sendable {
+nonisolated struct Issue: Identifiable, Equatable, Hashable, Sendable {
     let id: String
     let title: String
     let status: IssueStatus

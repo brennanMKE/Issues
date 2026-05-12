@@ -20,11 +20,15 @@ import Foundation
 /// effectively main-only via FolderWatcher's main-actor callbacks; a future
 /// remote source may live on a network-IO actor and offer async overloads).
 /// Today's call sites are all on the main actor via `TabsModel`.
-protocol IssueSource: AnyObject {
+protocol IssueSource: AnyObject, Sendable {
     /// Stable identity surrogate. Local sources expose the folder URL the user
     /// picked; remote sources will use a synthetic URL or replace this with a
     /// richer identifier when a second source type lands (RemoteAccess.md Q7).
-    var folderURL: URL { get }
+    ///
+    /// Marked `nonisolated` so callers running off the MainActor (e.g.
+    /// `AttachmentLoader`'s actor) can read it without an actor hop. The
+    /// conformer's backing storage must be immutable / Sendable-readable.
+    nonisolated var folderURL: URL { get }
 
     /// Display label for tab title and window header. Defaults to the parent
     /// folder name; replaced by `projectMetadata?.name` when present (#0075).

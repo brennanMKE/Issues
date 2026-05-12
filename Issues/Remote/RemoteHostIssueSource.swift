@@ -65,7 +65,7 @@ final class RemoteHostIssueSource: IssueSource {
 
     // MARK: - IssueSource conformance (observable state)
 
-    var folderURL: URL { syntheticFolderURL }
+    nonisolated var folderURL: URL { syntheticFolderURL }
 
     /// User-visible label. Populated from `FolderInfo.name` after the
     /// first `start()` / `reload()`; falls back to the host:port until

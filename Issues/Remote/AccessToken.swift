@@ -19,7 +19,7 @@ enum AccessTokenError: Error, Equatable {
 
 /// One issued access token. The plaintext is shown once at generation time
 /// and discarded — the host stores only `hash` (SHA-256 of the plaintext).
-struct TokenRecord: Codable, Equatable {
+nonisolated struct TokenRecord: Codable, Equatable, Sendable {
     /// SHA-256 of the plaintext token. 32 bytes.
     var hash: Data
     /// User label, e.g. "MacBook Air".
@@ -33,7 +33,7 @@ struct TokenRecord: Codable, Equatable {
 
 /// The full token database stored as a single JSON-encoded Keychain item.
 /// One item, many records — see `RemoteAccess.md` and #0078.
-struct TokenDatabase: Codable, Equatable {
+nonisolated struct TokenDatabase: Codable, Equatable, Sendable {
     var records: [TokenRecord]
 
     static let empty = TokenDatabase(records: [])
@@ -49,9 +49,9 @@ struct TokenDatabase: Codable, Equatable {
 enum AccessToken {
 
     /// Production Keychain service name. Tests override.
-    static let defaultService = "co.sstools.Issues.RemoteAccess.HostTokens"
-    private static let account = "default"
-    private static let plaintextPrefix = "iat_"
+    nonisolated static let defaultService = "co.sstools.Issues.RemoteAccess.HostTokens"
+    nonisolated private static let account = "default"
+    nonisolated private static let plaintextPrefix = "iat_"
     /// 32 random bytes → 43 base64url chars (no padding) → 47 chars total
     /// including the `iat_` prefix.
     static let plaintextLength = 47
@@ -191,7 +191,12 @@ enum AccessToken {
 
     /// Updates `lastUsedAt` / `lastUsedFrom` on the matching record.
     /// Throws `.notFound` if no record matches the hash.
-    static func touch(
+    ///
+    /// `nonisolated` so callers (e.g. `RemoteServer`'s `Task.detached`
+    /// bookkeeping path) can run this off the MainActor without an actor
+    /// hop. The body only touches Keychain + JSON via the nonisolated
+    /// `load` / `save` helpers.
+    nonisolated static func touch(
         hash: Data,
         from peer: String?,
         service: String = defaultService
@@ -245,10 +250,10 @@ enum AccessToken {
     /// last-used timestamps round-trip exactly. The blob is opaque storage,
     /// not user-visible JSON, so ISO8601 readability isn't worth the
     /// fractional-second precision loss.
-    private static let jsonEncoder = JSONEncoder()
-    private static let jsonDecoder = JSONDecoder()
+    nonisolated private static let jsonEncoder = JSONEncoder()
+    nonisolated private static let jsonDecoder = JSONDecoder()
 
-    private static func load(service: String) throws -> TokenDatabase {
+    nonisolated private static func load(service: String) throws -> TokenDatabase {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -274,7 +279,7 @@ enum AccessToken {
         }
     }
 
-    private static func save(_ db: TokenDatabase, service: String) throws {
+    nonisolated private static func save(_ db: TokenDatabase, service: String) throws {
         let data = try jsonEncoder.encode(db)
         let baseQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,

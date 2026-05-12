@@ -11,7 +11,7 @@ nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: 
 /// continue to work after the refactor (#0077). Behavior is bit-for-bit
 /// equivalent to the pre-refactor `IssueStore.start/stop/reload`.
 final class LocalFolderIssueSource: IssueSource {
-    let folderURL: URL
+    nonisolated let folderURL: URL
     /// Security-scoped bookmark bytes captured at construction time. Held
     /// here (rather than re-derived from `folderURL`) so `IssueStore.folderId`
     /// stays stable across the lifetime of this source even if a fresh
