@@ -1,6 +1,5 @@
 {
   "sourceLanguage" : "en",
-  "version" : "1.0",
   "strings" : {
     "Access tokens" : {
       "extractionState" : "manual",
@@ -8,7 +7,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Zugriffstoken" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Access tokens" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Tokens de acceso" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Jetons d’accès" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Jetons d’accès" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "액세스 토큰" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "访问令牌" } }
       }
     },
     "Add folders…" : {
@@ -17,7 +18,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Ordner hinzufügen …" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Add folders…" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir carpetas…" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ajouter des dossiers…" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ajouter des dossiers…" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "폴더 추가…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加文件夹…" } }
       }
     },
     "Add Host…" : {
@@ -26,7 +29,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Host hinzufügen …" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Add Host…" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir host…" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ajouter un hôte…" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ajouter un hôte…" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "호스트 추가…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加主机…" } }
       }
     },
     "All Attachments" : {
@@ -35,7 +40,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle Anhänge" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "All Attachments" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Todos los adjuntos" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Toutes les pièces jointes" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Toutes les pièces jointes" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "모든 첨부 파일" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "全部附件" } }
       }
     },
     "All Modules" : {
@@ -44,7 +51,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle Module" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "All Modules" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Todos los módulos" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Tous les modules" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Tous les modules" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "모든 모듈" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "全部模块" } }
       }
     },
     "All Platforms" : {
@@ -53,7 +62,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle Plattformen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "All Platforms" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Todas las plataformas" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Toutes les plateformes" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Toutes les plateformes" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "모든 플랫폼" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "全部平台" } }
       }
     },
     "Cancel" : {
@@ -62,7 +73,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Abbrechen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Cancelar" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Annuler" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Annuler" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "취소" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消" } }
       }
     },
     "Close" : {
@@ -71,7 +84,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Schließen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Close" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Cerrar" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Fermer" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Fermer" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "닫기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "关闭" } }
       }
     },
     "Close Other Tabs" : {
@@ -80,7 +95,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Andere Tabs schließen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Close Other Tabs" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Cerrar las otras pestañas" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Fermer les autres onglets" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Fermer les autres onglets" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "다른 탭 닫기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "关闭其他标签页" } }
       }
     },
     "Close Tab" : {
@@ -89,7 +106,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Tab schließen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Close Tab" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Cerrar pestaña" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Fermer l’onglet" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Fermer l’onglet" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "탭 닫기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "关闭标签页" } }
       }
     },
     "Closed" : {
@@ -98,7 +117,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Geschlossen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Closed" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Cerrado" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Fermée" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Fermée" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "닫힘" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已关闭" } }
       }
     },
     "Confirm" : {
@@ -107,7 +128,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Bestätigen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Confirm" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Confirmar" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Confirmer" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Confirmer" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "확인" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确认" } }
       }
     },
     "Connect to Remote Host…" : {
@@ -116,7 +139,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Mit entferntem Host verbinden …" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Connect to Remote Host…" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Conectar con host remoto…" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Se connecter à un hôte distant…" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Se connecter à un hôte distant…" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "원격 호스트에 연결…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "连接到远程主机…" } }
       }
     },
     "Connected viewers" : {
@@ -125,7 +150,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Verbundene Betrachter" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected viewers" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Visores conectados" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Visionneuses connectées" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Visionneuses connectées" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "연결된 뷰어" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已连接的查看器" } }
       }
     },
     "Copy" : {
@@ -134,7 +161,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Kopieren" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Copy" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Copiar" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Copier" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Copier" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "복사" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "复制" } }
       }
     },
     "Copy fingerprint" : {
@@ -143,7 +172,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Fingerabdruck kopieren" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Copy fingerprint" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Copiar huella" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Copier l’empreinte" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Copier l’empreinte" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "지문 복사" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "复制指纹" } }
       }
     },
     "Display name" : {
@@ -152,7 +183,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Anzeigename" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Display name" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Nombre visible" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Nom affiché" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Nom affiché" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "표시 이름" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "显示名称" } }
       }
     },
     "Display name (shown to viewers)" : {
@@ -161,7 +194,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Anzeigename (für Betrachter sichtbar)" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Display name (shown to viewers)" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Nombre visible (mostrado a los visores)" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Nom affiché (vu par les visionneuses)" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Nom affiché (vu par les visionneuses)" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "표시 이름 (뷰어에 표시됨)" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "显示名称（向查看器显示）" } }
       }
     },
     "Done" : {
@@ -170,7 +205,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Fertig" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Hecho" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "OK" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "OK" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "완료" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "完成" } }
       }
     },
     "Enable hosting" : {
@@ -179,7 +216,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Hosting aktivieren" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Enable hosting" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Activar alojamiento" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Activer l’hébergement" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Activer l’hébergement" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "호스팅 활성화" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "启用主机服务" } }
       }
     },
     "Find" : {
@@ -188,7 +227,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Suchen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Find" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Buscar" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Rechercher" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Rechercher" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "찾기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "查找" } }
       }
     },
     "Folder no longer shared by host" : {
@@ -197,7 +238,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Ordner wird vom Host nicht mehr freigegeben" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Folder no longer shared by host" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "La carpeta ya no está compartida por el host" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Le dossier n’est plus partagé par l’hôte" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Le dossier n’est plus partagé par l’hôte" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "호스트가 더 이상 폴더를 공유하지 않음" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "主机已不再共享此文件夹" } }
       }
     },
     "Forget host" : {
@@ -206,7 +249,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Host entfernen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Forget host" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Olvidar host" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Oublier l’hôte" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Oublier l’hôte" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "호스트 잊기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "忘记主机" } }
       }
     },
     "Forget this host" : {
@@ -215,7 +260,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Diesen Host entfernen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Forget this host" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Olvidar este host" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Oublier cet hôte" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Oublier cet hôte" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "이 호스트 잊기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "忘记此主机" } }
       }
     },
     "General" : {
@@ -224,7 +271,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Allgemein" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "General" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "General" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Général" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Général" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "일반" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "通用" } }
       }
     },
     "Generate Report…" : {
@@ -233,7 +282,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Bericht erstellen …" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Generate Report…" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Generar informe…" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Générer un rapport…" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Générer un rapport…" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "보고서 생성…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "生成报告…" } }
       }
     },
     "Generate token" : {
@@ -242,7 +293,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Token erstellen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Generate token" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Generar token" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Générer un jeton" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Générer un jeton" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "토큰 생성" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "生成令牌" } }
       }
     },
     "In Progress" : {
@@ -251,7 +304,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "In Bearbeitung" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "In Progress" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "En curso" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "En cours" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "En cours" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "진행 중" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "处理中" } }
       }
     },
     "Issues Help" : {
@@ -260,7 +315,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Issues-Hilfe" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Issues Help" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Ayuda de Issues" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Aide d’Issues" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Aide d’Issues" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Issues 도움말" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Issues 帮助" } }
       }
     },
     "List" : {
@@ -269,7 +326,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Liste" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "List" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Lista" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Liste" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Liste" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "목록" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "列表" } }
       }
     },
     "Manage Remote Subscriptions…" : {
@@ -278,7 +337,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Entfernte Abonnements verwalten …" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Manage Remote Subscriptions…" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Gestionar suscripciones remotas…" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Gérer les abonnements distants…" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Gérer les abonnements distants…" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "원격 구독 관리…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "管理远程订阅…" } }
       }
     },
     "Manage subscriptions" : {
@@ -287,7 +348,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Abonnements verwalten" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Manage subscriptions" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Gestionar suscripciones" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Gérer les abonnements" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Gérer les abonnements" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "구독 관리" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "管理订阅" } }
       }
     },
     "Module" : {
@@ -296,7 +359,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Modul" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Module" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Módulo" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Module" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Module" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "모듈" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "模块" } }
       }
     },
     "New Tab" : {
@@ -305,7 +370,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Neuer Tab" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "New Tab" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Nueva pestaña" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Nouvel onglet" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Nouvel onglet" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "새 탭" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "新建标签页" } }
       }
     },
     "No access tokens yet. Generate one to let a viewer connect." : {
@@ -314,7 +381,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Noch keine Zugriffstoken. Erstelle einen, damit ein Betrachter verbinden kann." } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "No access tokens yet. Generate one to let a viewer connect." } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Aún no hay tokens de acceso. Genera uno para permitir la conexión de un visor." } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Aucun jeton d’accès pour le moment. Générez-en un pour autoriser la connexion d’une visionneuse." } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Aucun jeton d’accès pour le moment. Générez-en un pour autoriser la connexion d’une visionneuse." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "아직 액세스 토큰이 없습니다. 뷰어가 연결할 수 있도록 하나 생성하십시오." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "尚无访问令牌。生成一个以允许查看器连接。" } }
       }
     },
     "No remote subscriptions yet." : {
@@ -323,7 +392,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Noch keine entfernten Abonnements." } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "No remote subscriptions yet." } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Aún no hay suscripciones remotas." } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Aucun abonnement distant pour le moment." } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Aucun abonnement distant pour le moment." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "아직 원격 구독이 없습니다." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "尚无远程订阅。" } }
       }
     },
     "No viewers connected." : {
@@ -332,7 +403,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Keine Betrachter verbunden." } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "No viewers connected." } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "No hay visores conectados." } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Aucune visionneuse connectée." } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Aucune visionneuse connectée." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "연결된 뷰어가 없습니다." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "没有已连接的查看器。" } }
       }
     },
     "Open" : {
@@ -341,7 +414,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Offen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Open" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Abierto" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ouverte" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ouverte" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "미해결" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未处理" } }
       }
     },
     "Open Folder" : {
@@ -350,7 +425,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Ordner öffnen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Folder" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Abrir carpeta" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ouvrir le dossier" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ouvrir le dossier" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "폴더 열기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "打开文件夹" } }
       }
     },
     "Paste new token" : {
@@ -359,7 +436,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Neuen Token einfügen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Paste new token" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Pegar nuevo token" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Coller un nouveau jeton" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Coller un nouveau jeton" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "새 토큰 붙여넣기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "粘贴新令牌" } }
       }
     },
     "Platform" : {
@@ -368,7 +447,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Plattform" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Platform" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Plataforma" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Plateforme" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Plateforme" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "플랫폼" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "平台" } }
       }
     },
     "Print…" : {
@@ -377,7 +458,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Drucken …" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Print…" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Imprimir…" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Imprimer…" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Imprimer…" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "프린트…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "打印…" } }
       }
     },
     "Recent" : {
@@ -386,7 +469,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Letzte" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Recent" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Reciente" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Récents" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Récents" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "최근" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "最近" } }
       }
     },
     "Reachable on this Mac at" : {
@@ -395,7 +480,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Erreichbar auf diesem Mac unter" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Reachable on this Mac at" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Accesible en este Mac en" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Joignable sur ce Mac à" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Joignable sur ce Mac à" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "이 Mac에서 접근 가능한 위치" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "此 Mac 的可访问地址" } }
       }
     },
     "Re-enable" : {
@@ -404,7 +491,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Erneut aktivieren" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Re-enable" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Reactivar" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Réactiver" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Réactiver" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "다시 활성화" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重新启用" } }
       }
     },
     "Reload" : {
@@ -413,7 +502,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Neu laden" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Reload" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Recargar" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Recharger" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Recharger" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "다시 불러오기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重新载入" } }
       }
     },
     "Reload now" : {
@@ -422,7 +513,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Jetzt neu laden" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Reload now" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Recargar ahora" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Recharger maintenant" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Recharger maintenant" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "지금 다시 불러오기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "立即重新载入" } }
       }
     },
     "Remote Access" : {
@@ -431,7 +524,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Fernzugriff" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Remote Access" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Acceso remoto" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Accès distant" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Accès distant" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "원격 접속" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "远程访问" } }
       }
     },
     "Remote Subscriptions" : {
@@ -440,7 +535,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Entfernte Abonnements" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Remote Subscriptions" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Suscripciones remotas" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Abonnements distants" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Abonnements distants" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "원격 구독" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "远程订阅" } }
       }
     },
     "Resolved" : {
@@ -449,7 +546,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Gelöst" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Resolved" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Resuelto" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Résolue" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Résolue" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "해결됨" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已解决" } }
       }
     },
     "Reveal in Finder" : {
@@ -458,7 +557,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Im Finder anzeigen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Reveal in Finder" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Mostrar en el Finder" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Afficher dans le Finder" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Afficher dans le Finder" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Finder에서 보기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "在访达中显示" } }
       }
     },
     "Reveal Issue" : {
@@ -467,7 +568,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Issue anzeigen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Reveal Issue" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Mostrar issue" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Afficher l’issue" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Afficher l’issue" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "이슈 보기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "显示问题" } }
       }
     },
     "Revoke" : {
@@ -476,7 +579,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Widerrufen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Revoke" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Revocar" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Révoquer" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Révoquer" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "무효화" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "撤销" } }
       }
     },
     "Rotate" : {
@@ -485,7 +590,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Rotieren" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Rotate" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Rotar" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Renouveler" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Renouveler" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "갱신" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "轮换" } }
       }
     },
     "Confirm certificate rotation" : {
@@ -494,7 +601,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Zertifikatrotation bestätigen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Confirm certificate rotation" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Confirmar la rotación del certificado" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Confirmer le renouvellement du certificat" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Confirmer le renouvellement du certificat" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "인증서 갱신 확인" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确认证书轮换" } }
       }
     },
     "Rotate certificate…" : {
@@ -503,7 +612,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Zertifikat rotieren …" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Rotate certificate…" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Rotar certificado…" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Renouveler le certificat…" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Renouveler le certificat…" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "인증서 갱신…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "轮换证书…" } }
       }
     },
     "Rotation invalidates every existing access token. All viewers will need a fresh token." : {
@@ -512,7 +623,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Eine Rotation macht alle vorhandenen Zugriffstoken ungültig. Alle Betrachter benötigen einen neuen Token." } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Rotation invalidates every existing access token. All viewers will need a fresh token." } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "La rotación invalida todos los tokens de acceso existentes. Todos los visores necesitarán un token nuevo." } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Renouveler le certificat invalide tous les jetons d’accès existants. Toutes les visionneuses auront besoin d’un nouveau jeton." } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Renouveler le certificat invalide tous les jetons d’accès existants. Toutes les visionneuses auront besoin d’un nouveau jeton." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "갱신하면 기존의 모든 액세스 토큰이 무효화됩니다. 모든 뷰어는 새 토큰이 필요합니다." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "轮换将使所有现有访问令牌失效。所有查看器需要使用新令牌。" } }
       }
     },
     "Running." : {
@@ -521,7 +634,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Läuft." } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Running." } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "En ejecución." } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "En cours d’exécution." } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "En cours d’exécution." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "실행 중." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "运行中。" } }
       }
     },
     "Server certificate" : {
@@ -530,7 +645,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Serverzertifikat" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Server certificate" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Certificado del servidor" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Certificat du serveur" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Certificat du serveur" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "서버 인증서" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "服务器证书" } }
       }
     },
     "Show Command Palette…" : {
@@ -539,7 +656,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Befehlspalette anzeigen …" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Show Command Palette…" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Mostrar paleta de comandos…" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Afficher la palette de commandes…" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Afficher la palette de commandes…" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "명령 팔레트 표시…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "显示命令面板…" } }
       }
     },
     "Show Next Tab" : {
@@ -548,7 +667,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Nächsten Tab anzeigen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Show Next Tab" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Mostrar la pestaña siguiente" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Afficher l’onglet suivant" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Afficher l’onglet suivant" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "다음 탭 보기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "显示下一个标签页" } }
       }
     },
     "Show Previous Tab" : {
@@ -557,7 +678,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Vorherigen Tab anzeigen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Show Previous Tab" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Mostrar la pestaña anterior" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Afficher l’onglet précédent" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Afficher l’onglet précédent" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "이전 탭 보기" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "显示上一个标签页" } }
       }
     },
     "Status" : {
@@ -566,7 +689,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Status" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Status" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Estado" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "État" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "État" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "상태" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "状态" } }
       }
     },
     "Subscribed" : {
@@ -575,7 +700,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Abonniert" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Subscribed" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Suscritas" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Abonnées" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Abonnées" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "구독됨" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已订阅" } }
       }
     },
     "Swimlanes" : {
@@ -584,7 +711,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Bahnen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Swimlanes" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Carriles" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Couloirs" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Couloirs" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "스윔레인" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "泳道图" } }
       }
     },
     "Timeline" : {
@@ -593,7 +722,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Zeitstrahl" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Timeline" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Cronología" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Chronologie" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Chronologie" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "타임라인" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "时间线" } }
       }
     },
     "Token" : {
@@ -602,7 +733,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Token" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Token" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Token" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Jeton" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Jeton" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "토큰" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "令牌" } }
       }
     },
     "Token created" : {
@@ -611,7 +744,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Token erstellt" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Token created" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Token creado" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Jeton créé" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Jeton créé" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "토큰 생성됨" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "令牌已创建" } }
       }
     },
     "Trying again — since %@" : {
@@ -620,7 +755,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Erneuter Versuch — seit %@" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Trying again — since %@" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Reintentando — desde %@" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Nouvelle tentative — depuis %@" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Nouvelle tentative — depuis %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "다시 시도 중 — %@부터" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在重试 — 自 %@" } }
       }
     },
     "With attachments" : {
@@ -629,7 +766,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Mit Anhängen" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "With attachments" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Con adjuntos" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Avec pièces jointes" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Avec pièces jointes" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "첨부 파일 있음" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "含附件" } }
       }
     },
     "Without attachments" : {
@@ -638,7 +777,9 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Ohne Anhänge" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Without attachments" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Sin adjuntos" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Sans pièces jointes" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Sans pièces jointes" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "첨부 파일 없음" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "不含附件" } }
       }
     },
     "Won't Fix" : {
@@ -647,8 +788,11 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Wird nicht behoben" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Won't Fix" } },
         "es" : { "stringUnit" : { "state" : "translated", "value" : "No se corregirá" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Non corrigée" } }
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Non corrigée" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "수정 안 함" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "不予修复" } }
       }
     }
-  }
+  },
+  "version" : "1.0"
 }
