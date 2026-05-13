@@ -7,7 +7,10 @@ ENABLE_APP_SANDBOX = NO
 SWIFT_APPROACHABLE_CONCURRENCY = YES
 SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
 
-MACOSX_DEPLOYMENT_TARGET = 15.6
+// Deployment target tracks "current macOS minus 1". Apple jumped 15 → 26
+// across all OS platforms in 2026 to align with the year, so the project
+// supports macOS 15 (Sequoia) as well as macOS 26 and later.
+MACOSX_DEPLOYMENT_TARGET = 15.0
 
 SUPPORTED_PLATFORMS = macosx
 

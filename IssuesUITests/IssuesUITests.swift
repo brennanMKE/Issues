@@ -2,7 +2,9 @@
 
 import XCTest
 
-final class IssuesUITests: XCTestCase {
+// `nonisolated` to match XCTestCase's overridable members. See note in
+// IssuesUITestsLaunchTests.swift.
+nonisolated final class IssuesUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

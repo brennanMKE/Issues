@@ -38,7 +38,7 @@ defaults delete co.sstools.Issues
 
 - Source folders under `Issues/` use `PBXFileSystemSynchronizedRootGroup`. Adding a new `.swift` file on disk auto-registers it with the target — **do not edit `project.pbxproj` to add sources**. Edit `project.pbxproj` only for build settings, entitlements, or package dependencies.
 - App is sandboxed with read-only user-selected files plus app-scope bookmarks. Entitlements live at `Issues/Issues.entitlements`; the `com.apple.security.files.bookmarks.app-scope` key is required for security-scoped bookmarks to persist across launches and is not part of Xcode's default set.
-- Deployment target is macOS 26.4 (project min is macOS 15+). Anything else built against older SDKs will fail to compile.
+- Deployment target is **macOS 15.0**, declared in `Configuration/Build.xcconfig`. Apple jumped 15 → 26 across all OS platforms in 2026 to align with the year, so the project supports both macOS 15 (Sequoia) and macOS 26+. Test targets carry an inline `MACOSX_DEPLOYMENT_TARGET = 15.0` in `project.pbxproj` (they don't have a baseConfigurationReference); keep them in sync if the xcconfig changes.
 
 ## Architecture
 

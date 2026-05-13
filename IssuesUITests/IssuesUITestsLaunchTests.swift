@@ -2,7 +2,12 @@
 
 import XCTest
 
-final class IssuesUITestsLaunchTests: XCTestCase {
+// The project's `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` would otherwise
+// promote this class to @MainActor, which doesn't match XCTestCase's
+// `nonisolated` overridable members. Marking the class `nonisolated`
+// keeps it aligned with the superclass while individual @MainActor test
+// methods stay opt-in.
+nonisolated final class IssuesUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
