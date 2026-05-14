@@ -335,6 +335,7 @@
 			mainGroup = 26EEA0612FA5B8390029CBBC;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				26A324902FB6900088AE9A /* XCLocalSwiftPackageReference "IssuesKit" */,
 				26EEA10E2FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "Watcher" */,
 				26EEA1112FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "textual" */,
 				26EEA1142FB051180029CBBC /* XCRemoteSwiftPackageReference "Sparkle" */,
@@ -768,6 +769,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		26A324902FB6900088AE9A /* XCLocalSwiftPackageReference "IssuesKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = IssuesKit;
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
 		26A324722FB67E000088AE9A /* XCRemoteSwiftPackageReference "SwiftTUI" */ = {
