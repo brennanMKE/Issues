@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		26A324702FB67E000088AE9A /* SwiftTUI in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324712FB67E000088AE9A /* SwiftTUI */; };
 		26EEA1102FA81FCC0029CBBC /* Watcher in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA10F2FA81FCC0029CBBC /* Watcher */; };
 		26EEA1132FA81FCC0029CBBC /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA1122FA81FCC0029CBBC /* Textual */; };
 		26EEA1162FB051180029CBBC /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA1152FB051180029CBBC /* Sparkle */; };
@@ -39,10 +40,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
+		26A324652FB67CAC0088AE9A /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		26A3224F2FB3DA6D0088AE9A /* issues */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = issues; sourceTree = BUILT_PRODUCTS_DIR; };
+		26A324672FB67CAC0088AE9A /* issues-dashboard */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "issues-dashboard"; sourceTree = BUILT_PRODUCTS_DIR; };
 		26EEA06A2FA5B8390029CBBC /* Issues.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Issues.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		26EEA0772FA5B83B0029CBBC /* IssuesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IssuesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		26EEA0812FA5B83B0029CBBC /* IssuesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IssuesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -72,6 +83,11 @@
 			path = Configuration;
 			sourceTree = "<group>";
 		};
+		26A324682FB67CAC0088AE9A /* DashboardCommand */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DashboardCommand;
+			sourceTree = "<group>";
+		};
 		26EEA06C2FA5B8390029CBBC /* Issues */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Issues;
@@ -94,6 +110,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		26A324642FB67CAC0088AE9A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				26A324702FB67E000088AE9A /* SwiftTUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,6 +154,7 @@
 				26A322562FB3DA790088AE9A /* Configuration */,
 				26EEA06C2FA5B8390029CBBC /* Issues */,
 				26A322502FB3DA6D0088AE9A /* IssuesCommand */,
+				26A324682FB67CAC0088AE9A /* DashboardCommand */,
 				26EEA07A2FA5B83B0029CBBC /* IssuesTests */,
 				26EEA0842FA5B83B0029CBBC /* IssuesUITests */,
 				26EEA06B2FA5B8390029CBBC /* Products */,
@@ -143,6 +168,7 @@
 				26EEA0772FA5B83B0029CBBC /* IssuesTests.xctest */,
 				26EEA0812FA5B83B0029CBBC /* IssuesUITests.xctest */,
 				26A3224F2FB3DA6D0088AE9A /* issues */,
+				26A324672FB67CAC0088AE9A /* issues-dashboard */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -170,6 +196,29 @@
 			);
 			productName = IssuesCommand;
 			productReference = 26A3224F2FB3DA6D0088AE9A /* issues */;
+			productType = "com.apple.product-type.tool";
+		};
+		26A324662FB67CAC0088AE9A /* DashboardCommand */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 26A3246B2FB67CAC0088AE9A /* Build configuration list for PBXNativeTarget "DashboardCommand" */;
+			buildPhases = (
+				26A324632FB67CAC0088AE9A /* Sources */,
+				26A324642FB67CAC0088AE9A /* Frameworks */,
+				26A324652FB67CAC0088AE9A /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				26A324682FB67CAC0088AE9A /* DashboardCommand */,
+			);
+			name = DashboardCommand;
+			packageProductDependencies = (
+				26A324712FB67E000088AE9A /* SwiftTUI */,
+			);
+			productName = DashboardCommand;
+			productReference = 26A324672FB67CAC0088AE9A /* issues-dashboard */;
 			productType = "com.apple.product-type.tool";
 		};
 		26EEA0692FA5B8390029CBBC /* Issues */ = {
@@ -257,6 +306,9 @@
 					26A3224E2FB3DA6D0088AE9A = {
 						CreatedOnToolsVersion = 26.4.1;
 					};
+					26A324662FB67CAC0088AE9A = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
 					26EEA0692FA5B8390029CBBC = {
 						CreatedOnToolsVersion = 26.4.1;
 					};
@@ -286,6 +338,7 @@
 				26EEA10E2FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "Watcher" */,
 				26EEA1112FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "textual" */,
 				26EEA1142FB051180029CBBC /* XCRemoteSwiftPackageReference "Sparkle" */,
+				26A324722FB67E000088AE9A /* XCRemoteSwiftPackageReference "SwiftTUI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 26EEA06B2FA5B8390029CBBC /* Products */;
@@ -294,6 +347,7 @@
 			targets = (
 				26EEA0692FA5B8390029CBBC /* Issues */,
 				26A3224E2FB3DA6D0088AE9A /* IssuesCommand */,
+				26A324662FB67CAC0088AE9A /* DashboardCommand */,
 				26EEA0762FA5B83B0029CBBC /* IssuesTests */,
 				26EEA0802FA5B83B0029CBBC /* IssuesUITests */,
 			);
@@ -326,6 +380,13 @@
 
 /* Begin PBXSourcesBuildPhase section */
 		26A3224B2FB3DA6D0088AE9A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		26A324632FB67CAC0088AE9A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -372,7 +433,7 @@
 		26A322532FB3DA6E0088AE9A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReferenceAnchor = 26A322562FB3DA790088AE9A /* Configuration */;
-			baseConfigurationReferenceRelativePath = Command.xcconfig;
+			baseConfigurationReferenceRelativePath = IssuesCommand.xcconfig;
 			buildSettings = {
 				ENABLE_HARDENED_RUNTIME = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -382,7 +443,27 @@
 		26A322542FB3DA6E0088AE9A /* Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReferenceAnchor = 26A322562FB3DA790088AE9A /* Configuration */;
-			baseConfigurationReferenceRelativePath = Command.xcconfig;
+			baseConfigurationReferenceRelativePath = IssuesCommand.xcconfig;
+			buildSettings = {
+				ENABLE_HARDENED_RUNTIME = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+			};
+			name = Release;
+		};
+		26A3246C2FB67CAC0088AE9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 26A322562FB3DA790088AE9A /* Configuration */;
+			baseConfigurationReferenceRelativePath = DashboardCommand.xcconfig;
+			buildSettings = {
+				ENABLE_HARDENED_RUNTIME = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+			};
+			name = Debug;
+		};
+		26A3246D2FB67CAC0088AE9A /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 26A322562FB3DA790088AE9A /* Configuration */;
+			baseConfigurationReferenceRelativePath = DashboardCommand.xcconfig;
 			buildSettings = {
 				ENABLE_HARDENED_RUNTIME = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -641,6 +722,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		26A3246B2FB67CAC0088AE9A /* Build configuration list for PBXNativeTarget "DashboardCommand" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				26A3246C2FB67CAC0088AE9A /* Debug */,
+				26A3246D2FB67CAC0088AE9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		26EEA0652FA5B8390029CBBC /* Build configuration list for PBXProject "Issues" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -680,6 +770,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		26A324722FB67E000088AE9A /* XCRemoteSwiftPackageReference "SwiftTUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/rensbreur/SwiftTUI.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		26EEA10E2FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "Watcher" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "git@github.com:brennanMKE/Watcher.git";
@@ -707,6 +805,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		26A324712FB67E000088AE9A /* SwiftTUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 26A324722FB67E000088AE9A /* XCRemoteSwiftPackageReference "SwiftTUI" */;
+			productName = SwiftTUI;
+		};
 		26EEA10F2FA81FCC0029CBBC /* Watcher */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 26EEA10E2FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "Watcher" */;
