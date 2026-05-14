@@ -48,6 +48,16 @@
 		26EEA0812FA5B83B0029CBBC /* IssuesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IssuesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		26A324072FB596BA0088AE9A /* Exceptions for "Configuration" folder in "Issues" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 26EEA0692FA5B8390029CBBC /* Issues */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		26A322502FB3DA6D0088AE9A /* IssuesCommand */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -56,6 +66,9 @@
 		};
 		26A322562FB3DA790088AE9A /* Configuration */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				26A324072FB596BA0088AE9A /* Exceptions for "Configuration" folder in "Issues" target */,
+			);
 			path = Configuration;
 			sourceTree = "<group>";
 		};
@@ -507,7 +520,6 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -530,7 +542,6 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

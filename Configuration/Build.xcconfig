@@ -1,7 +1,4 @@
 
-CURRENT_PROJECT_VERSION = 1
-MARKETING_VERSION = 1.0
-
 SWIFT_VERSION = 6.0
 ENABLE_APP_SANDBOX = NO
 SWIFT_APPROACHABLE_CONCURRENCY = YES
@@ -21,3 +18,10 @@ DEVELOPMENT_TEAM = XV8BAAVZ6V
 
 // Macs only — SDKROOT itself selects the SDK, so don't condition it on the SDK.
 SDKROOT = macosx
+
+// Avoid using double slash which becomes a comment
+HTTPS=https:/
+
+// Sparkle
+SU_FEED_URL = $HTTPS/issues.sstools.co/appcast.xml
+SU_PUBLIC_ED_KEY = i6t0gJDorD/84Ln1AyQBQ27Ibd3pbnVMvEPMUvbBi7M=
