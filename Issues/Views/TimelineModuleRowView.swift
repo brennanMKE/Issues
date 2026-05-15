@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct TimelineModuleRowView: View {
     let module: String

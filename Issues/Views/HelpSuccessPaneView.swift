@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 import Textual
 
 struct HelpSuccessPaneView: View {

@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct RecentView: View {
     @Bindable var store: IssueStore

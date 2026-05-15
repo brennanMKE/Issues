@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Trailing "+" button on the tab bar. Opens the dedicated folder-picker
 /// scene (#0029) rather than calling `presentOpenPanel()` directly so users

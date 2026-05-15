@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct LintSheetContentView: View {
     let findings: [LintFinding]

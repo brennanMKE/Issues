@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct FolderPickerEmptyStateView: View {
     var body: some View {

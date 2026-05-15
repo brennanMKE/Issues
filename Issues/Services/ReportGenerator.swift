@@ -1,4 +1,5 @@
 import Foundation
+import IssuesCore
 import SwiftUI
 import AppKit
 import os.log

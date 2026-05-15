@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// General settings pane. Currently surfaces the Known Paths list — every
 /// folder the app has remembered via `FolderBookmarkService` — so the user can

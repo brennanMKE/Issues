@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct TimelineBarView: View {
     let issue: Issue

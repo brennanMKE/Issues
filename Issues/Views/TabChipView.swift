@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 // MARK: - Tab chip
 

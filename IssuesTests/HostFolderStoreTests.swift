@@ -1,4 +1,5 @@
 import Testing
+import IssuesCore
 import Foundation
 @testable import Issues
 
@@ -20,7 +21,7 @@ struct HostFolderStoreTests {
         let url = URL(fileURLWithPath: "/tmp/\(name)/issues")
         let store = IssueStore(folderURL: url, bookmarkData: bookmarkBytes(name))
         let issues = issueIds.map { id in
-            Issues.Issue(
+            IssuesCore.Issue(
                 id: id,
                 title: "Issue \(id)",
                 status: .open,

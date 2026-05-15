@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct TimelineView: View {
     @Bindable var store: IssueStore

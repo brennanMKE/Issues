@@ -8,7 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		26A324702FB67E000088AE9A /* SwiftTUI in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324712FB67E000088AE9A /* SwiftTUI */; };
-		26EEA1102FA81FCC0029CBBC /* Watcher in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA10F2FA81FCC0029CBBC /* Watcher */; };
+		26A324A12FB6900088AE9A /* IssuesCore in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324A02FB6900088AE9A /* IssuesCore */; };
+		26A324A32FB6900088AE9A /* IssuesCore in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324A22FB6900088AE9A /* IssuesCore */; };
 		26EEA1132FA81FCC0029CBBC /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA1122FA81FCC0029CBBC /* Textual */; };
 		26EEA1162FB051180029CBBC /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA1152FB051180029CBBC /* Sparkle */; };
 /* End PBXBuildFile section */
@@ -125,7 +126,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				26EEA1102FA81FCC0029CBBC /* Watcher in Frameworks */,
+				26A324A12FB6900088AE9A /* IssuesCore in Frameworks */,
 				26EEA1132FA81FCC0029CBBC /* Textual in Frameworks */,
 				26EEA1162FB051180029CBBC /* Sparkle in Frameworks */,
 			);
@@ -135,6 +136,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26A324A32FB6900088AE9A /* IssuesCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,7 +241,7 @@
 			);
 			name = Issues;
 			packageProductDependencies = (
-				26EEA10F2FA81FCC0029CBBC /* Watcher */,
+				26A324A02FB6900088AE9A /* IssuesCore */,
 				26EEA1122FA81FCC0029CBBC /* Textual */,
 				26EEA1152FB051180029CBBC /* Sparkle */,
 			);
@@ -265,6 +267,7 @@
 			);
 			name = IssuesTests;
 			packageProductDependencies = (
+				26A324A22FB6900088AE9A /* IssuesCore */,
 			);
 			productName = IssuesTests;
 			productReference = 26EEA0772FA5B83B0029CBBC /* IssuesTests.xctest */;
@@ -818,10 +821,15 @@
 			package = 26A324722FB67E000088AE9A /* XCRemoteSwiftPackageReference "SwiftTUI" */;
 			productName = SwiftTUI;
 		};
-		26EEA10F2FA81FCC0029CBBC /* Watcher */ = {
+		26A324A02FB6900088AE9A /* IssuesCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 26EEA10E2FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "Watcher" */;
-			productName = Watcher;
+			package = 26A324902FB6900088AE9A /* XCLocalSwiftPackageReference "IssuesKit" */;
+			productName = IssuesCore;
+		};
+		26A324A22FB6900088AE9A /* IssuesCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 26A324902FB6900088AE9A /* XCLocalSwiftPackageReference "IssuesKit" */;
+			productName = IssuesCore;
 		};
 		26EEA1122FA81FCC0029CBBC /* Textual */ = {
 			isa = XCSwiftPackageProductDependency;

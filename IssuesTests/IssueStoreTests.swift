@@ -1,4 +1,5 @@
 import Testing
+import IssuesCore
 import Foundation
 @testable import Issues
 
@@ -19,8 +20,8 @@ struct IssueStoreTests {
         platform: String = "macOS",
         modifiedAt: Date = Date(timeIntervalSince1970: 0),
         hasAttachments: Bool = false
-    ) -> Issues.Issue {
-        Issues.Issue(
+    ) -> IssuesCore.Issue {
+        IssuesCore.Issue(
             id: id,
             title: "Issue \(id)",
             status: status,
@@ -38,7 +39,7 @@ struct IssueStoreTests {
         )
     }
 
-    private static func makeStore(issues: [Issues.Issue]) -> IssueStore {
+    private static func makeStore(issues: [IssuesCore.Issue]) -> IssueStore {
         let store = IssueStore(folderURL: URL(fileURLWithPath: "/tmp/test-store"))
         store.setIssuesForPreview(issues)
         return store

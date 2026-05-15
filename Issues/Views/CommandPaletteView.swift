@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Spotlight / VS Code-style command palette (#0055).
 ///

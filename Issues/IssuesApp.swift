@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 import AppKit
 import UserNotifications
 import os.log

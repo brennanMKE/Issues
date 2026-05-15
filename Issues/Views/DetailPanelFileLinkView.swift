@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct DetailPanelFileLinkView: View {
     let issue: Issue

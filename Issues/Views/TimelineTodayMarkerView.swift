@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct TimelineTodayMarkerView: View {
     let geometry: TimelineGeometry

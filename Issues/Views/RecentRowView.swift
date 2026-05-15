@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct RecentRowView: View {
     let issue: Issue

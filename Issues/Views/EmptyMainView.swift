@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Empty-state surface shown when no tab is active (#0029). Replaces the
 /// old behavior where `RootView` swapped `FolderPickerView` into the main

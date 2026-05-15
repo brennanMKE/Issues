@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 import Textual
 // `.quickLookPreview($url)` (#0073) is declared in the QuickLook overlay
 // module — SwiftUI re-exports it on iOS but on macOS the symbol lives behind

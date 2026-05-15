@@ -1,4 +1,5 @@
 import Testing
+import IssuesCore
 import Foundation
 @testable import Issues
 
@@ -32,8 +33,8 @@ struct RemoteHandlersTests {
         modifiedAt: Date = Date(timeIntervalSince1970: 1_700_000_000),
         fileURL: URL = URL(fileURLWithPath: "/tmp/stub.md"),
         hasAttachments: Bool = false
-    ) -> Issues.Issue {
-        Issues.Issue(
+    ) -> IssuesCore.Issue {
+        IssuesCore.Issue(
             id: id,
             title: title,
             status: IssueStatus(raw: statusRaw),
@@ -56,7 +57,7 @@ struct RemoteHandlersTests {
         displayName: String = "MyRepo",
         url: URL = URL(fileURLWithPath: "/Users/x/Code/MyRepo/issues"),
         project: ProjectMetadata? = nil,
-        issues: [Issues.Issue] = []
+        issues: [IssuesCore.Issue] = []
     ) -> HostedFolder {
         HostedFolder(
             id: id,

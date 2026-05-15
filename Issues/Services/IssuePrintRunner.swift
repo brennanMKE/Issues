@@ -1,4 +1,5 @@
 import Foundation
+import IssuesCore
 
 #if os(macOS)
 import AppKit

@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct FolderPickerView: View {
     @Bindable var bookmarks: FolderBookmarkService

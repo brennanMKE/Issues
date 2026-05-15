@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct SwimlaneModuleSectionView: View {
     let module: String

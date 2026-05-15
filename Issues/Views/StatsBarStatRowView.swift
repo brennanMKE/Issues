@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct StatsBarStatRowView: View {
     let color: Color

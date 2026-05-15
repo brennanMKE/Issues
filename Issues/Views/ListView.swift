@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct ListView: View {
     @Bindable var store: IssueStore

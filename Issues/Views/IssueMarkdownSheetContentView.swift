@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Sheet body for `IssueMarkdownSheet`. Mirrors the right-side detail panel
 /// below its header — metadata grid, divider, then description (#0048).

@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct FolderPickerRowView: View {
     let folder: RememberedFolder

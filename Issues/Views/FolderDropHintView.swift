@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Passive visual affordance (#0067) advertising that a surface accepts a
 /// folder drop from Finder. Renders a dashed `RoundedRectangle` with an

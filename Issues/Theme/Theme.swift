@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 extension Color {
     init(hex: String) {

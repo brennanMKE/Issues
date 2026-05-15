@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct MainContentAreaView: View {
     @Bindable var store: IssueStore

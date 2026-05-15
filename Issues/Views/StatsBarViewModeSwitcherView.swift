@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct StatsBarViewModeSwitcherView: View {
     @Bindable var store: IssueStore

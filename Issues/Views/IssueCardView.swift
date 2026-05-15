@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct IssueCardView: View {
     let issue: Issue

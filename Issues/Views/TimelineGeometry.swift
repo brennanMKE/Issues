@@ -1,4 +1,5 @@
 import Foundation
+import IssuesCore
 
 struct TimelineGeometry {
     let minDate: Date

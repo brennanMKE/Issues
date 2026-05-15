@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Sheet listing every `LintFinding` for the active folder. Read-only — each
 /// row gets a "Reveal in Finder" action so the user can investigate; the app

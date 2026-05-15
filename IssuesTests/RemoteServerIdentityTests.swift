@@ -1,4 +1,5 @@
 import Testing
+import IssuesCore
 import Foundation
 import CryptoKit
 @testable import Issues

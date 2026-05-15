@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Wraps subviews onto multiple rows, like CSS `flex-wrap: wrap`.
 /// Variable card widths preclude `LazyVGrid`.

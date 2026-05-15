@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct SwimlaneView: View {
     @Bindable var store: IssueStore

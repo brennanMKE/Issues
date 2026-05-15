@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Builds an `AttributedString` from `text` with every case-insensitive
 /// occurrence of `query` highlighted using an accent-tinted background.

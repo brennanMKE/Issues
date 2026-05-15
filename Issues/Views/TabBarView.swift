@@ -1,4 +1,5 @@
 import AppKit
+import IssuesCore
 import SwiftUI
 
 /// Horizontal Safari-style tab bar listing each open `IssueStore` as a chip.

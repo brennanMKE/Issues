@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Split into its own view so SwiftUI can observe `bookmarks` directly via
 /// `@Bindable`. `@Observable` services aren't observed when only read through

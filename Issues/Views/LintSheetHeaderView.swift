@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct LintSheetHeaderView: View {
     let count: Int

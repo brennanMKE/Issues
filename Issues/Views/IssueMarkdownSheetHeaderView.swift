@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct IssueMarkdownSheetHeaderView: View {
     let issue: Issue

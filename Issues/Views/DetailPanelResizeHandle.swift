@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// A 6pt-wide invisible vertical strip that lets the user drag-resize the
 /// detail panel by its leading edge (#0069). The cursor flips to the

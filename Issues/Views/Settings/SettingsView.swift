@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Top-level container for the macOS native Settings scene. Hosted by
 /// `IssuesApp`'s `Settings { ... }` block (#0024).

@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 import os.log
 
 #if os(macOS)

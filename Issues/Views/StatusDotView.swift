@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct StatusDotView: View {
     let status: IssueStatus

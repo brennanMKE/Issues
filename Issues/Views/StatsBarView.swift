@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Single horizontal row showing colored count chips on the leading edge,
 /// the search field, and the view-mode segmented capsule on the trailing

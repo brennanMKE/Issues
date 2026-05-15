@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct DetailPanelHeaderView: View {
     let issue: Issue

@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct HelpErrorPaneView: View {
     let error: Error

@@ -1,4 +1,5 @@
 import Foundation
+import IssuesCore
 import Sparkle
 import os.log
 

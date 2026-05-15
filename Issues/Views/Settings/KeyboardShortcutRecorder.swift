@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// A focusable, click-to-record keyboard shortcut field for the Settings pane.
 ///

@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 #if canImport(AppKit)
 import AppKit
 #endif

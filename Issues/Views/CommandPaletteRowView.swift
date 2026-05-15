@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// One row inside `CommandPaletteView`'s result list. Issues show a status
 /// dot; view-mode and tab rows show a generic glyph instead. The right edge

@@ -1,4 +1,5 @@
 import Foundation
+import IssuesCore
 
 enum HelpLoadError: LocalizedError {
     case resourceMissing(String)

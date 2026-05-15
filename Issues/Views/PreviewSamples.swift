@@ -1,5 +1,6 @@
 #if DEBUG
 import Foundation
+import IssuesCore
 
 /// Canonical fixtures for SwiftUI `#Preview` blocks throughout the app. Gated
 /// on `#if DEBUG` so the file (and any references to it) is excluded from

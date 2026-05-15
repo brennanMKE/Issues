@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// One Form row: name, recorder, per-row reset, and an inline warning row when
 /// the current binding collides with another action or hits a reserved combo.

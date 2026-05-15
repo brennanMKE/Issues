@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct HelpSidebarView: View {
     @Binding var selection: HelpSection.ID

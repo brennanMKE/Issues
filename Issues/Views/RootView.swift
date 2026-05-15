@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 import os.log
 
 private let rootLogger = Logger(subsystem: Logging.subsystem, category: "RootView")

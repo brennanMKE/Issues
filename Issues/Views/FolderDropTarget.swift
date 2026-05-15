@@ -1,4 +1,5 @@
 import AppKit
+import IssuesCore
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers

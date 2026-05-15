@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 import AppKit
 
 /// A single status filter pill in the toolbar. Plain-click collapses the

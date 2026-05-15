@@ -1,4 +1,5 @@
 import Testing
+import IssuesCore
 import Foundation
 @testable import Issues
 
@@ -29,8 +30,8 @@ struct LintRunnerTests {
         statusRaw: String = "open",
         status: IssueStatus = .open,
         modifiedAt: Date = Date(timeIntervalSince1970: 0)
-    ) -> Issues.Issue {
-        Issues.Issue(
+    ) -> IssuesCore.Issue {
+        IssuesCore.Issue(
             id: id,
             title: "Issue \(id)",
             status: status,

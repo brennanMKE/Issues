@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 import Charts
 
 #if os(macOS)

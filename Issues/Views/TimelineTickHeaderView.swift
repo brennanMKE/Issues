@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct TimelineTickHeaderView: View {
     let geometry: TimelineGeometry

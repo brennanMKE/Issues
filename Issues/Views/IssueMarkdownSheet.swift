@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct IssueMarkdownSheet: View {
     @Bindable var store: IssueStore

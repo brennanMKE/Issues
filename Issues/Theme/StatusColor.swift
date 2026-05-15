@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 extension IssueStatus {
     var foreground: Color {

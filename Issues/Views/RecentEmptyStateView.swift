@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct RecentEmptyStateView: View {
     var body: some View {

@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Shortcuts pane: one row per `ShortcutAction`, each with a recorder and a
 /// per-row reset button. Surfaces collisions and reserved-shortcut conflicts

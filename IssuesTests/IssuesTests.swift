@@ -1,6 +1,7 @@
 // IssuesTests.swift
 
 import Testing
+import IssuesCore
 @testable import Issues
 
 struct IssuesTests {

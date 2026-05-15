@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct StatsBarLintBannerView: View {
     let count: Int

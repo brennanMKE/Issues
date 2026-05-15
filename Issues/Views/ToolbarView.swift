@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Toolbar row holding the status filter pills and the module/platform
 /// pickers. The search field moved to `HeaderView` and the view-mode

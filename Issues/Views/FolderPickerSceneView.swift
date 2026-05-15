@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Wrapper used by the dedicated `Window("Open Folder", id: "folderPicker")`
 /// scene. The picker scene has its own SwiftUI environment, so it pulls the

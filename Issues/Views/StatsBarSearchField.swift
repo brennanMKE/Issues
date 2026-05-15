@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Extracted so the search field's `@FocusState` and `AppCommandsController`
 /// closure registration live in their own view's lifetime — moving the field

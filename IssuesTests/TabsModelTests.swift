@@ -1,4 +1,5 @@
 import Testing
+import IssuesCore
 import Foundation
 @testable import Issues
 
@@ -21,8 +22,8 @@ struct TabsModelTests {
         id: String,
         status: IssueStatus = .open,
         modifiedAt: Date = Date(timeIntervalSince1970: 0)
-    ) -> Issues.Issue {
-        Issues.Issue(
+    ) -> IssuesCore.Issue {
+        IssuesCore.Issue(
             id: id,
             title: "Issue \(id)",
             status: status,
@@ -40,7 +41,7 @@ struct TabsModelTests {
         )
     }
 
-    private static func snapshot(_ issue: Issues.Issue) -> IssueSnapshot {
+    private static func snapshot(_ issue: IssuesCore.Issue) -> IssueSnapshot {
         IssueSnapshot(id: issue.id, status: issue.status, modifiedAt: issue.modifiedAt)
     }
 

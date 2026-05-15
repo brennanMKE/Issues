@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Help menu item. Lifted into its own `View` so the `@Environment`
 /// property wrapper works — `CommandGroup`'s closure is a builder, not a

@@ -1,4 +1,5 @@
 import Charts
+import IssuesCore
 import SwiftUI
 
 /// A small stacked bar chart showing opened-vs-closed counts per day for

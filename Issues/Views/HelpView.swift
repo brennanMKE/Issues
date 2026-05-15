@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 /// Help window root view. A two-pane `NavigationSplitView` with the
 /// hardcoded `HelpCatalog.sections` as the sidebar and the selected

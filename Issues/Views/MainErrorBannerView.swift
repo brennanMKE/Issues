@@ -1,4 +1,5 @@
 import SwiftUI
+import IssuesCore
 
 struct MainErrorBannerView: View {
     let message: String
