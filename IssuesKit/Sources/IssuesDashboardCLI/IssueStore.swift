@@ -3,12 +3,17 @@
 // Polls the folder once per second, parses every NNNN.md, and publishes a
 // DashboardSnapshot. On error, the previous band contents are preserved and
 // only `loadError` flips so the UI doesn't blank out on a transient miss.
+//
+// Named `DashboardIssueStore` to avoid colliding with `IssuesCore.IssueStore`,
+// which is the app's main observable store (this one is TUI-specific and
+// uses Combine's `ObservableObject` for SwiftTUI compatibility).
 
 import Combine
 import Foundation
+import IssuesCore
 
 @MainActor
-final class IssueStore: ObservableObject {
+final class DashboardIssueStore: ObservableObject {
     @Published private(set) var snapshot: DashboardSnapshot = .empty
 
     let folderURL: URL

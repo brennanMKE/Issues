@@ -1,6 +1,6 @@
 import Foundation
 
-public enum IssueStatus: String, CaseIterable, Hashable, Codable, Sendable {
+public nonisolated enum IssueStatus: String, CaseIterable, Hashable, Codable, Sendable {
     case open
     case inProgress = "in-progress"
     case resolved

@@ -3,6 +3,7 @@
 // Pure ranking for the tri-band (ACTIVE / RECENT / NEXT UP) layout.
 
 import Foundation
+import IssuesCore
 
 struct DashboardSnapshot: Sendable {
     let inProgress: [Issue]

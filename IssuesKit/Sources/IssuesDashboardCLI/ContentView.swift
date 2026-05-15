@@ -5,10 +5,11 @@
 // recomputed every layout pass so the table re-flows on resize.
 
 import Foundation
+import IssuesCore
 import SwiftTUI
 
 struct ContentView: View {
-    @ObservedObject var store: IssueStore
+    @ObservedObject var store: DashboardIssueStore
 
     // Column widths
     private let numberCol: Int = 4

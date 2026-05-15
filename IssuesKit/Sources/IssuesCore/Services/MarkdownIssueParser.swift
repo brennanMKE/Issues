@@ -3,7 +3,7 @@ import os.log
 
 nonisolated private let logger = Logger(subsystem: Logging.subsystem, category: "MarkdownIssueParser")
 
-public enum MarkdownIssueParser {
+public nonisolated enum MarkdownIssueParser {
     private static let filenamePattern: NSRegularExpression = {
         // swiftlint:disable:next force_try
         try! NSRegularExpression(pattern: #"^\d{4}\.md$"#)

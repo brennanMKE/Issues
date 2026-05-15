@@ -7,13 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		26A324702FB67E000088AE9A /* SwiftTUI in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324712FB67E000088AE9A /* SwiftTUI */; };
 		26A324A12FB6900088AE9A /* IssuesCore in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324A02FB6900088AE9A /* IssuesCore */; };
 		26A324A32FB6900088AE9A /* IssuesCore in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324A22FB6900088AE9A /* IssuesCore */; };
 		26A324B12FB6A00088AE9A /* IssuesAppKit in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324B02FB6A00088AE9A /* IssuesAppKit */; };
 		26A324B32FB6A00088AE9A /* IssuesAppKit in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324B22FB6A00088AE9A /* IssuesAppKit */; };
-		26EEA1132FA81FCC0029CBBC /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA1122FA81FCC0029CBBC /* Textual */; };
-		26EEA1162FB051180029CBBC /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA1152FB051180029CBBC /* Sparkle */; };
+		26A324C02FB6B00088AE9A /* IssuesCLI in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324C12FB6B00088AE9A /* IssuesCLI */; };
+		26A324C22FB6B00088AE9A /* IssuesDashboardCLI in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324C32FB6B00088AE9A /* IssuesDashboardCLI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -113,6 +112,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26A324C02FB6B00088AE9A /* IssuesCLI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -120,7 +120,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				26A324702FB67E000088AE9A /* SwiftTUI in Frameworks */,
+				26A324C22FB6B00088AE9A /* IssuesDashboardCLI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -197,6 +197,7 @@
 			);
 			name = IssuesCommand;
 			packageProductDependencies = (
+				26A324C12FB6B00088AE9A /* IssuesCLI */,
 			);
 			productName = IssuesCommand;
 			productReference = 26A3224F2FB3DA6D0088AE9A /* issues */;
@@ -219,7 +220,7 @@
 			);
 			name = DashboardCommand;
 			packageProductDependencies = (
-				26A324712FB67E000088AE9A /* SwiftTUI */,
+				26A324C32FB6B00088AE9A /* IssuesDashboardCLI */,
 			);
 			productName = DashboardCommand;
 			productReference = 26A324672FB67CAC0088AE9A /* issues-dashboard */;
@@ -818,11 +819,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		26A324712FB67E000088AE9A /* SwiftTUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 26A324722FB67E000088AE9A /* XCRemoteSwiftPackageReference "SwiftTUI" */;
-			productName = SwiftTUI;
-		};
 		26A324A02FB6900088AE9A /* IssuesCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 26A324902FB6900088AE9A /* XCLocalSwiftPackageReference "IssuesKit" */;
@@ -843,15 +839,15 @@
 			package = 26A324902FB6900088AE9A /* XCLocalSwiftPackageReference "IssuesKit" */;
 			productName = IssuesAppKit;
 		};
-		26EEA1122FA81FCC0029CBBC /* Textual */ = {
+		26A324C12FB6B00088AE9A /* IssuesCLI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 26EEA1112FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "textual" */;
-			productName = Textual;
+			package = 26A324902FB6900088AE9A /* XCLocalSwiftPackageReference "IssuesKit" */;
+			productName = IssuesCLI;
 		};
-		26EEA1152FB051180029CBBC /* Sparkle */ = {
+		26A324C32FB6B00088AE9A /* IssuesDashboardCLI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 26EEA1142FB051180029CBBC /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
+			package = 26A324902FB6900088AE9A /* XCLocalSwiftPackageReference "IssuesKit" */;
+			productName = IssuesDashboardCLI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
