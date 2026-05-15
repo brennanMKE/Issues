@@ -287,10 +287,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				26A324902FB6900088AE9A /* XCLocalSwiftPackageReference "IssuesKit" */,
-				26EEA10E2FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "Watcher" */,
-				26EEA1112FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "textual" */,
-				26EEA1142FB051180029CBBC /* XCRemoteSwiftPackageReference "Sparkle" */,
-				26A324722FB67E000088AE9A /* XCRemoteSwiftPackageReference "SwiftTUI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 26EEA06B2FA5B8390029CBBC /* Products */;
@@ -658,41 +654,6 @@
 			relativePath = IssuesKit;
 		};
 /* End XCLocalSwiftPackageReference section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		26A324722FB67E000088AE9A /* XCRemoteSwiftPackageReference "SwiftTUI" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/rensbreur/SwiftTUI.git";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
-		26EEA10E2FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "Watcher" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "git@github.com:brennanMKE/Watcher.git";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
-		26EEA1112FA81FCC0029CBBC /* XCRemoteSwiftPackageReference "textual" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/gonzalezreal/textual.git";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
-		26EEA1142FB051180029CBBC /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.6.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		26A324A02FB6900088AE9A /* IssuesCore */ = {
