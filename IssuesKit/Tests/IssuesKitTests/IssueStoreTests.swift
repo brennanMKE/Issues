@@ -1,7 +1,6 @@
 import Testing
-import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesCore
 
 /// Tests for `IssueStore.apply(_:)` (per-tab persisted-state restore, #0009)
 /// and the keyboard-nav helpers `selectNext()` / `selectPrevious()` (#0049).
@@ -9,6 +8,7 @@ import Foundation
 /// `IssueStore` isn't `@MainActor`-isolated as a class, but its mutating
 /// methods are exercised here on a single test actor. We seed `issues` via
 /// the DEBUG-only `setIssuesForPreview(_:)` hook so we never touch disk.
+@MainActor
 struct IssueStoreTests {
 
     // MARK: - Fixtures

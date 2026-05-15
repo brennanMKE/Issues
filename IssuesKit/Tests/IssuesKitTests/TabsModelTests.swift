@@ -1,7 +1,6 @@
 import Testing
-import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesCore
 
 /// Tests for `TabsModel.diff(baseline:new:issues:)` — the pure value-typed
 /// computation that drives notification firing (#0013) and underpins the

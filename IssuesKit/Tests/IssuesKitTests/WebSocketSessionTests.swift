@@ -1,7 +1,6 @@
 import Testing
-import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesCore
 
 #if os(macOS)
 
@@ -10,6 +9,7 @@ import Foundation
 /// pure and don't stand up any network. The session/fanout tests use the
 /// public hooks on `WebSocketSession` and a small in-process driver instead
 /// of `NWConnection` so they're deterministic.
+@MainActor
 struct WebSocketSessionTests {
 
     // MARK: - Handshake

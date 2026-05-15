@@ -1,7 +1,6 @@
 import Testing
-import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesCore
 
 /// Tests for `LocalFolderIssueSource.projectMetadata` / `displayName`
 /// (#0075 — read `project.json`).
@@ -9,6 +8,7 @@ import Foundation
 /// Each test writes into a fresh temp folder, calls `reload()` directly
 /// (skipping `start()` so the FolderWatcher / security-scoped paths stay out
 /// of the picture), and asserts on `projectMetadata` and `displayName`.
+@MainActor
 struct LocalFolderIssueSourceTests {
 
     // MARK: - Fixture

@@ -1,11 +1,11 @@
 import Testing
-import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesCore
 
 /// Tests for `RemoteHostRecents` (#0091). Each test uses a fresh
 /// `UserDefaults` suite so writes don't leak across runs or contaminate
 /// the standard suite.
+@MainActor
 struct RemoteHostRecentsTests {
 
     private static func uniqueDefaults() -> UserDefaults {

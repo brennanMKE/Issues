@@ -1,12 +1,12 @@
 import Testing
-import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesCore
 
 /// Tests for `LintRunner.run(folderURL:parsedIssues:)`. Each test builds a
 /// temp folder with a small fixture set, invokes the runner, asserts on the
 /// returned `[LintFinding]`, and tears the folder down. Mirrors the layout
 /// the IssuesSkill / Issues.app produces in the wild.
+@MainActor
 struct LintRunnerTests {
 
     // MARK: - Fixture helpers

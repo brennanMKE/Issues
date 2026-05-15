@@ -1,7 +1,6 @@
 import Testing
-import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesCore
 
 #if os(macOS)
 
@@ -9,6 +8,7 @@ import Foundation
 /// the markdown body extractor. All handler tests use a stub
 /// `MultiFolderStore` so the host doesn't have to be running and there's
 /// no real Keychain/network involvement.
+@MainActor
 struct RemoteHandlersTests {
 
     // MARK: - Stub store

@@ -1,8 +1,7 @@
 import Testing
-import IssuesCore
 import Foundation
 import CryptoKit
-@testable import Issues
+@testable import IssuesCore
 
 #if os(macOS)
 

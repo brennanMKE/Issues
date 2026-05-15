@@ -1,7 +1,6 @@
 import Testing
-import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesCore
 
 /// Tests for `FolderBookmarkService.folderId(for:)` and the
 /// `IssueStore.folderId` passthrough (#0082).
@@ -9,6 +8,7 @@ import Foundation
 /// These tests use synthetic `Data` blobs rather than real security-scoped
 /// bookmarks; the function under test is a pure SHA-256 + truncate, so the
 /// shape of the input doesn't matter for the contract we're verifying.
+@MainActor
 struct FolderIdTests {
 
     // MARK: - Format

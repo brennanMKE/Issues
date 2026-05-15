@@ -1,6 +1,6 @@
 import Testing
-import IssuesCore
 import Foundation
+@testable import IssuesCore
 @testable import IssuesAppKit
 
 #if os(macOS)
@@ -8,6 +8,7 @@ import Foundation
 /// Pure validation-logic tests for `RemoteFolderPickerModel`. The SwiftUI
 /// surface isn't unit-tested directly — these cover only the rules the
 /// Continue buttons use to flip enabled/disabled.
+@MainActor
 struct RemoteFolderPickerStateTests {
 
     @Test func parsePortAcceptsLegalIntegers() {

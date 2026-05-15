@@ -1,6 +1,6 @@
 import Testing
-import IssuesCore
 import Foundation
+@testable import IssuesCore
 @testable import IssuesAppKit
 
 /// Tests for `ReportGenerator` (#0064). Most coverage is on the pure

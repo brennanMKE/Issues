@@ -1,7 +1,6 @@
 import Testing
-import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesCore
 
 #if os(macOS)
 
@@ -9,6 +8,7 @@ import Foundation
 /// segments, auth middleware, and response shapes. The `NWListener`
 /// itself is exercised manually via `curl` per the issue's verification
 /// steps; the unit tests focus on the load-bearing pure-function layer.
+@MainActor
 struct RemoteServerTests {
 
     private static func uniqueService() -> String {

@@ -1,12 +1,12 @@
 import Testing
-import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesCore
 
 #if os(macOS)
 
 /// Tests for `ViewerTokenStore` (#0095). Each test uses a unique Keychain
 /// service name and cleans up via `deleteAll(service:)`.
+@MainActor
 struct ViewerTokenStoreTests {
 
     private static func uniqueService() -> String {

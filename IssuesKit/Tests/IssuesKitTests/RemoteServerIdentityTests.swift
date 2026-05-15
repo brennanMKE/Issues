@@ -1,8 +1,7 @@
 import Testing
-import IssuesCore
 import Foundation
 import CryptoKit
-@testable import Issues
+@testable import IssuesCore
 
 #if os(macOS)
 import Security
@@ -17,6 +16,7 @@ import Security
 /// we see under Swift Testing's default parallelism (xnu's Keychain
 /// trust cache appears to lag a `SecItemDelete` by tens of milliseconds).
 @Suite(.serialized)
+@MainActor
 struct RemoteServerIdentityTests {
 
     private static func uniqueLabel() -> String {

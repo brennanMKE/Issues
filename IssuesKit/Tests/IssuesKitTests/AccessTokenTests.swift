@@ -1,7 +1,6 @@
 import Testing
-import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesCore
 
 #if os(macOS)
 
@@ -9,6 +8,7 @@ import Foundation
 /// service name so concurrent runs don't collide and so the production
 /// host-token database is never touched. `deleteAll` is called in a
 /// `defer` to guarantee cleanup.
+@MainActor
 struct AccessTokenTests {
 
     private static func uniqueService() -> String {
