@@ -10,6 +10,8 @@
 		26A324702FB67E000088AE9A /* SwiftTUI in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324712FB67E000088AE9A /* SwiftTUI */; };
 		26A324A12FB6900088AE9A /* IssuesCore in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324A02FB6900088AE9A /* IssuesCore */; };
 		26A324A32FB6900088AE9A /* IssuesCore in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324A22FB6900088AE9A /* IssuesCore */; };
+		26A324B12FB6A00088AE9A /* IssuesAppKit in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324B02FB6A00088AE9A /* IssuesAppKit */; };
+		26A324B32FB6A00088AE9A /* IssuesAppKit in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324B22FB6A00088AE9A /* IssuesAppKit */; };
 		26EEA1132FA81FCC0029CBBC /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA1122FA81FCC0029CBBC /* Textual */; };
 		26EEA1162FB051180029CBBC /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 26EEA1152FB051180029CBBC /* Sparkle */; };
 /* End PBXBuildFile section */
@@ -127,8 +129,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				26A324A12FB6900088AE9A /* IssuesCore in Frameworks */,
-				26EEA1132FA81FCC0029CBBC /* Textual in Frameworks */,
-				26EEA1162FB051180029CBBC /* Sparkle in Frameworks */,
+				26A324B12FB6A00088AE9A /* IssuesAppKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -137,6 +138,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				26A324A32FB6900088AE9A /* IssuesCore in Frameworks */,
+				26A324B32FB6A00088AE9A /* IssuesAppKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,8 +244,7 @@
 			name = Issues;
 			packageProductDependencies = (
 				26A324A02FB6900088AE9A /* IssuesCore */,
-				26EEA1122FA81FCC0029CBBC /* Textual */,
-				26EEA1152FB051180029CBBC /* Sparkle */,
+				26A324B02FB6A00088AE9A /* IssuesAppKit */,
 			);
 			productName = Issues;
 			productReference = 26EEA06A2FA5B8390029CBBC /* Issues.app */;
@@ -268,6 +269,7 @@
 			name = IssuesTests;
 			packageProductDependencies = (
 				26A324A22FB6900088AE9A /* IssuesCore */,
+				26A324B22FB6A00088AE9A /* IssuesAppKit */,
 			);
 			productName = IssuesTests;
 			productReference = 26EEA0772FA5B83B0029CBBC /* IssuesTests.xctest */;
@@ -830,6 +832,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 26A324902FB6900088AE9A /* XCLocalSwiftPackageReference "IssuesKit" */;
 			productName = IssuesCore;
+		};
+		26A324B02FB6A00088AE9A /* IssuesAppKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 26A324902FB6900088AE9A /* XCLocalSwiftPackageReference "IssuesKit" */;
+			productName = IssuesAppKit;
+		};
+		26A324B22FB6A00088AE9A /* IssuesAppKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 26A324902FB6900088AE9A /* XCLocalSwiftPackageReference "IssuesKit" */;
+			productName = IssuesAppKit;
 		};
 		26EEA1122FA81FCC0029CBBC /* Textual */ = {
 			isa = XCSwiftPackageProductDependency;

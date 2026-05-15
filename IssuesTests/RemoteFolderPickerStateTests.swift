@@ -1,7 +1,7 @@
 import Testing
 import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesAppKit
 
 #if os(macOS)
 

@@ -1,7 +1,7 @@
 import SwiftUI
 import IssuesCore
 
-extension IssueStatus {
+public extension IssueStatus {
     var foreground: Color {
         switch self {
         case .open: return .statusOpen

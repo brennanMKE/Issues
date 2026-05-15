@@ -1,7 +1,7 @@
 import Testing
 import IssuesCore
 import Foundation
-@testable import Issues
+@testable import IssuesAppKit
 
 /// Tests for `ReportGenerator` (#0064). Most coverage is on the pure
 /// `buildBody` renderer with a fixed clock + a synthetic store; the
