@@ -69,6 +69,12 @@ public struct IssuesRootScene: Scene {
                     UpdaterController.shared.checkForUpdates()
                 }
                 .disabled(!UpdaterController.shared.isConfigured)
+
+                // Install the bundled `issues` and `issues-dashboard` CLIs
+                // onto the user's PATH (#0136). Implementation lives in
+                // `CLIInstaller` + `InstallCLIMenuButton`; this menu group
+                // just hosts the trigger.
+                InstallCLIMenuButton()
             }
 
             // Suppress `File → New Window` (#0074). With single-window

@@ -11,6 +11,8 @@
 		26A324B12FB6A00088AE9A /* IssuesAppKit in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324B02FB6A00088AE9A /* IssuesAppKit */; };
 		26A324C02FB6B00088AE9A /* IssuesCLI in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324C12FB6B00088AE9A /* IssuesCLI */; };
 		26A324C22FB6B00088AE9A /* IssuesDashboardCLI in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324C32FB6B00088AE9A /* IssuesDashboardCLI */; };
+		26C01361A0000000000000A1 /* issues in CopyFiles */ = {isa = PBXBuildFile; fileRef = 26A3224F2FB3DA6D0088AE9A /* issues */; };
+		26C01361A0000000000000A2 /* issues-dashboard in CopyFiles */ = {isa = PBXBuildFile; fileRef = 26A324672FB67CAC0088AE9A /* issues-dashboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -20,6 +22,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = 26EEA0692FA5B8390029CBBC;
 			remoteInfo = Issues;
+		};
+		26C01361A0000000000000A4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 26EEA0622FA5B8390029CBBC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26A3224E2FB3DA6D0088AE9A;
+			remoteInfo = IssuesCommand;
+		};
+		26C01361A0000000000000A5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 26EEA0622FA5B8390029CBBC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26A324662FB67CAC0088AE9A;
+			remoteInfo = DashboardCommand;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -41,6 +57,18 @@
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 1;
+		};
+		26C01361A0000000000000A3 /* Copy CLI Tools */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				26C01361A0000000000000A1 /* issues in CopyFiles */,
+				26C01361A0000000000000A2 /* issues-dashboard in CopyFiles */,
+			);
+			name = "Copy CLI Tools";
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -207,10 +235,13 @@
 				26EEA0662FA5B8390029CBBC /* Sources */,
 				26EEA0672FA5B8390029CBBC /* Frameworks */,
 				26EEA0682FA5B8390029CBBC /* Resources */,
+				26C01361A0000000000000A3 /* Copy CLI Tools */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				26C01361A0000000000000A6 /* PBXTargetDependency */,
+				26C01361A0000000000000A7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				26A322562FB3DA790088AE9A /* Configuration */,
@@ -354,6 +385,16 @@
 			isa = PBXTargetDependency;
 			target = 26EEA0692FA5B8390029CBBC /* Issues */;
 			targetProxy = 26EEA0822FA5B83B0029CBBC /* PBXContainerItemProxy */;
+		};
+		26C01361A0000000000000A6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26A3224E2FB3DA6D0088AE9A /* IssuesCommand */;
+			targetProxy = 26C01361A0000000000000A4 /* PBXContainerItemProxy */;
+		};
+		26C01361A0000000000000A7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26A324662FB67CAC0088AE9A /* DashboardCommand */;
+			targetProxy = 26C01361A0000000000000A5 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
