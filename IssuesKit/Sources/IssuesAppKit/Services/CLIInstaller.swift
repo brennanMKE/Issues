@@ -78,13 +78,18 @@ nonisolated enum CLIInstaller {
 
     /// Resolve the absolute paths to the two CLI binaries inside the
     /// running `.app` bundle. The Issues target's Copy Files build phase
-    /// places them under `Contents/MacOS/` next to the main executable.
+    /// places them under `Contents/SharedSupport/bin/` — NOT in
+    /// `Contents/MacOS/`, where they would collide with the main
+    /// `Issues` executable on a case-insensitive APFS volume (the CLI
+    /// binary `issues` and the app binary `Issues` resolve to the same
+    /// path on the default APFS configuration).
     static func bundledBinaryURLs() throws -> [URL] {
-        let macOS = Bundle.main.bundleURL
+        let binDir = Bundle.main.bundleURL
             .appendingPathComponent("Contents", isDirectory: true)
-            .appendingPathComponent("MacOS", isDirectory: true)
+            .appendingPathComponent("SharedSupport", isDirectory: true)
+            .appendingPathComponent("bin", isDirectory: true)
         return try binaryNames.map { name in
-            let url = macOS.appendingPathComponent(name, isDirectory: false)
+            let url = binDir.appendingPathComponent(name, isDirectory: false)
             guard FileManager.default.fileExists(atPath: url.path) else {
                 throw InstallError.bundleBinaryMissing(name: name, expectedPath: url)
             }

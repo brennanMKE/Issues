@@ -61,8 +61,8 @@
 		26C01361A0000000000000A3 /* Copy CLI Tools */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 6;
+			dstPath = bin;
+			dstSubfolderSpec = 12;
 			files = (
 				26C01361A0000000000000A1 /* issues in CopyFiles */,
 				26C01361A0000000000000A2 /* issues-dashboard in CopyFiles */,
