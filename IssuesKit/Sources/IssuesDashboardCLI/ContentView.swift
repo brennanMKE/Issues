@@ -1,8 +1,8 @@
 // ContentView.swift
 //
-// Tri-band (ACTIVE / RECENT / NEXT UP) dashboard rendered in the terminal
-// via SwiftTUI. Truncates rather than scrolls — the band budget is
-// recomputed every layout pass so the table re-flows on resize.
+// Flat/hybrid dashboard rendered in the terminal via SwiftTUI.
+// Layout: recency-sorted top (~70% of rows) + open-queue tail (~30%),
+// no section headers — status colour conveys state per row.
 
 import Foundation
 import IssuesCore
@@ -24,40 +24,27 @@ struct ContentView: View {
 
             let snapshot = store.snapshot
 
-            // De-dup NEXT UP against the *visible* RECENT slice (see
-            // allocation below), not the full recent array.
-            let plan = layoutPlan(
-                snapshot: snapshot,
-                terminalHeight: height
-            )
+            // chrome = title(1) + column header(1) + hairline(1) + footer(1)
+            let chrome = 4
+            let dataRows = max(0, height - chrome)
 
             let titleWidth = max(
                 10,
                 width - numberCol - statusCol - modifiedCol - gutters
             )
 
+            let (topIssues, queueIssues) = hybridLayout(snapshot: snapshot, dataRows: dataRows)
+
             VStack(alignment: .leading, spacing: 0) {
                 titleBar(width: width, snapshot: snapshot)
+                columnHeader(titleWidth: titleWidth)
+                hairline(width: width)
 
-                if plan.showActive {
-                    sectionHeader("ACTIVE", width: width)
-                    ForEach(Array(snapshot.inProgress.prefix(plan.ipShow))) { issue in
-                        row(issue, titleWidth: titleWidth)
-                    }
+                ForEach(topIssues) { issue in
+                    row(issue, titleWidth: titleWidth)
                 }
-
-                if plan.showRecent {
-                    sectionHeader("RECENT", width: width)
-                    ForEach(Array(snapshot.recent.prefix(plan.recentShow))) { issue in
-                        row(issue, titleWidth: titleWidth)
-                    }
-                }
-
-                if plan.showNext {
-                    sectionHeader("NEXT UP", width: width)
-                    ForEach(plan.nextUpVisible) { issue in
-                        row(issue, titleWidth: titleWidth)
-                    }
+                ForEach(queueIssues) { issue in
+                    row(issue, titleWidth: titleWidth)
                 }
 
                 Spacer()
@@ -66,106 +53,61 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Layout plan
+    // MARK: - Layout
 
-    private struct LayoutPlan {
-        let ipShow: Int
-        let recentShow: Int
-        let nextShow: Int
-        let nextUpVisible: [Issue]
-        let showActive: Bool
-        let showRecent: Bool
-        let showNext: Bool
-    }
+    /// Option B hybrid: top ~70% is all issues by recency; bottom ~30% is
+    /// the open queue by id, deduped against whatever is visible in the top.
+    /// Unused queue slots are donated back to the top band.
+    private func hybridLayout(snapshot: DashboardSnapshot, dataRows: Int) -> (top: [Issue], queue: [Issue]) {
+        guard dataRows > 0 else { return ([], []) }
 
-    private func layoutPlan(snapshot: DashboardSnapshot, terminalHeight: Int) -> LayoutPlan {
-        // chrome = title (1) + footer (1) + headers for non-empty bands.
-        let activeNonEmpty = !snapshot.inProgress.isEmpty
-        let recentNonEmpty = !snapshot.recent.isEmpty
+        let topBudget = max(1, dataRows * 7 / 10)
+        let queueBudget = dataRows - topBudget
 
-        // For NEXT UP emptiness we need to know which IDs the visible
-        // RECENT slice will hide. Iterate twice if needed: start with a
-        // conservative estimate, then refine. In practice a single pass
-        // with three potential headers is good enough — assume all three
-        // bands could appear, allocate, then drop any band that ends up
-        // with zero rows and recompute once.
-        var headers = 0
-        if activeNonEmpty { headers += 1 }
-        if recentNonEmpty { headers += 1 }
-        // assume NEXT UP header in first pass if there are any open issues
-        let nextNonEmptyFirstPass = !snapshot.nextUp.isEmpty
-        if nextNonEmptyFirstPass { headers += 1 }
+        var topIssues = Array(snapshot.recency.prefix(topBudget))
+        let topIDs = Set(topIssues.map(\.id))
+        var queueIssues = Array(snapshot.openQueue.filter { !topIDs.contains($0.id) }.prefix(queueBudget))
 
-        let chrome = 2 + headers
-        let visibleRows = max(0, terminalHeight - chrome)
-
-        let ipShow = min(snapshot.inProgress.count, visibleRows)
-        let remaining = max(0, visibleRows - ipShow)
-
-        var recentShow = min(snapshot.recent.count, remaining * 6 / 10)
-
-        // Build the visible RECENT slice now so we can dedup NEXT UP.
-        let visibleRecentIDs = Set(snapshot.recent.prefix(recentShow).map(\.id))
-        let nextUpFiltered = snapshot.nextUp.filter { !visibleRecentIDs.contains($0.id) }
-
-        var nextShow = min(nextUpFiltered.count, remaining - recentShow)
-
-        // Donate slack greedily.
-        var slack = remaining - recentShow - nextShow
-        if slack > 0 && recentShow < snapshot.recent.count {
-            let bonus = min(slack, snapshot.recent.count - recentShow)
-            recentShow += bonus
-            slack -= bonus
-        }
-        if slack > 0 && nextShow < nextUpFiltered.count {
-            let bonus = min(slack, nextUpFiltered.count - nextShow)
-            nextShow += bonus
-            slack -= bonus
+        // Donate unused queue budget back to the top band.
+        let slack = queueBudget - queueIssues.count
+        if slack > 0 {
+            topIssues = Array(snapshot.recency.prefix(topBudget + slack))
+            // Re-dedup after expanding top.
+            let expandedTopIDs = Set(topIssues.map(\.id))
+            queueIssues = Array(snapshot.openQueue.filter { !expandedTopIDs.contains($0.id) }.prefix(queueBudget))
         }
 
-        // After growing recentShow, the dedup set may now hide more open
-        // issues — recompute once to keep the dedup honest.
-        let visibleRecentIDs2 = Set(snapshot.recent.prefix(recentShow).map(\.id))
-        let nextUpFiltered2 = snapshot.nextUp.filter { !visibleRecentIDs2.contains($0.id) }
-        nextShow = min(nextShow, nextUpFiltered2.count)
-
-        let nextUpVisible = Array(nextUpFiltered2.prefix(nextShow))
-
-        let showActive = activeNonEmpty && ipShow > 0
-        let showRecent = recentNonEmpty && recentShow > 0
-        let showNext = !nextUpVisible.isEmpty
-
-        // If a band turned out empty we leak its header — fine, the
-        // bottom is padded with Spacer().
-        _ = remaining
-
-        return LayoutPlan(
-            ipShow: ipShow,
-            recentShow: recentShow,
-            nextShow: nextShow,
-            nextUpVisible: nextUpVisible,
-            showActive: showActive,
-            showRecent: showRecent,
-            showNext: showNext
-        )
+        return (topIssues, queueIssues)
     }
 
     // MARK: - Sub-views
 
     private func titleBar(width: Int, snapshot: DashboardSnapshot) -> some View {
-        let count = snapshot.inProgress.count + snapshot.recent.count
         let stamp = Self.timeFormatter.string(from: snapshot.lastUpdated)
         let folderDisplay = truncate(store.folderURL.path, to: max(10, width - 50))
-        let line = "Issues Dashboard — \(count) items — \(stamp) — \(folderDisplay)"
+        let line = "Issues Dashboard — \(snapshot.totalCount) items — \(stamp) — \(folderDisplay)"
         return Text(String(line.prefix(width))).bold()
     }
 
-    private func sectionHeader(_ name: String, width: Int) -> some View {
-        // Bold single-line band header: "─ NAME ──────"
-        let prefix = "─ \(name) "
-        let fillerCount = max(1, width - displayWidth(prefix))
-        let filler = String(repeating: "─", count: fillerCount)
-        return Text(prefix + filler).bold()
+    private func columnHeader(titleWidth: Int) -> some View {
+        HStack(spacing: 1) {
+            Text("#")
+                .frame(width: Extended(numberCol), alignment: .trailing)
+                .bold()
+            Text("STATUS")
+                .frame(width: Extended(statusCol), alignment: .leading)
+                .bold()
+            Text("TITLE")
+                .frame(width: Extended(titleWidth), alignment: .leading)
+                .bold()
+            Text("MODIFIED")
+                .frame(width: Extended(modifiedCol), alignment: .trailing)
+                .bold()
+        }
+    }
+
+    private func hairline(width: Int) -> some View {
+        Text(String(repeating: "─", count: width))
     }
 
     private func row(_ issue: Issue, titleWidth: Int) -> some View {
@@ -203,18 +145,10 @@ struct ContentView: View {
         }
     }
 
-    private func displayWidth(_ s: String) -> Int {
-        // Approximation: count grapheme clusters. Box-drawing chars are
-        // single-width in monospaced terminals so this is accurate enough.
-        return s.count
-    }
-
-    /// Truncate from the left if too long, prefixing with `…`.
     private func truncate(_ s: String, to width: Int) -> String {
         if s.count <= width { return s }
         if width <= 1 { return String(s.suffix(width)) }
-        let keep = width - 1
-        return "…" + String(s.suffix(keep))
+        return "…" + String(s.suffix(width - 1))
     }
 
     private static let timeFormatter: DateFormatter = {

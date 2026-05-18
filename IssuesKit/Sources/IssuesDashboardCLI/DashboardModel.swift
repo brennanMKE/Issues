@@ -1,57 +1,44 @@
 // DashboardModel.swift
 //
-// Pure ranking for the tri-band (ACTIVE / RECENT / NEXT UP) layout.
+// Produces a DashboardSnapshot for the flat/hybrid (Option B) dashboard layout.
 
 import Foundation
 import IssuesCore
 
 struct DashboardSnapshot: Sendable {
-    let inProgress: [Issue]
-    let recent: [Issue]
-    let nextUp: [Issue]
+    /// All issues sorted by modifiedAt descending — the recency band.
+    let recency: [Issue]
+    /// Open issues sorted by id ascending — the queue band (dedup against
+    /// visible recency rows happens in the view layer).
+    let openQueue: [Issue]
+    let totalCount: Int
     let lastUpdated: Date
     let loadError: String?
 
     static let empty = DashboardSnapshot(
-        inProgress: [],
-        recent: [],
-        nextUp: [],
+        recency: [],
+        openQueue: [],
+        totalCount: 0,
         lastUpdated: Date(),
         loadError: nil
     )
 }
 
 enum DashboardModel {
-    /// Build a snapshot from a flat list of parsed issues.
-    ///
-    /// - ACTIVE: all `in-progress`, sorted by `modifiedAt` desc.
-    /// - RECENT: everything not in ACTIVE, sorted by `modifiedAt` desc.
-    /// - NEXT UP: all `open` issues sorted by id asc. The view layer is
-    ///   responsible for filtering out IDs that already appear in the
-    ///   *visible* RECENT slice (see ContentView).
     static func snapshot(
         issues: [Issue],
         lastUpdated: Date,
         loadError: String?
     ) -> DashboardSnapshot {
-        let inProgress = issues
-            .filter { $0.status == .inProgress }
-            .sorted { $0.modifiedAt > $1.modifiedAt }
-
-        let inProgressIDs = Set(inProgress.map(\.id))
-
-        let recent = issues
-            .filter { !inProgressIDs.contains($0.id) }
-            .sorted { $0.modifiedAt > $1.modifiedAt }
-
-        let nextUp = issues
+        let recency = issues.sorted { $0.modifiedAt > $1.modifiedAt }
+        let openQueue = issues
             .filter { $0.status == .open }
             .sorted { $0.id < $1.id }
 
         return DashboardSnapshot(
-            inProgress: inProgress,
-            recent: recent,
-            nextUp: nextUp,
+            recency: recency,
+            openQueue: openQueue,
+            totalCount: issues.count,
             lastUpdated: lastUpdated,
             loadError: loadError
         )

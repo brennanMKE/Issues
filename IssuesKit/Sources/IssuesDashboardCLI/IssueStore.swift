@@ -76,12 +76,12 @@ final class DashboardIssueStore: ObservableObject {
                 loadError: nil
             )
         case .failure(let error):
-            // Preserve prior band contents — only flip loadError so the
-            // screen doesn't blank out on a transient filesystem miss.
+            // Preserve prior contents — only flip loadError so the screen
+            // doesn't blank out on a transient filesystem miss.
             snapshot = DashboardSnapshot(
-                inProgress: snapshot.inProgress,
-                recent: snapshot.recent,
-                nextUp: snapshot.nextUp,
+                recency: snapshot.recency,
+                openQueue: snapshot.openQueue,
+                totalCount: snapshot.totalCount,
                 lastUpdated: snapshot.lastUpdated,
                 loadError: error.localizedDescription
             )
