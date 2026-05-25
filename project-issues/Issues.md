@@ -126,6 +126,42 @@ cp ~/Desktop/Screenshot\ YYYY-MM-DD\ at\ H.MM.SS*PM.png issues/NNNN/screenshot.p
 
 The `*` matches the U+202F. Substitute the actual timestamp; if you don't know which screenshot the user means, list `~/Desktop/Screenshot*` by mtime and pick the most recent.
 
+## Visual verification
+
+For issues involving UI changes, capture the running app window as part of the `## Verification` section. This requires the `Issues (Beta)` build to be running (bundle ID `co.sstools.Issues.beta`).
+
+**Prerequisites:**
+
+- `windows` CLI must be on `$PATH` — it resolves window IDs by bundle ID. Verify with `which windows`.
+- Issues Beta must be running. Launch it:
+  ```sh
+  ./scripts/set-environment.sh Beta
+  open -b co.sstools.Issues.beta
+  ```
+  Or build and run from Xcode using the `Issues (Beta)` scheme.
+
+**Capture to an issue attachment folder:**
+
+```sh
+./scripts/screenshot.sh project-issues/NNNN/after.png
+```
+
+The script creates the destination folder automatically. Then embed the screenshot in the issue:
+
+```markdown
+## Attachments
+
+![App state after fix](NNNN/after.png)
+```
+
+**Ad-hoc captures** (no destination argument) go to `screenshots/` at the repo root (gitignored):
+
+```sh
+./scripts/screenshot.sh
+```
+
+If the app is not running, the script exits with a non-zero status and a warning to stderr. Note the gap in the `## Verification` section rather than silently skipping.
+
 ## Module conventions for this project
 
 Use one of these names (or a `A / B` pair) for the **Module** field:
