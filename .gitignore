@@ -3,3 +3,5 @@ build/
 .build/
 dist/
 xcuserdata/
+Configuration/Active.xcconfig
+screenshots/

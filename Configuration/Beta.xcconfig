@@ -1,0 +1,6 @@
+PRODUCT_BUNDLE_IDENTIFIER = co.sstools.Issues.beta
+PRODUCT_NAME = Issues Beta
+
+// No Sparkle update feed for beta builds.
+SU_FEED_URL =
+SU_PUBLIC_ED_KEY =

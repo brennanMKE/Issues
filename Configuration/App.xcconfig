@@ -10,3 +10,5 @@ SDKROOT = macosx
 CODE_SIGN_ENTITLEMENTS = Issues/Issues.entitlements
 
 ASSETCATALOG_COMPILER_APPICON_NAME[sdk=macos*] = AppIcon
+
+#include? "Active.xcconfig"
