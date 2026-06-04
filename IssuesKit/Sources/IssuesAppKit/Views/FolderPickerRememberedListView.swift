@@ -12,7 +12,7 @@ struct FolderPickerRememberedListView: View {
                 .textCase(.uppercase)
                 .foregroundStyle(Color.appMuted)
                 .frame(maxWidth: 360, alignment: .leading)
-            ForEach(bookmarks.remembered) { folder in
+            ForEach(bookmarks.remembered.prefix(FolderBookmarkService.maxRemembered)) { folder in
                 FolderPickerRowView(folder: folder, bookmarks: bookmarks, onSelect: onSelect)
             }
         }

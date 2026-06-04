@@ -7,6 +7,19 @@ import Observation
 public final class FolderBookmarkService {
     private static let defaultsKey = "rememberedFolders"
 
+    /// Upper bound on how many remembered folders are kept (#0144). The list
+    /// is sorted by `lastUsed` descending, so trimming keeps the most-recent
+    /// entries and drops the stalest. Capping both the persisted blob and the
+    /// in-memory array keeps `UserDefaults` from growing without limit.
+    public static let maxRemembered = 10
+
+    /// Pure helper: sort by `lastUsed` descending and keep at most
+    /// `maxRemembered`. Factored out so the cap can be unit-tested without
+    /// real security-scoped bookmarks or `UserDefaults`.
+    static func pruned(_ folders: [RememberedFolder]) -> [RememberedFolder] {
+        Array(folders.sorted { $0.lastUsed > $1.lastUsed }.prefix(maxRemembered))
+    }
+
     /// Wire-stable folder identifier derived from a security-scoped bookmark
     /// blob (#0082). 16 lowercase hex characters = 8 bytes of SHA-256 prefix
     /// — short enough for log lines and URL paths, far past collision risk
@@ -36,7 +49,7 @@ public final class FolderBookmarkService {
         }
         do {
             let folders = try JSONDecoder().decode([RememberedFolder].self, from: data)
-            remembered = folders.sorted { $0.lastUsed > $1.lastUsed }
+            remembered = Self.pruned(folders)
         } catch {
             remembered = []
         }
@@ -88,7 +101,7 @@ public final class FolderBookmarkService {
         )
         remembered.removeAll { $0.displayPath == entry.displayPath }
         remembered.insert(entry, at: 0)
-        remembered.sort { $0.lastUsed > $1.lastUsed }
+        remembered = Self.pruned(remembered)
         save()
     }
 
