@@ -15,7 +15,7 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "26EEA0692FA5B8390029CBBC"
-                     BuildableName = "Issues Beta.app"
+                     BuildableName = "Issues.app"
                      BlueprintName = "Issues"
                      ReferencedContainer = "container:Issues.xcodeproj">
                   </BuildableReference>
@@ -33,7 +33,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "26EEA0692FA5B8390029CBBC"
-               BuildableName = "Issues Beta.app"
+               BuildableName = "Issues.app"
                BlueprintName = "Issues"
                ReferencedContainer = "container:Issues.xcodeproj">
             </BuildableReference>
@@ -73,7 +73,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "26EEA0692FA5B8390029CBBC"
-            BuildableName = "Issues Beta.app"
+            BuildableName = "Issues.app"
             BlueprintName = "Issues"
             ReferencedContainer = "container:Issues.xcodeproj">
          </BuildableReference>
@@ -90,7 +90,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "26EEA0692FA5B8390029CBBC"
-            BuildableName = "Issues Beta.app"
+            BuildableName = "Issues.app"
             BlueprintName = "Issues"
             ReferencedContainer = "container:Issues.xcodeproj">
          </BuildableReference>

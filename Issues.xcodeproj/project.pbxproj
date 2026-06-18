@@ -11,18 +11,11 @@
 		26A324B12FB6A00088AE9A /* IssuesAppKit in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324B02FB6A00088AE9A /* IssuesAppKit */; };
 		26A324C02FB6B00088AE9A /* IssuesCLI in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324C12FB6B00088AE9A /* IssuesCLI */; };
 		26A324C22FB6B00088AE9A /* IssuesDashboardCLI in Frameworks */ = {isa = PBXBuildFile; productRef = 26A324C32FB6B00088AE9A /* IssuesDashboardCLI */; };
-		26C01361A0000000000000A1 /* issues in CopyFiles */ = {isa = PBXBuildFile; fileRef = 26A3224F2FB3DA6D0088AE9A /* issues */; };
-		26C01361A0000000000000A2 /* issues-dashboard in CopyFiles */ = {isa = PBXBuildFile; fileRef = 26A324672FB67CAC0088AE9A /* issues-dashboard */; };
+		26C01361A0000000000000A1 /* issues in Copy CLI Tools */ = {isa = PBXBuildFile; fileRef = 26A3224F2FB3DA6D0088AE9A /* issues */; };
+		26C01361A0000000000000A2 /* issues-dashboard in Copy CLI Tools */ = {isa = PBXBuildFile; fileRef = 26A324672FB67CAC0088AE9A /* issues-dashboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		26EEA0822FA5B83B0029CBBC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 26EEA0622FA5B8390029CBBC /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 26EEA0692FA5B8390029CBBC;
-			remoteInfo = Issues;
-		};
 		26C01361A0000000000000A4 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 26EEA0622FA5B8390029CBBC /* Project object */;
@@ -36,6 +29,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 26A324662FB67CAC0088AE9A;
 			remoteInfo = DashboardCommand;
+		};
+		26EEA0822FA5B83B0029CBBC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 26EEA0622FA5B8390029CBBC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26EEA0692FA5B8390029CBBC;
+			remoteInfo = Issues;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -64,8 +64,8 @@
 			dstPath = bin;
 			dstSubfolderSpec = 12;
 			files = (
-				26C01361A0000000000000A1 /* issues in CopyFiles */,
-				26C01361A0000000000000A2 /* issues-dashboard in CopyFiles */,
+				26C01361A0000000000000A1 /* issues in Copy CLI Tools */,
+				26C01361A0000000000000A2 /* issues-dashboard in Copy CLI Tools */,
 			);
 			name = "Copy CLI Tools";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -381,11 +381,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		26EEA0832FA5B83B0029CBBC /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 26EEA0692FA5B8390029CBBC /* Issues */;
-			targetProxy = 26EEA0822FA5B83B0029CBBC /* PBXContainerItemProxy */;
-		};
 		26C01361A0000000000000A6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 26A3224E2FB3DA6D0088AE9A /* IssuesCommand */;
@@ -395,6 +390,11 @@
 			isa = PBXTargetDependency;
 			target = 26A324662FB67CAC0088AE9A /* DashboardCommand */;
 			targetProxy = 26C01361A0000000000000A5 /* PBXContainerItemProxy */;
+		};
+		26EEA0832FA5B83B0029CBBC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26EEA0692FA5B8390029CBBC /* Issues */;
+			targetProxy = 26EEA0822FA5B83B0029CBBC /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
